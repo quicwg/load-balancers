@@ -106,8 +106,8 @@ QUIC-TRANSPORT: title: "QUIC: A UDP-Based Multiplexed and Secure Transport" date
 ## Simplicity
  
    QUIC is intended to provide unlinkability across connection
-   migration, but servers are under no obligation to provide connection
-   IDs, or IDs that effectively prevent linkability. If the
+   migration, but servers are under no obligation to provide additional
+   connection IDs that effectively prevent linkability. If the
    coordination scheme is too difficult to implement, servers behind
    load balancers using connection IDs for routing will use trivially
    linkable connection IDs. Clients will therefore be forced choose
@@ -164,8 +164,8 @@ QUIC-TRANSPORT: title: "QUIC: A UDP-Based Multiplexed and Secure Transport" date
 # Routing Algorithms
  
    In QUIC-LB, load balancers do not send individual connection IDs to
-   servers. Instead, they communicate the parameters of one of two
-   algorithms to generate routable connection IDs.
+   servers. Instead, they communicate the parameters of an algorithm to
+   generate routable connection IDs.
 
    The algorithms differ in the complexity of configuration at both
    load balancer and server. Increasing complexity improves obfuscation
@@ -316,21 +316,18 @@ QUIC-TRANSPORT: title: "QUIC: A UDP-Based Multiplexed and Secure Transport" date
    future versions of QUIC.
 
 ## Packet Header Format
-   QUIC-LB messages resemble QUIC packets with a long header. They are
-   sent when a load balancer boots up, or detects a new server in the
-   pool. QUIC-LB packets are delivered in a UDP datagram.
+   QUIC-LB messages are QUIC packets with a long header and zero
+   length connection IDs. They are sent when a load balancer boots
+   up, or detects a new server in the pool. QUIC-LB packets are
+   delivered in a UDP datagram.
  0                   1                   2                   3
  0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
 +-+-+-+-+-+-+-+-+
 | Type = 0xfb   |
 +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-|                      	Version (32)                         |
+|                        Version (32)                           |
 +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
 |      0x00     |
-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-|                           Length (i)                          |
-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-|     Random    |
 +-+-+-+-+-+-+-+-+
 {: #quic-lb-header title="QUIC-LB Header"}
 
@@ -339,8 +336,8 @@ QUIC-TRANSPORT: title: "QUIC: A UDP-Based Multiplexed and Secure Transport" date
    The Version field allows QUIC-LB to use the Version Negotiation
    mechanism. All messages in this specification are specific to
    QUICv2, as future QUIC versions may use the 0xfb type for other
-   purposes. Therefore, the Version field should be set as 0xff00000d,
-   the current QUIC version.
+   purposes. Therefore, the Version field should be set as the
+   codepoint for QUICv2 as defined in {{QUIC-TRANSPORT}}.
 
    Load balancers MUST cease sending QUIC-LB packets of this version
    to a server when that server sends a Version Negotiation packet
@@ -348,15 +345,7 @@ QUIC-TRANSPORT: title: "QUIC: A UDP-Based Multiplexed and Secure Transport" date
 
    The 0x00 byte indicates that there are no connection IDs present
    in the header.
-
-   The length field is a variable-length integer that encodes the
-   length of the entire QUIC-LB packet, in octets, after the length
-   field. The variable integer encoding is the same as that in
-   {{QUIC-TRANSPORT}}.
-   
-   The Random field is one random octet, meant to emulate an
-   encrypted one-octet QUIC packet number. 
-
+ 
    The remainder of the packet is the payload. This has multiple
    formats.
 
@@ -387,7 +376,8 @@ QUIC-TRANSPORT: title: "QUIC: A UDP-Based Multiplexed and Secure Transport" date
  0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
 +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
 |  Type = 0x01  |   Supp. Type  |  Supp. Type   |  ...
-+-+-+-+-+-+-+-+-++-+-+-+-+-+-+-+-++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+                                                               |                                                               |
++-+-+-+-+-+-+-+-++-+-+-+-+-+-+-+-++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+|                                                               |
 +                            Token (64)                         +
 |                                                               |
 +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
