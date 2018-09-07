@@ -320,6 +320,7 @@ QUIC-TRANSPORT: title: "QUIC: A UDP-Based Multiplexed and Secure Transport" date
    length connection IDs. They are sent when a load balancer boots
    up, or detects a new server in the pool. QUIC-LB packets are
    delivered in a UDP datagram.
+~~~~~
  0                   1                   2                   3
  0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
 +-+-+-+-+-+-+-+-+
@@ -329,6 +330,7 @@ QUIC-TRANSPORT: title: "QUIC: A UDP-Based Multiplexed and Secure Transport" date
 +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
 |      0x00     |
 +-+-+-+-+-+-+-+-+
+~~~~~
 {: #quic-lb-header title="QUIC-LB Header"}
 
    The type field is 0xfb, which is otherwise unused in QUICv2.
@@ -350,6 +352,7 @@ QUIC-TRANSPORT: title: "QUIC: A UDP-Based Multiplexed and Secure Transport" date
    formats.
 
 ### Ack Payload
+~~~~~
  0                   1                   2                   3
  0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
 +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
@@ -359,6 +362,7 @@ QUIC-TRANSPORT: title: "QUIC: A UDP-Based Multiplexed and Secure Transport" date
 +                            Token (64)                         +
 |                                                               |
 +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+~~~~~
 {: #ack-payload title="Ack Payload"}
    The Ack Payload consists of a nine octets. Servers send this
    payload after receipt of any acceptable QUIC-LB packet from a load
@@ -372,6 +376,7 @@ QUIC-TRANSPORT: title: "QUIC: A UDP-Based Multiplexed and Secure Transport" date
    destination after a reasonable interval.
 
 ### Fail Payload
+~~~~~
  0                   1                   2                   3
  0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
 +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
@@ -381,7 +386,7 @@ QUIC-TRANSPORT: title: "QUIC: A UDP-Based Multiplexed and Secure Transport" date
 +                            Token (64)                         +
 |                                                               |
 +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-
+~~~~~
 {: #fail-payload title="Fail Payload"}
    Servers send a Fail Payload upon receipt of a payload type which
    they do not support, or if they do not possess all of the
@@ -399,6 +404,7 @@ QUIC-TRANSPORT: title: "QUIC: A UDP-Based Multiplexed and Secure Transport" date
    the server pool.
 
 ### Routing Info Payload
+~~~~~
  0                   1                   2                   3
  0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
 +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
@@ -410,8 +416,9 @@ QUIC-TRANSPORT: title: "QUIC: A UDP-Based Multiplexed and Secure Transport" date
 +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
 |     Routing Byte Mask (16)    |         Modulus (16)          |
 +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-|         	Divisor (16)         |
+|          Divisor (16)         |
 +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+~~~~~
 {: #routing-info-format title="Routing Info Payload"}
    The Type Octet indicates that this is a Routing Info Payload.
 
@@ -424,6 +431,7 @@ QUIC-TRANSPORT: title: "QUIC: A UDP-Based Multiplexed and Secure Transport" date
    {{routing-algorithm}}.
 
 ### Encrypted CID Payload
+~~~~~
  0                   1                   2                   3
  0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
 +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
@@ -440,6 +448,7 @@ QUIC-TRANSPORT: title: "QUIC: A UDP-Based Multiplexed and Secure Transport" date
 |                                                               |
 +                                                               +
 +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+~~~~~
 {: #Encrypted-cid-format title="Encrypted CID Payload"}
    
    The CIDL field is a one-octet unsigned integer that describes
@@ -459,6 +468,7 @@ QUIC-TRANSPORT: title: "QUIC: A UDP-Based Multiplexed and Secure Transport" date
    keys in plaintext may be a safe strategy.
 
 ### Server ID Payload
+~~~~~
  0                   1                   2                   3
  0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
 +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
@@ -468,13 +478,16 @@ QUIC-TRANSPORT: title: "QUIC: A UDP-Based Multiplexed and Secure Transport" date
 +                            Token (64)                         +
 |                                                               |
 +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+~~~~~
 {: #server-id-format title="Server ID Payload"}   
+
    Load balancers send the Server ID when all global values for CID
    encryption are sent out-of-band, so that only the server-unique
    values must be sent in-band. The fields are identical to their
    counterparts in the Encrypted CID payload.
 
 ### Modulus Payload
+~~~~~
  0                   1                   2                   3
  0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
 +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
@@ -484,6 +497,7 @@ QUIC-TRANSPORT: title: "QUIC: A UDP-Based Multiplexed and Secure Transport" date
 +                            Token (64)                         +
 |                                                               |
 +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+~~~~~
 {: #modulus-format title="Modulus Payload"}
    Load balancers send the Modulus when all global values for 
    Plaintext CIDs are sent out-of-band, so that only the server-
