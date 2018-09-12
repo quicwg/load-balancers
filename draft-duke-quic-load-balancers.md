@@ -112,7 +112,7 @@ QUIC-TRANSPORT: title: "QUIC: A UDP-Based Multiplexed and Secure Transport" date
    load balancers using connection IDs for routing will use trivially
    linkable connection IDs. Clients will therefore be forced choose
    between terminating the connection during migration or remaining
-   Linkable, subverting a major design objective of QUIC.
+   linkable, subverting a major design objective of QUIC.
  
    The solution should be both simple to implement and require little
    additional infrastructure for cryptographic keys, etc.
@@ -272,7 +272,7 @@ QUIC-TRANSPORT: title: "QUIC: A UDP-Based Multiplexed and Secure Transport" date
    essentially random to observers.
 
    The server then encrypts the server ID bytes using 128-bit AES in
-   counter (CTR) mode, much like QUIC packet number decryption. The counter
+   counter (CTR) mode, much like QUIC packet number encryption. The counter
    input to AES-CTR is the bytes of the connection ID that do not
    constitute the encrypted server ID.
 
