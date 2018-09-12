@@ -19,14 +19,15 @@ author:
 	email: martin.h.duke@gmail.com
 normative:
 QUIC-TRANSPORT: title: "QUIC: A UDP-Based Multiplexed and Secure Transport" date: {DATE} seriesinfo: Internet-Draft: draft-ietf-quic-transport-latest author: - ins: J. Iyengar name: Jana Iyengar org: Fastly role: editor - ins: M. Thomson name: Martin Thomson org: Mozilla role: editor
+
 --- abstract
  
    QUIC connection IDs allow continuation of connections across
    address/port 4-tuple changes, and can store routing information for
-   stateless or low-state load balancers.  They are also meant to
-   prevent linkability of connections across deliberate address
-   migration through the use of protected communications between client
-   and server. This creates issues for load-balancing intermediaries.
+   stateless or low-state load balancers.  They also can prevent
+   linkability of connections across deliberate address migration
+   through the use of protected communications between client and
+   server. This creates issues for load-balancing intermediaries.
    This specification standardizes methods for encoding routing
    information and proposes an optional protocol called QUIC_LB to
    exchange the parameters of that encoding.
@@ -88,8 +89,8 @@ QUIC-TRANSPORT: title: "QUIC: A UDP-Based Multiplexed and Secure Transport" date
    
    Note that stateful load balancers that act as proxies, by
    terminating a QUIC connection with the client and then retrieving
-   data from the server using QUIC or another protocol, are for all
-   intents and purposes a server with respect to this specification.
+   data from the server using QUIC or another protocol, are treated as
+   a server with respect to this specification.
 
    When discussing security threats to QUIC-LB, we distinguish between
    “inside observers” and “outside observers.” The former lie on the
@@ -106,13 +107,13 @@ QUIC-TRANSPORT: title: "QUIC: A UDP-Based Multiplexed and Secure Transport" date
 ## Simplicity
  
    QUIC is intended to provide unlinkability across connection
-   migration, but servers are under no obligation to provide additional
+   migration, but servers are not required to provide additional
    connection IDs that effectively prevent linkability. If the
    coordination scheme is too difficult to implement, servers behind
    load balancers using connection IDs for routing will use trivially
    linkable connection IDs. Clients will therefore be forced choose
    between terminating the connection during migration or remaining
-   linkable, subverting a major design objective of QUIC.
+   linkable, subverting a design objective of QUIC.
  
    The solution should be both simple to implement and require little
    additional infrastructure for cryptographic keys, etc.
@@ -203,14 +204,14 @@ QUIC-TRANSPORT: title: "QUIC: A UDP-Based Multiplexed and Secure Transport" date
    the load balancer extracts the selected bits of the SCID and expresses
    them as an unsigned integer of that length. The load balancer
    then divides the result by the chosen divisor. The modulus of this
-   operation maps to modulus for the destination server.
+   operation maps to the modulus for the destination server.
 .
    Note that any SCID that contains a server's modulus, plus an
    arbitrary integer multiple of the divisor, in the routing bits is
    routable to that server regardless of the contents of the non-routing
    bits. Outside observers that do not know the divisor or the routing
-   bits will therefore have great difficulty identifying that two SCIDs
-   route to the same server.
+   bits will therefore have difficulty identifying that two SCIDs route to
+   the same server.
  
    Note also that not all Connection IDs are necessarily routable, as the
    computed modulus may not match one assigned to any server. Load
@@ -337,8 +338,8 @@ QUIC-TRANSPORT: title: "QUIC: A UDP-Based Multiplexed and Secure Transport" date
 
    The Version field allows QUIC-LB to use the Version Negotiation
    mechanism. All messages in this specification are specific to
-   QUICv2, as future QUIC versions may use the 0xfb type for other
-   purposes. Therefore, the Version field should be set as the
+   QUICv2, as future QUIC versions may use the 0xfb packet type for
+   other purposes. Therefore, the Version field should be set as the
    codepoint for QUICv2 as defined in {{QUIC-TRANSPORT}}.
 
    Load balancers MUST cease sending QUIC-LB packets of this version
@@ -364,7 +365,7 @@ QUIC-TRANSPORT: title: "QUIC: A UDP-Based Multiplexed and Secure Transport" date
 +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
 ~~~~~
 {: #ack-payload title="Ack Payload"}
-   The Ack Payload consists of a nine octets. Servers send this
+   The Ack Payload consists of nine octets. Servers send this
    payload after receipt of any acceptable QUIC-LB packet from a load
    balancer.
 
@@ -388,8 +389,8 @@ QUIC-TRANSPORT: title: "QUIC: A UDP-Based Multiplexed and Secure Transport" date
 +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
 ~~~~~
 {: #fail-payload title="Fail Payload"}
-   Servers send a Fail Payload upon receipt of a payload type which
-   they do not support, or if they do not possess all of the
+   Servers MUST send a Fail Payload upon receipt of a payload type
+   which they do not support, or if they do not possess all of the
    implied out-of-band configuration to support a particular payload
    type.
 
@@ -399,7 +400,7 @@ QUIC-TRANSPORT: title: "QUIC: A UDP-Based Multiplexed and Secure Transport" date
    The token field echoes the token field from the acknowledged
    packet.
 
-   Upon receipt of a Fail Payload, Load Balancers can either send
+   Upon receipt of a Fail Payload, Load Balancers MUST either send
    a QUIC-LB payload the server supports, or remove the server from
    the server pool.
 
@@ -536,12 +537,12 @@ QUIC-TRANSPORT: title: "QUIC: A UDP-Based Multiplexed and Secure Transport" date
  
 # Security Considerations {#security-considerations}
  
-   QUIC-LB is intended to preserve routability and prevent linkability,
-   so attacks on the protocol would compromise at least one of these
+   QUIC-LB is intended to preserve routability and prevent linkability.
+   Attacks on the protocol would compromise at least one of these
    objectives.
 
    A routability attack would inject QUIC-LB messages so that load
-   balancers incorrectly routed QUIC connections
+   balancers incorrectly route QUIC connections.
 
    A linkability attack would find some means of determining that two
    connection IDs route to the same server. As described above, there
@@ -559,20 +560,20 @@ QUIC-TRANSPORT: title: "QUIC: A UDP-Based Multiplexed and Secure Transport" date
    Off-path outside attackers cannot observe connection IDs, and will
    therefore struggle to link them.
 
-   On-path outside attackers might try to link to connection IDs to
-   the same QUIC connection. The Encrypted CID algorithm provides
-   robust entropy to making any sort of linkage. The Plaintext CID
-   obscures the mapping and prevents trivial brute-force attacks to
-   determine what the routing parameters are, but we do not claim
-   robust protection against sophisticated attacks.
+   On-path outside attackers might try to link connection IDs to the
+   same QUIC connection. The Encrypted CID algorithm provides robust
+   entropy to making any sort of linkage. The Plaintext CID obscures
+   the mapping and prevents trivial brute-force attacks to determine
+   the routing parameters, but does not provide robust protection
+   against sophisticated attacks.
  
  ## Inside Attackers
 
    As described above, on-path inside attackers are intrinsically
    able to map two connection IDs to the same server. The QUIC-LB
    algorithms do prevent the linkage of two connection IDs to the
-   same individual connections if servers make reasonable selections
-   when generating new IDs for a connections.
+   same individual connection if servers make reasonable selections
+   when generating new IDs for that connection.
 
    On-path inside attackers can break routability for new and migrating
    connections by copying the token from QUIC-LB messages. From this
