@@ -428,7 +428,7 @@ QUIC-TRANSPORT: title: "QUIC: A UDP-Based Multiplexed and Secure Transport" date
    drop QUIC-LB packets with an incorrect token.
 
    The remaining fields are used as described in
-   {{routing-algorithm}}.
+   {{routing-algorithms}}.
 
 ### Encrypted CID Payload
 ~~~~~
