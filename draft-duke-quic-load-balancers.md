@@ -180,7 +180,7 @@ QUIC-TRANSPORT: title: "QUIC: A UDP-Based Multiplexed and Secure Transport" date
    connection ID. The load balancer algorithms below apply to all
    incoming Handshake and 1-RTT packets.
 
-## Plaintext CID Algorithm
+## Plaintext CID Algorithm {plaintext-cid-algorithm}
 
 ### Load Balancer Actions
    The load balancer selects an arbitrary set of bits of the server
@@ -223,8 +223,10 @@ QUIC-TRANSPORT: title: "QUIC: A UDP-Based Multiplexed and Secure Transport" date
    all of the routing bits.
 
    When a server needs a new connection ID, it adds an arbitrary
-   integer multiple of the divisor to its modulus, without exceeding
-   the maximum integer value implied by the number of routing bits.
+   nonnegative integer multiple of the divisor to its modulus, without
+   exceeding the maximum integer value implied by the number of routing
+   bits. The choice of multiple should appear random within these
+   constraints.
 
    The server encodes the result in the routing bits. It MAY put any
    other value into the non-routing bits. The non-routing bits
@@ -415,22 +417,34 @@ QUIC-TRANSPORT: title: "QUIC: A UDP-Based Multiplexed and Secure Transport" date
 +                            Token (64)                         +
 |                                                               |
 +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-|     Routing Byte Mask (16)    |         Modulus (16)          |
+|                                                               |
++                                                               +
+|                                                               |
++                       Routing Bit Mask (144)                  +
+|                                                               |
++                                                               +
+|                                                               |
++                               +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+                                +
+|                               |         Modulus (16)          |
 +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-|          Divisor (16)         |
+|         Divisor (16)          |
 +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
 ~~~~~
 {: #routing-info-format title="Routing Info Payload"}
-   The Type Octet indicates that this is a Routing Info Payload.
+   The Type Octet indicates that this is a Routing Info Payload,
+   which contains all parameters for the plaintext CID algorithm.
 
    The Token is an 8-octet field that both entities obtain at
    configuration time. It is used to verify that the sender
    is not an inside off-path attacker. Servers SHOULD silently
    drop QUIC-LB packets with an incorrect token.
-
-   The remaining fields are used as described in
-   {{routing-algorithms}}.
-
+   
+   The Routing Bit Mask encodes a '1' at every bit position in
+   the server connection ID that will encode routing information.
+   
+   These bits, along with the Modulus and Divisor,  are chosen by
+   the load balancer as described in {{plaintext-cid-algorithm}}.
+      
 ### Encrypted CID Payload
 ~~~~~
  0                   1                   2                   3
