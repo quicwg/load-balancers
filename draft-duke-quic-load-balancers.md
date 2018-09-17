@@ -13,12 +13,29 @@ pi: [toc, sortrefs, symrefs, docmapping]
  
 author:
  -
-	ins: M. Duke
-	name: Martin Duke
-	org: F5 Networks, Inc.
-	email: martin.h.duke@gmail.com
+        ins: M. Duke
+        name: Martin Duke
+        org: F5 Networks, Inc.
+        email: martin.h.duke@gmail.com
+
 normative:
-QUIC-TRANSPORT: title: "QUIC: A UDP-Based Multiplexed and Secure Transport" date: {DATE} seriesinfo: Internet-Draft: draft-ietf-quic-transport-latest author: - ins: J. Iyengar name: Jana Iyengar org: Fastly role: editor - ins: M. Thomson name: Martin Thomson org: Mozilla role: editor
+
+  QUIC-TRANSPORT:
+    title: "QUIC: A UDP-Based Multiplexed and Secure Transport"
+    date: {DATE}
+    seriesinfo:
+      Internet-Draft: draft-ietf-quic-transport-latest
+    author:
+      -
+          ins: J. Iyengar
+          name: Jana Iyengar
+          org: Fastly
+          role: editor
+      -
+          ins: M. Thomson
+          name: Martin Thomson
+          org: Mozilla
+          role: editor
 
 --- abstract
  
@@ -180,7 +197,7 @@ QUIC-TRANSPORT: title: "QUIC: A UDP-Based Multiplexed and Secure Transport" date
    connection ID. The load balancer algorithms below apply to all
    incoming Handshake and 1-RTT packets.
 
-## Plaintext CID Algorithm {plaintext-cid-algorithm}
+## Plaintext CID Algorithm {#plaintext-cid-algorithm}
 
 ### Load Balancer Actions
    The load balancer selects an arbitrary set of bits of the server
@@ -366,7 +383,7 @@ QUIC-TRANSPORT: title: "QUIC: A UDP-Based Multiplexed and Secure Transport" date
 |                                                               |
 +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
 ~~~~~
-{: #ack-payload title="Ack Payload"}
+{: #ack-payload-format title="Ack Payload"}
    The Ack Payload consists of nine octets. Servers send this
    payload after receipt of any acceptable QUIC-LB packet from a load
    balancer.
@@ -390,7 +407,7 @@ QUIC-TRANSPORT: title: "QUIC: A UDP-Based Multiplexed and Secure Transport" date
 |                                                               |
 +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
 ~~~~~
-{: #fail-payload title="Fail Payload"}
+{: #fail-payload-format title="Fail Payload"}
    Servers MUST send a Fail Payload upon receipt of a payload type
    which they do not support, or if they do not possess all of the
    implied out-of-band configuration to support a particular payload
