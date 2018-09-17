@@ -1,7 +1,7 @@
 ---
 title: "QUIC-LB: Generating Routable QUIC Connection IDs"
 abbrev: QUIC-LB
-docname: draft-duke-quic-load-balancers-latest
+docname: draft-duke-quic-load-latest
 date: {DATE}
 category: std
 ipr: trust200902
@@ -335,11 +335,7 @@ normative:
    versions leading up to QUICv2. They may require revision for
    future versions of QUIC.
 
-## Packet Header Format
-   QUIC-LB messages are QUIC packets with a long header and zero
-   length connection IDs. They are sent when a load balancer boots
-   up, or detects a new server in the pool. QUIC-LB packets are
-   delivered in a UDP datagram.
+### Packet Header Format
 ~~~~~
  0                   1                   2                   3
  0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
@@ -352,6 +348,11 @@ normative:
 +-+-+-+-+-+-+-+-+
 ~~~~~
 {: #quic-lb-header title="QUIC-LB Header"}
+
+   QUIC-LB messages are QUIC packets with a long header and zero
+   length connection IDs. They are sent when a load balancer boots
+   up, or detects a new server in the pool. QUIC-LB packets are
+   delivered in a UDP datagram.
 
    The type field is 0xfb, which is otherwise unused in QUICv2.
 
@@ -441,7 +442,7 @@ normative:
 |                                                               |
 +                                                               +
 |                                                               |
-+                               +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+                                +
++                               +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
 |                               |         Modulus (16)          |
 +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
 |         Divisor (16)          |
