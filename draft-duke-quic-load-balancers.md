@@ -1,7 +1,7 @@
 ---
 title: "QUIC-LB: Generating Routable QUIC Connection IDs"
 abbrev: QUIC-LB
-docname: draft-duke-quic-load-balancers
+docname: draft-duke-quic-load-balancers-latest
 date: {DATE}
 category: std
 ipr: trust200902
