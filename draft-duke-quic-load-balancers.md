@@ -205,6 +205,9 @@ normative:
    called the "routing bits". The number of bits MUST have enough
    entropy to have a different code point for each server, and SHOULD
    have enough entropy so that there are many codepoints for each server.
+   
+   The load balancer MUST NOT select a routing mask that provides fewer
+   than 16 non-routing bits in an 18 octet connection ID.
  
    The load balancer selects a divisor that MUST be larger than the
    number of servers. It SHOULD be large enough to accommodate reasonable
