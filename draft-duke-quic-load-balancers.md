@@ -472,6 +472,8 @@ normative:
    
    The Routing Bit Mask encodes a '1' at every bit position in
    the server connection ID that will encode routing information.
+   The first two bits MUST be zero, as these represent the
+   config rotation bits.
    
    These bits, along with the Modulus and Divisor,  are chosen by
    the load balancer as described in {{plaintext-cid-algorithm}}.
