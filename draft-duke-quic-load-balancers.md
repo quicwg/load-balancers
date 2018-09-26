@@ -308,7 +308,7 @@ normative:
    constitute the encrypted server ID.
 
    encrypted_server_id = AES-CTR(key, non_server_id_bytes, server-id)
-      
+
 # Protocol Description {#protocol-description}
 
    The fundamental protocol requirement is to share the choice of
