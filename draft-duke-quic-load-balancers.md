@@ -688,3 +688,7 @@ normative:
 - Supports multiple security levels
 - Lightweight messages
 
+## Since draft-duke-quic-load-balancers-02
+
+- Add Config Rotation.
+
