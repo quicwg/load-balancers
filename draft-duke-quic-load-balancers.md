@@ -197,10 +197,10 @@ normative:
    connection ID. The load balancer algorithms below apply to all
    incoming Handshake and 1-RTT packets.
    
-   There are situations where servers might be operating two or
-   more routing algorithms or parameter sets simultaneously. It
-   uses the first two bits of the connection ID to multiplex incoming
-   SCIDs over these schemes.
+   There are situations where a server pool might be operating two or
+   more routing algorithms or parameter sets simultaneously. The
+   load balancer uses the first two bits of the connection ID to
+   multiplex incoming SCIDs over these schemes.
 
 ## Plaintext CID Algorithm {#plaintext-cid-algorithm}
 
