@@ -206,8 +206,10 @@ normative:
    entropy to have a different code point for each server, and SHOULD
    have enough entropy so that there are many codepoints for each server.
    
-   The load balancer MUST NOT select a routing mask that provides fewer
-   than 16 non-routing bits in an 18 octet connection ID.
+   The load balancer MUST NOT select a routing mask that with more than
+   126 routing bits set to 1, which allows at least 2 bits for config
+   rotation (see {{#config-rotation}}) and 16 for server purposes in a
+   maximum-length connection ID.
  
    The load balancer selects a divisor that MUST be larger than the
    number of servers. It SHOULD be large enough to accommodate reasonable
