@@ -211,10 +211,15 @@ normative:
    entropy to have a different code point for each server, and SHOULD
    have enough entropy so that there are many codepoints for each server.
    
+   The load balancer MUST NOT select a routing mask that with more than
+   126 routing bits set to 1, which allows at least 2 bits for config
+   rotation (see {{#config-rotation}}) and 16 for server purposes in a
+   maximum-length connection ID.
+
    The first two bits of an SCID MUST NOT be routing bits; these are
-   reserved for config rotation {{#config-rotation}}.
- 
-   The load balancer selects a divisor that MUST be larger than the
+   reserved for config rotation.
+
+    The load balancer selects a divisor that MUST be larger than the
    number of servers. It SHOULD be large enough to accommodate reasonable
    increases in the number of servers.
  
@@ -691,4 +696,5 @@ normative:
 ## Since draft-duke-quic-load-balancers-02
 
 - Add Config Rotation.
+- Reserve 16 bits of plaintext CID for server use
 
