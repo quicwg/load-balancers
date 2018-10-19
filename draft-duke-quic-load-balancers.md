@@ -196,6 +196,11 @@ normative:
    0RTT packets that arrive with the same source and destination
    connection ID. The load balancer algorithms below apply to all
    incoming Handshake and 1-RTT packets.
+   
+   There are situations where a server pool might be operating two or
+   more routing algorithms or parameter sets simultaneously. The
+   load balancer uses the first two bits of the connection ID to
+   multiplex incoming SCIDs over these schemes.
 
 ## Plaintext CID Algorithm {#plaintext-cid-algorithm}
 
@@ -205,6 +210,9 @@ normative:
    called the "routing bits". The number of bits MUST have enough
    entropy to have a different code point for each server, and SHOULD
    have enough entropy so that there are many codepoints for each server.
+   
+   The first two bits of an SCID MUST NOT be routing bits; these are
+   reserved for config rotation {{#config-rotation}}.
  
    The load balancer selects a divisor that MUST be larger than the
    number of servers. It SHOULD be large enough to accommodate reasonable
@@ -246,8 +254,8 @@ normative:
    constraints.
 
    The server encodes the result in the routing bits. It MAY put any
-   other value into the non-routing bits. The non-routing bits
-   SHOULD appear random to observers. 
+   other value into the non-routing bits except the config rotation
+   bits. The non-routing bits SHOULD appear random to observers. 
 
 ## Encrypted CID Algorithm
    The Encrypted CID algorithm provides true cryptographic protection,
@@ -260,11 +268,13 @@ normative:
    The load balancer assigns a server ID to every server in its pool,
    and determines a server ID length (in octets) sufficiently large
    to encode all server IDs, including potential future servers. The
-   server ID will be encoded in the first octets of the connection ID.
+   server ID will start in the second octet of the connection ID and
+   occupy continuous octets beyond that.
 
    The load balancer also selects a connection ID length that all
    servers must use, and an 16-octet AES-CTR key to use for connection
-   ID decryption.
+   ID decryption. The length MUST be at least one octet more than the
+   server ID length.
 
    The load balancer shares these three values with servers, as explained
    in {{protocol-description}}.
@@ -289,7 +299,8 @@ normative:
    provided server ID into the server ID octets, and arbitrary bits
    into the remaining required connection ID octets. These arbitrary
    bits MAY encode additional information, but SHOULD appear
-   essentially random to observers.
+   essentially random to observers. The first two bits of the first
+   octet are reserved for config rotation {{#config-rotation}}.
 
    The server then encrypts the server ID bytes using 128-bit AES in
    counter (CTR) mode, much like QUIC packet number encryption. The counter
@@ -297,7 +308,7 @@ normative:
    constitute the encrypted server ID.
 
    encrypted_server_id = AES-CTR(key, non_server_id_bytes, server-id)
-   
+
 # Protocol Description {#protocol-description}
 
    The fundamental protocol requirement is to share the choice of
@@ -370,14 +381,16 @@ normative:
    in the header.
  
    The remainder of the packet is the payload. This has multiple
-   formats.
+   formats. In each case, the first two bits are used for Config
+   Rotation as described in {{#config-rotation}}. The following
+   six bits encode the payload type.
 
 ### Ack Payload
 ~~~~~
  0                   1                   2                   3
  0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
 +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-|  Type = 0x00  |
+|C R| Type 0x00 |
 +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
 |                                                               |
 +                            Token (64)                         +
@@ -401,7 +414,7 @@ normative:
  0                   1                   2                   3
  0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
 +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-|  Type = 0x01  |   Supp. Type  |  Supp. Type   |  ...
+|C R| Type 0x01 |   Supp. Type  |  Supp. Type   |  ...
 +-+-+-+-+-+-+-+-++-+-+-+-+-+-+-+-++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
 |                                                               |
 +                            Token (64)                         +
@@ -429,7 +442,7 @@ normative:
  0                   1                   2                   3
  0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
 +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-|  Type = 0x02  | 
+|C R| Type 0x02 | 
 +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
 |                                                               |
 +                            Token (64)                         +
@@ -459,6 +472,8 @@ normative:
    
    The Routing Bit Mask encodes a '1' at every bit position in
    the server connection ID that will encode routing information.
+   The first two bits MUST be zero, as these represent the
+   config rotation bits.
    
    These bits, along with the Modulus and Divisor,  are chosen by
    the load balancer as described in {{plaintext-cid-algorithm}}.
@@ -468,7 +483,7 @@ normative:
  0                   1                   2                   3
  0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
 +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-|  Type = 0x03  |   CIDL (8)    |    SIDL (8)   |  
+|C R| Type 0x03 |   CIDL (8)    |    SIDL (8)   |  
 +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
 |                                                               |
 +                            Token (64)                         +
@@ -505,7 +520,7 @@ normative:
  0                   1                   2                   3
  0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
 +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-|  Type = 0x04  |    SIDL (8)   |       Server ID (variable)    |
+|C R| Type 0x04 |    SIDL (8)   |       Server ID (variable)    |
 +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
 |                                                               |
 +                            Token (64)                         +
@@ -524,7 +539,7 @@ normative:
  0                   1                   2                   3
  0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
 +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-|  Type = 0x05  |           Modulus (16)        |
+|C R| Type 0x05 |           Modulus (16)        |
 +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
 |                                                               |
 +                            Token (64)                         +
@@ -536,6 +551,39 @@ normative:
    Plaintext CIDs are sent out-of-band, so that only the server-
    unique values must be sent in-band. The Modulus field is
    identical to its counterpart in the Routing Info payload.
+
+# Config Rotation {#config-rotation}
+
+   The first two bits of any connection-ID MUST encode the
+   configuration phase of that ID. QUIC-LB messages indicate the
+   phase of the algorithm and parameters that they encode.
+ 
+   A new configuration may change one or more parameters of the
+   old configuration, or change the algorithm used.
+   
+   It is possible for servers to have mutually exclusive sets of
+   supported algorithms, or for a transition from one algorithm
+   to another to result in Fail Payloads. The four states encoded
+   in these two bits allow two mutually exclusive server pools to
+   coexist, and for each of them to transition to a new set of
+   parameters.
+
+   When new configuration is distributed to servers, there will be
+   a transition period when connection IDs reflecting old and new
+   configuration coexist in the network. The rotation bits allow
+   load balancers to apply the correct routing algorithm and
+   parameters to incoming packets.
+
+   Servers MUST NOT generate new connection IDs using an old
+   configuration when it has sent an Ack payload for a new
+   configuration.
+
+   Load balancers SHOULD not use a codepoint to represent
+   a new configuration until it takes precautions to make sure
+   that all connections using IDs with an old configuration at
+   that codepoint have closed or transitioned. They MAY drop
+   connection IDs with the old configuration after a reasonable
+   interval to accelerate this process.
 
 # Configuration Requirements
 
@@ -639,4 +687,8 @@ normative:
 - Complete rewrite
 - Supports multiple security levels
 - Lightweight messages
+
+## Since draft-duke-quic-load-balancers-02
+
+- Add Config Rotation.
 
