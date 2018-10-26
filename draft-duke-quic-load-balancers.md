@@ -196,6 +196,11 @@ normative:
    0RTT packets that arrive with the same source and destination
    connection ID. The load balancer algorithms below apply to all
    incoming Handshake and 1-RTT packets.
+   
+   There are situations where a server pool might be operating two or
+   more routing algorithms or parameter sets simultaneously. The
+   load balancer uses the first two bits of the connection ID to
+   multiplex incoming SCIDs over these schemes.
 
 ## Plaintext CID Algorithm {#plaintext-cid-algorithm}
 
@@ -207,7 +212,16 @@ normative:
    entropy to have a different code point for each server, and SHOULD
    have enough entropy so that there are many codepoints for each server.
 
-   The load balancer selects a divisor that MUST be larger than the
+   The load balancer MUST NOT select a routing mask that with more than
+   126 routing bits set to 1, which allows at least 2 bits for config
+   rotation (see {{#config-rotation}}) and 16 for server purposes in a
+   maximum-length connection ID.
+
+   The first two bits of an SCID MUST NOT be routing bits; these are
+   reserved for config rotation.
+
+    The load balancer selects a divisor that MUST be larger than the
+
    number of servers. It SHOULD be large enough to accommodate reasonable
    increases in the number of servers.
 
@@ -248,8 +262,9 @@ normative:
    constraints.
 
    The server encodes the result in the routing bits. It MAY put any
-   other value into the non-routing bits. The non-routing bits
-   SHOULD appear random to observers.
+
+   other value into the non-routing bits except the config rotation
+   bits. The non-routing bits SHOULD appear random to observers. 
 
 ## Encrypted CID Algorithm
 
@@ -263,11 +278,13 @@ normative:
    The load balancer assigns a server ID to every server in its pool,
    and determines a server ID length (in octets) sufficiently large
    to encode all server IDs, including potential future servers. The
-   server ID will be encoded in the first octets of the connection ID.
+   server ID will start in the second octet of the connection ID and
+   occupy continuous octets beyond that.
 
    The load balancer also selects a connection ID length that all
    servers must use, and an 16-octet AES-CTR key to use for connection
-   ID decryption.
+   ID decryption. The length MUST be at least one octet more than the
+   server ID length.
 
    The load balancer shares these three values with servers, as explained
    in {{protocol-description}}.
@@ -292,7 +309,8 @@ normative:
    provided server ID into the server ID octets, and arbitrary bits
    into the remaining required connection ID octets. These arbitrary
    bits MAY encode additional information, but SHOULD appear
-   essentially random to observers.
+   essentially random to observers. The first two bits of the first
+   octet are reserved for config rotation {{#config-rotation}}.
 
    The server then encrypts the server ID bytes using 128-bit AES in
    counter (CTR) mode, much like QUIC packet number encryption. The counter
@@ -357,8 +375,8 @@ normative:
 +                  Authentication Token (64)                    +
 |                                                               |
 +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-| Message Type  |
-+-+-+-+-+-+-+-+-+
+|      CR       | Message Type  |
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
 ~~~~~
 {: #quic-lb-packet-fromat title="QUIC-LB Packet Format"}
 
@@ -380,6 +398,10 @@ normative:
    configuration time. It is used to verify that the sender is not an inside
    off-path attacker. Servers and load balancers SHOULD silently discard QUIC-LB
    packets with an incorrect token.
+
+   CR
+
+   : The CR field indicates the Config Rotation described in {{#config-rotation}}.
 
    Message Type
 
@@ -538,6 +560,39 @@ normative:
    sent out-of-band, so that only the server-unique values must be sent in-band.
    The Modulus field is identical to its counterpart in the ROUTING_INFO message.
 
+# Config Rotation {#config-rotation}
+
+   The first two bits of any connection-ID MUST encode the
+   configuration phase of that ID. QUIC-LB messages indicate the
+   phase of the algorithm and parameters that they encode.
+ 
+   A new configuration may change one or more parameters of the
+   old configuration, or change the algorithm used.
+   
+   It is possible for servers to have mutually exclusive sets of
+   supported algorithms, or for a transition from one algorithm
+   to another to result in Fail Payloads. The four states encoded
+   in these two bits allow two mutually exclusive server pools to
+   coexist, and for each of them to transition to a new set of
+   parameters.
+
+   When new configuration is distributed to servers, there will be
+   a transition period when connection IDs reflecting old and new
+   configuration coexist in the network. The rotation bits allow
+   load balancers to apply the correct routing algorithm and
+   parameters to incoming packets.
+
+   Servers MUST NOT generate new connection IDs using an old
+   configuration when it has sent an Ack payload for a new
+   configuration.
+
+   Load balancers SHOULD not use a codepoint to represent
+   a new configuration until it takes precautions to make sure
+   that all connections using IDs with an old configuration at
+   that codepoint have closed or transitioned. They MAY drop
+   connection IDs with the old configuration after a reasonable
+   interval to accelerate this process.
+
 # Configuration Requirements
 
    QUIC-LB strives to minimize the configuration load to enable, as
@@ -629,6 +684,11 @@ normative:
 
 > **RFC Editor's Note:**  Please remove this section prior to
 > publication of a final version of this document.
+
+## Since draft-duke-quic-load-balancers-02
+
+- Add Config Rotation.
+- Reserve 16 bits of plaintext CID for server use
 
 ## Since draft-duke-quic-load-balancers-01
 
