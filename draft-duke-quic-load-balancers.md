@@ -221,11 +221,13 @@ normative:
 
    The load balancer selects a divisor that MUST be larger than the
    number of servers. It SHOULD be large enough to accommodate reasonable
-   increases in the number of servers.
+   increases in the number of servers. The divisor MUST be an odd integer
+   so certain addition operations do not always produce an even number.
  
    The load balancer also assigns each server a "modulus", an integer
    between 0 and the divisor minus 1. These MUST be unique for each
-   server.
+   server, and SHOULD be distributed across the entire number space
+   between zero and the divisor.
 
    The load balancer shares these three values with servers, as explained
    in {{protocol-description}}.
