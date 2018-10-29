@@ -351,8 +351,8 @@ normative:
    until that server responds with an acknowledgement. Specifics of this
    retransmission are implementation-dependent.
 
-   These packet formats are specific to QUICv2 and experimental versions leading
-   up to QUICv2. They may require revision for future versions of QUIC.
+   These packet formats are specific to QUICv1 and experimental versions leading
+   up to QUICv1. They may require revision for future versions of QUIC.
 
 ## QUIC-LB Packet {#quic-lb-packet}
 
@@ -375,16 +375,16 @@ normative:
 +                  Authentication Token (64)                    +
 |                                                               |
 +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-|      CR       | Message Type  |
+|CR | Reserved  | Message Type  |
 +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
 ~~~~~
 {: #quic-lb-packet-fromat title="QUIC-LB Packet Format"}
 
    The Version field allows QUIC-LB to use the Version Negotiation
    mechanism. All messages in this specification are specific to
-   QUICv2, as future QUIC versions may use the 0xfb packet type for
+   QUICv1, as future QUIC versions may use the 0xfb packet type for
    other purposes. Therefore, the Version field should be set as the
-   codepoint for QUICv2 as defined in {{QUIC-TRANSPORT}}.
+   codepoint for QUICv1 as defined in {{QUIC-TRANSPORT}}.
 
    Load balancers MUST cease sending QUIC-LB packets of this version
    to a server when that server sends a Version Negotiation packet
@@ -401,7 +401,8 @@ normative:
 
    CR
 
-   : The CR field indicates the Config Rotation described in {{#config-rotation}}.
+   : The 2-bit. CR field indicates the Config Rotation described in
+   {{#config-rotation}}.
 
    Message Type
 
@@ -417,7 +418,7 @@ normative:
 ### ACK_LB Message {#message-ack-lb}
 
    A server uses the ACK_LB message (type=0x00) to acknowledge a QUIC-LB packet
-   received from the load balancer.  Beyond the ACK-LB message has no additional
+   received from the load balancer.  The ACK-LB message has no additional
    payload beyond the QUIC-LB packet header.
 
    Load balancers SHOULD continue to retransmit a QUIC-LB packet until a valid
