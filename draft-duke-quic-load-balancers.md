@@ -7,10 +7,10 @@ category: std
 ipr: trust200902
 area: Transport
 workgroup: QUIC
- 
+
 stand_alone: yes
 pi: [toc, sortrefs, symrefs, docmapping]
- 
+
 author:
  -
         ins: M. Duke
@@ -26,19 +26,19 @@ normative:
     seriesinfo:
       Internet-Draft: draft-ietf-quic-transport-latest
     author:
-      -
+
           ins: J. Iyengar
           name: Jana Iyengar
           org: Fastly
           role: editor
-      -
+
           ins: M. Thomson
           name: Martin Thomson
           org: Mozilla
           role: editor
 
 --- abstract
- 
+
    QUIC connection IDs allow continuation of connections across
    address/port 4-tuple changes, and can store routing information for
    stateless or low-state load balancers.  They also can prevent
@@ -48,18 +48,18 @@ normative:
    This specification standardizes methods for encoding routing
    information and proposes an optional protocol called QUIC_LB to
    exchange the parameters of that encoding.
-    
+
 --- middle
- 
+
 # Introduction
- 
+
    QUIC packets usually contain a connection ID to allow endpoints to
    associate packets with different address/port 4-tuples to the same
    connection context. This feature makes connections robust in the
    event of NAT rebinding. QUIC endpoints designate the connection ID
    which peers use to address packets. Server-generated connection IDs
    create a potential need for out-of-band communication to support QUIC.
- 
+
    QUIC allows servers (or load balancers) to designate an initial
    connection ID to encode useful routing information for load
    balancers. It also encourages servers, in packets protected by
@@ -67,7 +67,7 @@ normative:
    This allows clients that know they are going to change IP address or
    port to use a separate connection ID on the new path, thus reducing
    linkability as clients move through the world.
- 
+
    There is a tension between the requirements to provide routing
    information and mitigate linkability. Ultimately, because new
    connection IDs are in protected packets, they must be generated at
@@ -79,7 +79,7 @@ normative:
    expensive table of server-generated connection IDs, and will not
    route packets correctly if they use a connection ID that was
    originally communicated in a protected NEW_CONNECTION_ID frame.
- 
+
    This specification provides a method of coordination between QUIC
    servers and low-state load balancers to support connection IDs that
    encode routing information. It describes desirable properties of a
@@ -87,23 +87,23 @@ normative:
    properties. This protocol supports multiple encoding schemes that
    increase in complexity as they address paths between load balancer
    and server with weaker trust dynamics.
- 
+
 ## Terminology
- 
+
    The key words "MUST", "MUST NOT", "REQUIRED", "SHALL", "SHALL NOT",
    "SHOULD", "SHOULD NOT", "RECOMMENDED", "MAY", and "OPTIONAL" in this
    document are to be interpreted as described in RFC 2119 {{?RFC2119}}.
- 
+
    In this document, these words will appear with that interpretation
    only when in ALL CAPS. Lower case uses of these words are not to be
    interpreted as carrying significance described in RFC 2119.
- 
+
    In this document, "client" and "server" refer to the endpoints of a
    QUIC connection unless otherwise indicated. A "load balancer" is an
    intermediary for that connection that does not possess QUIC
    connection keys, but it may rewrite IP addresses or conduct other IP
    or UDP processing.
-   
+
    Note that stateful load balancers that act as proxies, by
    terminating a QUIC connection with the client and then retrieving
    data from the server using QUIC or another protocol, are treated as
@@ -118,11 +118,11 @@ normative:
    “inside” or “outside” depending on whether not they have network
    access to the server without intermediation by the load balancer
    and/or other security devices.
- 
+
 # Protocol Objectives
- 
+
 ## Simplicity
- 
+
    QUIC is intended to provide unlinkability across connection
    migration, but servers are not required to provide additional
    connection IDs that effectively prevent linkability. If the
@@ -131,12 +131,12 @@ normative:
    linkable connection IDs. Clients will therefore be forced choose
    between terminating the connection during migration or remaining
    linkable, subverting a design objective of QUIC.
- 
+
    The solution should be both simple to implement and require little
    additional infrastructure for cryptographic keys, etc.
- 
+
 ## Security
-   
+
    In the limit where there are very few connections to a pool of
    servers, no scheme can prevent the linking of two connection IDs
    with high probability. In the opposite limit, where all servers
@@ -163,9 +163,9 @@ normative:
    schemes. However, QUIC-LB should protect against Denial of
    Service due to inside off-path attackers in cases where such
    attackers are possible.
- 
+
 ## Robustness to Middleboxes
- 
+
    The path between load balancer and server may pass through
    middleboxes that could drop the coordination messages in this
    protocol. It is therefore advantageous to make messages resemble
@@ -178,9 +178,9 @@ normative:
    low-state load balancers in the path, by using different parts of
    the connection ID to encoding routing information for each load
    balancer, this use case is out of scope for QUIC-LB.
- 
+
 # Routing Algorithms
- 
+
    In QUIC-LB, load balancers do not send individual connection IDs to
    servers. Instead, they communicate the parameters of an algorithm to
    generate routable connection IDs.
@@ -205,12 +205,13 @@ normative:
 ## Plaintext CID Algorithm {#plaintext-cid-algorithm}
 
 ### Load Balancer Actions
+
    The load balancer selects an arbitrary set of bits of the server
    connection ID (SCID) that it will use to route to a given server,
    called the "routing bits". The number of bits MUST have enough
    entropy to have a different code point for each server, and SHOULD
    have enough entropy so that there are many codepoints for each server.
-   
+
    The load balancer MUST NOT select a routing mask that with more than
    126 routing bits set to 1, which allows at least 2 bits for config
    rotation (see {{#config-rotation}}) and 16 for server purposes in a
@@ -231,26 +232,27 @@ normative:
 
    The load balancer shares these three values with servers, as explained
    in {{protocol-description}}.
- 
+
    Upon receipt of a QUIC packet that is not of type Initial or 0-RTT,
    the load balancer extracts the selected bits of the SCID and expresses
    them as an unsigned integer of that length. The load balancer
    then divides the result by the chosen divisor. The modulus of this
    operation maps to the modulus for the destination server.
-.
+
    Note that any SCID that contains a server's modulus, plus an
    arbitrary integer multiple of the divisor, in the routing bits is
    routable to that server regardless of the contents of the non-routing
    bits. Outside observers that do not know the divisor or the routing
    bits will therefore have difficulty identifying that two SCIDs route to
    the same server.
- 
+
    Note also that not all Connection IDs are necessarily routable, as the
    computed modulus may not match one assigned to any server. Load
    balancers SHOULD drop these packets if not a QUIC Initial or 0-RTT
    packet.
- 
+
 ### Server Actions
+
    The server chooses a connection ID length. This MUST contain all of the
    routing bits and MUST be at least 8 octets to provide adequate entropy.
 
@@ -261,10 +263,12 @@ normative:
    constraints.
 
    The server encodes the result in the routing bits. It MAY put any
+
    other value into the non-routing bits except the config rotation
    bits. The non-routing bits SHOULD appear random to observers. 
 
 ## Encrypted CID Algorithm
+
    The Encrypted CID algorithm provides true cryptographic protection,
    rather than mere obfuscation, at the cost of additional per-packet
    processing at the load balancer to decrypt every incoming connection
@@ -343,17 +347,21 @@ normative:
 
 ## QUIC-LB Message Exchange
 
-   QUIC-LB load balancers send the encoding parameters to servers
-   as they discover the servers, using a single packet to each that
-   resembles QUIC. They periodically retransmit this packet to each
-   server until that server responds with a QUIC-LB ack. Specifics
-   of this retransmission are implementation-dependent.
+   QUIC-LB load balancers send the encoding parameters to servers using a
+   QUIC-LB packet.  They periodically retransmit this packet to each server
+   until that server responds with an acknowledgement. Specifics of this
+   retransmission are implementation-dependent.
 
-   These message formats are specific to QUICv2 and experimental
-   versions leading up to QUICv2. They may require revision for
-   future versions of QUIC.
+   These packet formats are specific to QUICv1 and experimental versions leading
+   up to QUICv1. They may require revision for future versions of QUIC.
 
-### Packet Header Format
+## QUIC-LB Packet {#quic-lb-packet}
+
+   A QUIC-LB packet uses a long header with a type value of 0xFB. It carries
+   configuration information from the load balancer and acknowledgements from
+   the servers. They are sent when a load balancer boots up, detects a new
+   server in the pool or needs to update the server configuration.
+
 ~~~~~
  0                   1                   2                   3
  0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
@@ -362,98 +370,93 @@ normative:
 +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
 |                        Version (32)                           |
 +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-|      0x00     |
-+-+-+-+-+-+-+-+-+
+|  0x00 | 0x00  |
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+|                                                               |
++                  Authentication Token (64)                    +
+|                                                               |
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+|CR | Reserved  | Message Type  |
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
 ~~~~~
-{: #quic-lb-header title="QUIC-LB Header"}
-
-   QUIC-LB messages are QUIC packets with a long header and zero
-   length connection IDs. They are sent when a load balancer boots
-   up, or detects a new server in the pool. QUIC-LB packets are
-   delivered in a UDP datagram.
-
-   The type field is 0xfb, which is otherwise unused in QUICv2.
+{: #quic-lb-packet-fromat title="QUIC-LB Packet Format"}
 
    The Version field allows QUIC-LB to use the Version Negotiation
    mechanism. All messages in this specification are specific to
-   QUICv2, as future QUIC versions may use the 0xfb packet type for
+   QUICv1, as future QUIC versions may use the 0xfb packet type for
    other purposes. Therefore, the Version field should be set as the
-   codepoint for QUICv2 as defined in {{QUIC-TRANSPORT}}.
+   codepoint for QUICv1 as defined in {{QUIC-TRANSPORT}}.
 
    Load balancers MUST cease sending QUIC-LB packets of this version
    to a server when that server sends a Version Negotiation packet
    that does not advertise the version.
 
-   The 0x00 byte indicates that there are no connection IDs present
-   in the header.
- 
-   The remainder of the packet is the payload. This has multiple
-   formats. In each case, the first two bits are used for Config
-   Rotation as described in {{#config-rotation}}. The following
-   six bits encode the payload type.
+   The length of the DCIL and SCIL fields are 0x00.
 
-### Ack Payload
+   Authentication Token
+
+   : The Authentication Token is an 8-byte field that both entities obtain at
+   configuration time. It is used to verify that the sender is not an inside
+   off-path attacker. Servers and load balancers SHOULD silently discard QUIC-LB
+   packets with an incorrect token.
+
+   CR
+
+   : The 2-bit. CR field indicates the Config Rotation described in
+   {{#config-rotation}}.
+
+   Message Type
+
+   : The Message Type indicates the type of message payload that follows the
+   QUIC-LB header.
+
+## Message Types and Formats
+
+   As described in {{quic-lb-packet}}, QUIC-LB packets contain a single
+   message.  This section describes the format and semantics of the QUIC-LB
+   message types.
+
+### ACK_LB Message {#message-ack-lb}
+
+   A server uses the ACK_LB message (type=0x00) to acknowledge a QUIC-LB packet
+   received from the load balancer.  The ACK-LB message has no additional
+   payload beyond the QUIC-LB packet header.
+
+   Load balancers SHOULD continue to retransmit a QUIC-LB packet until a valid
+   ACK_LB message, FAIL message or Version Negotiation Packet is received from
+   the server.
+
+### FAIL Message {#message-fail}
+
+   A server uses the FAIL message (type=0x01) to indicate the configuration
+   received from the load balancer is unsupported.
+
 ~~~~~
  0                   1                   2                   3
  0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
 +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-|C R| Type 0x00 |
-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-|                                                               |
-+                            Token (64)                         +
-|                                                               |
-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-~~~~~
-{: #ack-payload-format title="Ack Payload"}
-   The Ack Payload consists of nine octets. Servers send this
-   payload after receipt of any acceptable QUIC-LB packet from a load
-   balancer.
-
-   The token field echoes the token field from the acknowledged
-   packet.
-
-   Load balancers MUST retransmit a QUIC-LB packet if not followed
-   by a valid Ack Payload or Version Negotiation Packet from the
-   destination after a reasonable interval.
-
-### Fail Payload
-~~~~~
- 0                   1                   2                   3
- 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-|C R| Type 0x01 |   Supp. Type  |  Supp. Type   |  ...
+|   Supp. Type  |  Supp. Type   |  ...
 +-+-+-+-+-+-+-+-++-+-+-+-+-+-+-+-++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-|                                                               |
-+                            Token (64)                         +
-|                                                               |
-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
 ~~~~~
-{: #fail-payload-format title="Fail Payload"}
-   Servers MUST send a Fail Payload upon receipt of a payload type
-   which they do not support, or if they do not possess all of the
-   implied out-of-band configuration to support a particular payload
-   type.
 
-   After the type octet, servers append additional octets to list
-   all payload types they support.
+   Servers MUST send a FAIL message upon receipt of a message type which they
+   do not support, or if they do not possess all of the implied out-of-band
+   configuration to support a particular message type.
 
-   The token field echoes the token field from the acknowledged
-   packet.
+   The payload of the FAIL message consists of a list of all the message types
+   supported by the server.
 
-   Upon receipt of a Fail Payload, Load Balancers MUST either send
-   a QUIC-LB payload the server supports, or remove the server from
-   the server pool.
+   Upon receipt of a FAIL message, Load Balancers MUST either send a QUIC-LB
+   message the server supports or remove the server from the server pool.
 
-### Routing Info Payload
+### ROUTING_INFO Message {#message-routing-info}
+
+   A load balancer uses the ROUTING_INFO message (type=0x02) to exchange all the
+   parameters for the plaintext CID algorithm.
+
 ~~~~~
  0                   1                   2                   3
  0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-|C R| Type 0x02 | 
-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-|                                                               |
-+                            Token (64)                         +
-|                                                               |
 +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
 |                                                               |
 +                                                               +
@@ -468,33 +471,25 @@ normative:
 |         Divisor (16)          |
 +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
 ~~~~~
-{: #routing-info-format title="Routing Info Payload"}
-   The Type Octet indicates that this is a Routing Info Payload,
-   which contains all parameters for the plaintext CID algorithm.
 
-   The Token is an 8-octet field that both entities obtain at
-   configuration time. It is used to verify that the sender
-   is not an inside off-path attacker. Servers SHOULD silently
-   drop QUIC-LB packets with an incorrect token.
-   
-   The Routing Bit Mask encodes a '1' at every bit position in
-   the server connection ID that will encode routing information.
-   The first two bits MUST be zero, as these represent the
-   config rotation bits.
-   
-   These bits, along with the Modulus and Divisor,  are chosen by
-   the load balancer as described in {{plaintext-cid-algorithm}}.
-      
-### Encrypted CID Payload
+   Routing Bit Mask
+
+   : The Routing Bit Mask encodes a '1' at every bit position in the server
+   connection ID that will encode routing information.
+
+   These bits, along with the Modulus and Divisor,  are chosen by the load
+   balancer as described in {{plaintext-cid-algorithm}}.
+
+### ENCRYPTED_CID Message {#message-encrypted-cid}
+
+   A load balancer uses the ENCRYPTED_CID message (type=0x03) to exchange all
+   the parameters for using encrypted CIDs.
+
 ~~~~~
  0                   1                   2                   3
  0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
 +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-|C R| Type 0x03 |   CIDL (8)    |    SIDL (8)   |  
-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-|                                                               |
-+                            Token (64)                         +
-|                                                               |
+|   CIDL (8)    |    SIDL (8)   |
 +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
 |                       Server ID (variable)                    |
 +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
@@ -505,59 +500,67 @@ normative:
 +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
 ~~~~~
 {: #Encrypted-cid-format title="Encrypted CID Payload"}
-   
-   The CIDL field is a one-octet unsigned integer that describes
-   the server connection ID length necessary to use this routing
-   algorithm, in octets.
 
-   The SIDL field is a one-octet unsigned integer that describes
-   the server ID length necessary to use this routing algorithm,
-   in octets.
+   CIDL
 
-   The server ID is the unique value assigned to the receiving
-   server. Its length is determined by the SIDL field.
+   : The CIDL field is a one-octet unsigned integer that describes the server
+   connection ID length necessary to use this routing algorithm, in octets.
 
-   The key is an 16-octet field that contains the key that the
-   load balancer will use to decrypt server IDs on QUIC packets.
-   See {{security-considerations}} to understand why sending
-   keys in plaintext may be a safe strategy.
+   SIDL
 
-### Server ID Payload
+   : The SIDL field is a one-octet unsigned integer that describes the server ID
+   length necessary to use this routing algorithm, in octets.
+
+   Server ID
+
+   : The Server ID is the unique value assigned to the receiving server. Its
+   length is determined by the SIDL field.
+
+   Key
+
+   : The Key is an 16-octet field that contains the key that the load balancer
+   will use to decrypt server IDs on QUIC packets.  See
+   {{security-considerations}} to understand why sending keys in plaintext may
+   be a safe strategy.
+
+### SERVER_ID Message {#message-server-id}
+
+   A load balancer uses the SERVER_ID message (type=0x04) to exchange explicit
+   server IDs.
+
 ~~~~~
  0                   1                   2                   3
  0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
 +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-|C R| Type 0x04 |    SIDL (8)   |       Server ID (variable)    |
+|    SIDL (8)   |       Server ID (variable)    |
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+~~~~~
+
+   Load balancers send the SERVER_ID message when all global values for CID
+   encryption are sent out-of-band, so that only the server-unique values must
+   be sent in-band. The fields are identical to their counterparts in the
+   {{message-encrypted-cid}} payload.
+
+### MODULUS Message {#message-modulus}
+
+   A load balancer uses the MODULUS message (type=0x05) to exchange just the
+   modulus used in the plaintext CID algorithm.
+
+~~~~~
+ 0                   1                   2                   3
+ 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+|           Modulus (16)        |
 +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
 |                                                               |
 +                            Token (64)                         +
 |                                                               |
 +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
 ~~~~~
-{: #server-id-format title="Server ID Payload"}   
 
-   Load balancers send the Server ID when all global values for CID
-   encryption are sent out-of-band, so that only the server-unique
-   values must be sent in-band. The fields are identical to their
-   counterparts in the Encrypted CID payload.
-
-### Modulus Payload
-~~~~~
- 0                   1                   2                   3
- 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-|C R| Type 0x05 |           Modulus (16)        |
-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-|                                                               |
-+                            Token (64)                         +
-|                                                               |
-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-~~~~~
-{: #modulus-format title="Modulus Payload"}
-   Load balancers send the Modulus when all global values for 
-   Plaintext CIDs are sent out-of-band, so that only the server-
-   unique values must be sent in-band. The Modulus field is
-   identical to its counterpart in the Routing Info payload.
+   Load balancers send the MODULUS when all global values for Plaintext CIDs are
+   sent out-of-band, so that only the server-unique values must be sent in-band.
+   The Modulus field is identical to its counterpart in the ROUTING_INFO message.
 
 # Config Rotation {#config-rotation}
 
@@ -595,7 +598,7 @@ normative:
 # Configuration Requirements
 
    QUIC-LB strives to minimize the configuration load to enable, as
-   much as possible, a “plug-and-play” model. However, there are some
+   much as possible, a "plug-and-play" model. However, there are some
    configuration requirements based on algorithm and protocol choices
    above.
 
@@ -621,9 +624,9 @@ normative:
    all. In this case, servers and load balancers MUST enable only one
    routing algorithm, as there is no explicit message to agree on one
    or the other.
- 
+
 # Security Considerations {#security-considerations}
- 
+
    QUIC-LB is intended to preserve routability and prevent linkability.
    Attacks on the protocol would compromise at least one of these
    objectives.
@@ -638,7 +641,7 @@ normative:
    server ID encoding have diminishing returns.
 
 ## Outside attackers
-  
+
    For an outside attacker to break routability, it must inject packets
    that correctly guess the 64-bit token, and servers must be reachable
    from these outside hosts. Load balancers SHOULD drop QUIC-LB packets
@@ -653,7 +656,7 @@ normative:
    the mapping and prevents trivial brute-force attacks to determine
    the routing parameters, but does not provide robust protection
    against sophisticated attacks.
- 
+
  ## Inside Attackers
 
    As described above, on-path inside attackers are intrinsically
@@ -670,33 +673,33 @@ normative:
    Off-path inside attackers cannot observe connection IDs to link
    them. To successfully break routability, they must correctly
    guess the token.
-  
+
 # IANA Considerations
- 
+
    There are no IANA requirements.
- 
+
 --- back
- 
+
 # Acknowledgments
- 
+
 # Change Log
- 
+
 > **RFC Editor's Note:**  Please remove this section prior to
 > publication of a final version of this document.
- 
-## Since draft-duke-quic-load-balancers-00
- 
-- Converted to markdown
-- Added variable length connection IDs
- 
-## Since draft-duke-quic-load-balancers-01
- 
-- Complete rewrite
-- Supports multiple security levels
-- Lightweight messages
 
 ## Since draft-duke-quic-load-balancers-02
 
 - Add Config Rotation.
 - Reserve 16 bits of plaintext CID for server use
+
+## Since draft-duke-quic-load-balancers-01
+
+- Complete rewrite
+- Supports multiple security levels
+- Lightweight messages
+
+## Since draft-duke-quic-load-balancers-00
+
+- Converted to markdown
+- Added variable length connection IDs
 
