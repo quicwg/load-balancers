@@ -220,14 +220,15 @@ normative:
    The first two bits of an SCID MUST NOT be routing bits; these are
    reserved for config rotation.
 
-    The load balancer selects a divisor that MUST be larger than the
-
+   The load balancer selects a divisor that MUST be larger than the
    number of servers. It SHOULD be large enough to accommodate reasonable
-   increases in the number of servers.
-
+   increases in the number of servers. The divisor MUST be an odd integer
+   so certain addition operations do not always produce an even number.
+ 
    The load balancer also assigns each server a "modulus", an integer
    between 0 and the divisor minus 1. These MUST be unique for each
-   server.
+   server, and SHOULD be distributed across the entire number space
+   between zero and the divisor.
 
    The load balancer shares these three values with servers, as explained
    in {{protocol-description}}.
@@ -252,8 +253,8 @@ normative:
 
 ### Server Actions
 
-   The server may choose any connection ID length that can represent
-   all of the routing bits.
+   The server chooses a connection ID length. This MUST contain all of the
+   routing bits and MUST be at least 8 octets to provide adequate entropy.
 
    When a server needs a new connection ID, it adds an arbitrary
    nonnegative integer multiple of the divisor to its modulus, without
@@ -283,8 +284,8 @@ normative:
 
    The load balancer also selects a connection ID length that all
    servers must use, and an 16-octet AES-CTR key to use for connection
-   ID decryption. The length MUST be at least one octet more than the
-   server ID length.
+   ID decryption. The connection ID length MUST be at least eight
+   octets more than the server ID length.
 
    The load balancer shares these three values with servers, as explained
    in {{protocol-description}}.
