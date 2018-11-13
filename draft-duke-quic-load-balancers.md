@@ -318,26 +318,24 @@ formats presented below.
 
 ## QUIC-LB Message Exchange
 
-QUIC-LB load balancers send the encoding parameters to servers using a QUIC-LB
-packet.  They periodically retransmit this packet to each server until that
-server responds with an acknowledgement. Specifics of this retransmission are
-implementation-dependent.
-
-These packet formats are specific to QUICv1 and experimental versions leading up
-to QUICv1. They may require revision for future versions of QUIC.
+QUIC-LB load balancers and servers exchange messages via the QUIC-LBv1 protocol,
+which uses the QUIC invariants with version number 0xF1000000. The QUIC-LB
+load balancers send the encoding parameters to servers and periodically
+retransmit until that server responds with an acknowledgement. Specifics of this
+retransmission are implementation-dependent.
 
 ## QUIC-LB Packet {#quic-lb-packet}
 
-A QUIC-LB packet uses a long header with a type value of 0xFB.  It carries
-configuration information from the load balancer and acknowledgements from the
-servers. They are sent when a load balancer boots up, detects a new server in
-the pool or needs to update the server configuration.
+A QUIC-LB packet uses a long header.  It carries configuration information from
+the load balancer and acknowledgements from the servers.  They are sent when a
+load balancer boots up, detects a new server in the pool or needs to update the
+server configuration.
 
 ~~~~~
 0                   1                   2                   3
 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
 +-+-+-+-+-+-+-+-+
-| Type = 0xfb   |
+|1|C R| Reserved|
 +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
 |                        Version (32)                           |
 +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
@@ -347,15 +345,14 @@ the pool or needs to update the server configuration.
 +                  Authentication Token (64)                    +
 |                                                               |
 +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-|CR | Reserved  | Message Type  |
-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+| Message Type  |
++-+-+-+-+-+-+-+-+
 ~~~~~
 {: #quic-lb-packet-fromat title="QUIC-LB Packet Format"}
 
 The Version field allows QUIC-LB to use the Version Negotiation mechanism.  All
-messages in this specification are specific to QUICv1, as future QUIC versions
-may use the 0xfb packet type for other purposes.  Therefore, the Version field
-should be set as the codepoint for QUICv1 as defined in {{QUIC-TRANSPORT}}.
+messages in this specification are specific to QUIC-LBv1.  It should be set to
+0xF1000000.
 
 Load balancers MUST cease sending QUIC-LB packets of this version to a server
 when that server sends a Version Negotiation packet that does not advertise the
@@ -363,17 +360,17 @@ version.
 
 The length of the DCIL and SCIL fields are 0x00.
 
+CR
+
+: The 2-bit. CR field indicates the Config Rotation described in
+  {{#config-rotation}}.
+
 Authentication Token
 
 : The Authentication Token is an 8-byte field that both entities obtain at
   configuration time. It is used to verify that the sender is not an inside
   off-path attacker. Servers and load balancers SHOULD silently discard QUIC-LB
   packets with an incorrect token.
-
-CR
-
-: The 2-bit. CR field indicates the Config Rotation described in
-  {{#config-rotation}}.
 
 Message Type
 
