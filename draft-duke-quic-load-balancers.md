@@ -269,11 +269,11 @@ balancer extracts as many of the earliest octets from the destination connection
 ID as necessary to match the nonce length. The server ID immediately follows.
 
 The load balancer decrypts the server ID using 128-bit AES in counter (CTR)
-mode, much like QUIC packet number decryption. The counter input to AES-CTR is
-the are the nonce octets, padded to 16 octets using the as many of the first
-octets of the token as necessary.
+mode, much like QUIC packet number decryption. The nonce octets are padded
+to 16 octets using the as many of the first octets of the token as necessary,
+and used as counter input to AES-CTR.
 
-server_id = AES-CTR(key, non-server-id-bytes, encrypted_server_id)
+server_id = AES-CTR(key, padded-nonce, encrypted_server_id)
 
 For example, if the nonce length is 10 octets and the server ID length is 2
 octets, the connection ID can be as small as 12 octets.  The load balancer uses
