@@ -560,6 +560,16 @@ configuration at that codepoint have closed or transitioned.  They MAY drop
 connection IDs with the old configuration after a reasonable interval to
 accelerate this process.
 
+## Configuration Failover
+
+If a server is configured to expect QUIC-LB messages, and it has not received
+these, it MUST generate connection IDs with the config rotation bits set to
+'0b11' and MUST use the "disable_migration" transport parameter in all new
+QUIC connections. It MUST NOT send NEW_CONNECTION_ID frames with new values.
+
+A load balancer that sees a connection ID with config rotation bits set to
+'0b11' MUST revert to 5-tuple routing.
+
 # Configuration Requirements
 
 QUIC-LB strives to minimize the configuration load to enable, as much as
