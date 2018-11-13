@@ -289,17 +289,16 @@ routing.
 When generating a routable connection ID, the server writes arbitrary bits into
 its nonce octets, and its provided server ID into the server ID octets. Servers
 MAY opt to have a longer connection ID beyond the nonce and server ID. The nonce
-and additional bits MAY encode additional information, ut SHOULD appear
+and additional bits MAY encode additional information, but SHOULD appear
 essentially random to observers. The first two bits of the irst octet are
 reserved for config rotation {{#config-rotation}}, but form part of the nonce.
 
-The server then encrypts the server ID octs using 128-bit AES in counter (CTR)
-mode, much like QUIC packet number encryption.  The counter input to AES-CTR is
-the bytes of the connection ID that do not constitute the encrypted server ID,
-padded with the as many of the first octets of the token as necessary to obtain
-a full 16-octet nonce.
+The server then encrypts the server ID octets using 128-bit AES in counter (CTR)
+mode, much like QUIC packet number encryption. The server pads its nonce to 16
+octets using the earliest octets of the token, and uses the result as the counter
+input to AES-CTR.
 
-encrypted_server_id = AES-CTR(key, non_server_id_bytes, server-id)
+encrypted_server_id = AES-CTR(key, padded-nonce, server-id)
 
 ## Block Cipher CID Algorithm
 
