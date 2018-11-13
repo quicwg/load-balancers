@@ -277,7 +277,7 @@ server_id = AES-CTR(key, padded-nonce, encrypted_server_id)
 
 For example, if the nonce length is 10 octets and the server ID length is 2
 octets, the connection ID can be as small as 12 octets.  The load balancer uses
-the first 10 octets (including the config rotation bits) of the connnection ID
+the first 10 octets (including the config rotation bits) of the connection ID
 for the nonce, pads it to 16 octets using the first 6 octets of the token, and
 uses this to decrypt the server ID in the eleventh and twelfth octet.
 
@@ -290,7 +290,7 @@ When generating a routable connection ID, the server writes arbitrary bits into
 its nonce octets, and its provided server ID into the server ID octets. Servers
 MAY opt to have a longer connection ID beyond the nonce and server ID. The nonce
 and additional bits MAY encode additional information, but SHOULD appear
-essentially random to observers. The first two bits of the irst octet are
+essentially random to observers. The first two bits of the first octet are
 reserved for config rotation {{#config-rotation}}, but form part of the nonce.
 
 The server then encrypts the server ID octets using 128-bit AES in counter (CTR)
