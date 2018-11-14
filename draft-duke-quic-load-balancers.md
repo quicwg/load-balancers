@@ -358,8 +358,9 @@ For Plaintext CID Routing, this consists of the Routing Bits, Divisor, and
 Modulus. The Modulus is unique to each server, but the others MUST be global.
 
 For Stream Cipher CID Routing, this consists of the Server ID, Server ID Length,
-Key, and Nonce Length.  The Server ID is unique to each server, but the
-others MUST be global.
+Key, and Nonce Length.  The Server ID is unique to each server, but the others
+MUST be global. The authentication token MUST be distributed out of band for
+this algorithm to operate.
 
 For Block Cipher CID Routing, this consists of the Server ID, Server ID Length,
 Key, and Zero-Padding Length. The Server ID is unique to each server, but the
@@ -676,7 +677,9 @@ Load balancers MUST have configuration for all parameters of each routing
 algorithm they support.
 
 If there is any in-band communication, servers MUST be explicitly configured
-with the token of the load balancer they expect to interface with.
+with the token of the load balancer they expect to interface with. Endpoints
+that use Stream Cipher CIDs MUST have this token regardless of the configuration
+method.
 
 Optionally, servers MAY be configured with the global parameters of supported
 routing algorithms. This allows load balancers to use Server ID and Modulus
