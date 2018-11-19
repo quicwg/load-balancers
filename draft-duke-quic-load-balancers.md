@@ -245,7 +245,7 @@ The server encodes the result in the routing bits. It MAY put any other value
 into the non-routing bits except the config rotation bits.  The non-routing bits
 SHOULD appear random to observers.
 
-## Encrypted CID Algorithm
+## Stream Cipher CID Algorithm
 
 The Encrypted CID algorithm provides true cryptographic protection, rather than
 mere obfuscation, at the cost of additional per-packet processing at the load
@@ -256,42 +256,97 @@ packets.
 
 The load balancer assigns a server ID to every server in its pool, and
 determines a server ID length (in octets) sufficiently large to encode all
-server IDs, including potential future servers.  The server ID will start in the
-second octet of the connection ID and occupy continuous octets beyond that.
+server IDs, including potential future servers.
 
-The load balancer also selects a connection ID length that all servers must use,
-and an 16-octet AES-CTR key to use for connection ID decryption.  The connection
-ID length MUST be at least eight octets more than the server ID length.
+The load balancer also selects a nonce length and an 16-octet AES-CTR key to use
+for connection ID decryption.  The nonce length MUST be at least eight octets.
 
 The load balancer shares these three values with servers, as explained in
 {{protocol-description}}.
 
 Upon receipt of a QUIC packet that is not of type Initial or 0-RTT, the load
 balancer extracts as many of the earliest octets from the destination connection
-ID as necessary to match the server ID length.
+ID as necessary to match the nonce length. The server ID immediately follows.
 
 The load balancer decrypts the server ID using 128-bit AES in counter (CTR)
-mode, much like QUIC packet number decryption. The counter input to AES-CTR is
-the bytes of the connection ID that do not constitute the encrypted server ID.
+mode, much like QUIC packet number decryption. The nonce octets are padded
+to 16 octets using the as many of the first octets of the token as necessary,
+and used as counter input to AES-CTR.
 
-server_id = AES-CTR(key, non-server-id-bytes, encrypted_server_id)
+server_id = AES-CTR(key, padded-nonce, encrypted_server_id)
+
+For example, if the nonce length is 10 octets and the server ID length is 2
+octets, the connection ID can be as small as 12 octets.  The load balancer uses
+the first 10 octets (including the config rotation bits) of the connection ID
+for the nonce, pads it to 16 octets using the first 6 octets of the token, and
+uses this to decrypt the server ID in the eleventh and twelfth octet.
 
 The output of the decryption is the server ID that the load balancer uses for
 routing.
 
 ### Server Actions
 
-When generating a routable connection ID, the server writes its provided server
-ID into the server ID octets, and arbitrary bits into the remaining required
-connection ID octets. These arbitrary bits MAY encode additional information,
-but SHOULD appear essentially random to observers. The first two bits of the
-first octet are reserved for config rotation {{#config-rotation}}.
+When generating a routable connection ID, the server writes arbitrary bits into
+its nonce octets, and its provided server ID into the server ID octets. Servers
+MAY opt to have a longer connection ID beyond the nonce and server ID. The nonce
+and additional bits MAY encode additional information, but SHOULD appear
+essentially random to observers. The first two bits of the first octet are
+reserved for config rotation {{#config-rotation}}, but form part of the nonce.
 
-The server then encrypts the server ID bytes using 128-bit AES in counter (CTR)
-mode, much like QUIC packet number encryption.  The counter input to AES-CTR is
-the bytes of the connection ID that do not constitute the encrypted server ID.
+The server then encrypts the server ID octets using 128-bit AES in counter (CTR)
+mode, much like QUIC packet number encryption. The server pads its nonce to 16
+octets using the earliest octets of the token, and uses the result as the counter
+input to AES-CTR.
 
-encrypted_server_id = AES-CTR(key, non_server_id_bytes, server-id)
+encrypted_server_id = AES-CTR(key, padded-nonce, server-id)
+
+## Block Cipher CID Algorithm
+
+The Block Cipher CID Algorithm, by using a full 16 octets of Plaintext and a
+128-bit cipher, provides higher cryptographic protection and detection of
+spurious connection IDs. However, it also requires connection IDs of at least
+17 octets, increasing overhead of client-to-server packets.
+
+## Load Balancer Actions
+
+The load balancer assigns a server ID to every server in its pool, and
+determines a server ID length (in octets) sufficiently large to encode all
+server IDs, including potential future servers.  The server ID will start in the
+second octet of the decrypted connection ID and occupy continuous octets beyond
+that.
+
+The load balancer selects a zero-padding length. This SHOULD be at least four
+octets to allow detection of spurious connection IDs. The server ID and zero-
+padding length MUST sum to no more than 16 octets. They SHOULD sum to no more
+than 12 octets, to provide servers adequate space to encode their own opaque
+data.
+
+The load balancer also selects an 16-octet AES-ECB key to use for connection ID
+decryption.
+
+The load balancer shares these four values with servers, as explained in
+{{protocol-description}}.
+
+Upon receipt of a QUIC packet that is not of type Initial or 0-RTT, the load
+balancer reads the first octet to obtain the config rotation bits. It then
+decrypts the subsequent 16 octets using AES-ECB decryption and the chosen key.
+
+The decrypted plaintext contains the server id, zero padding, and opaque server
+data in that order. If the zero padding octets are not zero, the load balancer
+MUST drop the packet. The load balancer uses the server ID octets for routing.
+
+### Server Actions
+
+When generating a routable connection ID, the server MUST choose a connection ID
+length of 17 or 18 octets. The server writes its provided server ID into the
+server ID octets, zeroes into the zero-padding octets, and arbitrary bits into
+the remaining bits. These arbitrary bits MAY encode additional information. Bits
+in the first and eighteenth octets SHOULD appear essentially random to observers.
+The first two bits of the first octet are reserved for config rotation
+{{#config-rotation}}.
+
+The server then encrypts the second through seventeenth octets using the 128-bit
+AES-ECB cipher.
 
 # Protocol Description {#protocol-description}
 
@@ -302,14 +357,19 @@ and server.
 For Plaintext CID Routing, this consists of the Routing Bits, Divisor, and
 Modulus. The Modulus is unique to each server, but the others MUST be global.
 
-For Encrypted CID Routing, this consists of the Server ID, Server ID Length,
-Key, and Connection ID Length.  The Server ID is unique to each server, but the
+For Stream Cipher CID Routing, this consists of the Server ID, Server ID Length,
+Key, and Nonce Length.  The Server ID is unique to each server, but the others
+MUST be global. The authentication token MUST be distributed out of band for
+this algorithm to operate.
+
+For Block Cipher CID Routing, this consists of the Server ID, Server ID Length,
+Key, and Zero-Padding Length. The Server ID is unique to each server, but the
 others MUST be global.
 
 ## Out of band sharing
 
 When there are concerns about the integrity of the path between load balancer
-and server, operators may share routing information using an out-of-band
+and server, operators MAY share routing information using an out-of-band
 technique, which is out of the scope of this specification.
 
 To simplify configuration, the global parameters can be shared out-of-band,
@@ -446,16 +506,16 @@ Routing Bit Mask
 These bits, along with the Modulus and Divisor,  are chosen by the load balancer
 as described in {{plaintext-cid-algorithm}}.
 
-### ENCRYPTED_CID Message {#message-encrypted-cid}
+### STREAM_CID Message {#message-stream-cid}
 
-A load balancer uses the ENCRYPTED_CID message (type=0x03) to exchange all the
-parameters for using encrypted CIDs.
+A load balancer uses the STREAM_CID message (type=0x03) to exchange all the
+parameters for using Stream Cipher CIDs.
 
 ~~~~~
 0                   1                   2                   3
 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
 +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-|   CIDL (8)    |    SIDL (8)   |
+| Nonce Len (8) |    SIDL (8)   |
 +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
 |                       Server ID (variable)                    |
 +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
@@ -465,12 +525,55 @@ parameters for using encrypted CIDs.
 +                                                               +
 +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
 ~~~~~
-{: #Encrypted-cid-format title="Encrypted CID Payload"}
+{: #Stream-cid-format title="Stream CID Payload"}
 
-CIDL
+Nonce Len
 
-: The CIDL field is a one-octet unsigned integer that describes the server
-  connection ID length necessary to use this routing algorithm, in octets.
+: The Nonce Len field is a one-octet unsigned integer that describes the
+  nonce length necessary to use this routing algorithm, in octets.
+
+SIDL
+
+: The SIDL field is a one-octet unsigned integer that describes the server ID
+  length necessary to use this routing algorithm, in octets.
+
+Server ID
+
+: The Server ID is the unique value assigned to the receiving server. Its
+  length is determined by the SIDL field.
+
+Key
+
+: The Key is an 16-octet field that contains the key that the load balancer
+  will use to decrypt server IDs on QUIC packets.  See
+  {{security-considerations}} to understand why sending keys in plaintext may
+  be a safe strategy.
+  
+  ### BLOCK_CID Message {#message-block-cid}
+
+A load balancer uses the BLOCK_CID message (type=0x04) to exchange all the
+parameters for using Stream Cipher CIDs.
+
+~~~~~
+0                   1                   2                   3
+0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+|   ZP Len (8)  |    SIDL (8)   |
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+|                       Server ID (variable)                    |
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+|                                                               |
++                             Key (128)                         +
+|                                                               |
++                                                               +
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+~~~~~
+{: #block-cid-format title="Block CID Payload"}
+
+ZP Len
+
+: The ZP Len field is a one-octet unsigned integer that describes the
+  zero-padding length necessary to use this routing algorithm, in octets.
 
 SIDL
 
@@ -491,8 +594,8 @@ Key
 
 ### SERVER_ID Message {#message-server-id}
 
-A load balancer uses the SERVER_ID message (type=0x04) to exchange explicit
-server IDs.
+A load balancer uses the SERVER_ID message (type=0x05) to exchange
+explicit server IDs.
 
 ~~~~~
 0                   1                   2                   3
@@ -502,14 +605,14 @@ server IDs.
 +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
 ~~~~~
 
-Load balancers send the SERVER_ID message when all global values for CID
-encryption are sent out-of-band, so that only the server-unique values must be
-sent in-band. The fields are identical to their counterparts in the
-{{message-encrypted-cid}} payload.
+Load balancers send the SERVER_ID message when all global values for Stream
+or Block CIDs are sent out-of-band, so that only the server-unique values
+must be sent in-band. The fields are identical to their counterparts in the
+{{message-stream-cid}} payload.
 
 ### MODULUS Message {#message-modulus}
 
-A load balancer uses the MODULUS message (type=0x05) to exchange just the
+A load balancer uses the MODULUS message (type=0x06) to exchange just the
 modulus used in the plaintext CID algorithm.
 
 ~~~~~
@@ -571,7 +674,9 @@ Load balancers MUST have configuration for all parameters of each routing
 algorithm they support.
 
 If there is any in-band communication, servers MUST be explicitly configured
-with the token of the load balancer they expect to interface with.
+with the token of the load balancer they expect to interface with. Endpoints
+that use Stream Cipher CIDs MUST have this token regardless of the configuration
+method.
 
 Optionally, servers MAY be configured with the global parameters of supported
 routing algorithms. This allows load balancers to use Server ID and Modulus
