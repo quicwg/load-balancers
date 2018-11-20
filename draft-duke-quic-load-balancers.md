@@ -151,6 +151,9 @@ QUIC connections regardless of Connection ID schemes.  However, QUIC-LB should
 protect against Denial of Service due to inside off-path attackers in cases
 where such attackers are possible.
 
+Though not an explicit goal of the QUIC-LB design, concealing the server mapping
+also complicates attempts to focus attacks on a specific server in the pool.
+
 ## Robustness to Middleboxes
 
 The path between load balancer and server may pass through middleboxes that
