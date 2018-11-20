@@ -366,6 +366,9 @@ For Block Cipher CID Routing, this consists of the Server ID, Server ID Length,
 Key, and Zero-Padding Length. The Server ID is unique to each server, but the
 others MUST be global.
 
+Each routing configuration also requires a unique two-bit config rotation
+codepoint (see {{config-rotation}}) to identify it.
+
 ## Out of band sharing
 
 When there are concerns about the integrity of the path between load balancer
