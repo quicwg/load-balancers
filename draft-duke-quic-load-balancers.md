@@ -200,7 +200,7 @@ for each server.
 
 The load balancer MUST NOT select a routing mask that with more than 126 routing
 bits set to 1, which allows at least 2 bits for config rotation (see
-{{#config-rotation}}) and 16 for server purposes in a maximum-length connection
+{{config-rotation}}) and 16 for server purposes in a maximum-length connection
 ID.
 
 The first two bits of an SCID MUST NOT be routing bits; these are reserved for
@@ -294,7 +294,7 @@ its nonce octets, and its provided server ID into the server ID octets. Servers
 MAY opt to have a longer connection ID beyond the nonce and server ID. The nonce
 and additional bits MAY encode additional information, but SHOULD appear
 essentially random to observers. The first two bits of the first octet are
-reserved for config rotation {{#config-rotation}}, but form part of the nonce.
+reserved for config rotation {{config-rotation}}, but form part of the nonce.
 
 The server then encrypts the server ID octets using 128-bit AES in counter (CTR)
 mode, much like QUIC packet number encryption. The server pads its nonce to 16
@@ -346,7 +346,7 @@ server ID octets, zeroes into the zero-padding octets, and arbitrary bits into
 the remaining bits. These arbitrary bits MAY encode additional information. Bits
 in the first and eighteenth octets SHOULD appear essentially random to observers.
 The first two bits of the first octet are reserved for config rotation
-{{#config-rotation}}.
+{{config-rotation}}.
 
 The server then encrypts the second through seventeenth octets using the 128-bit
 AES-ECB cipher.
@@ -429,7 +429,7 @@ The length of the DCIL and SCIL fields are 0x00.
 CR
 
 : The 2-bit. CR field indicates the Config Rotation described in
-  {{#config-rotation}}.
+  {{config-rotation}}.
 
 Authentication Token
 
@@ -554,8 +554,8 @@ Key
   will use to decrypt server IDs on QUIC packets.  See
   {{security-considerations}} to understand why sending keys in plaintext may
   be a safe strategy.
-  
-  ### BLOCK_CID Message {#message-block-cid}
+
+### BLOCK_CID Message {#message-block-cid}
 
 A load balancer uses the BLOCK_CID message (type=0x04) to exchange all the
 parameters for using Stream Cipher CIDs.
