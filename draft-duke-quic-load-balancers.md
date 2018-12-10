@@ -763,9 +763,11 @@ There are no IANA requirements.
 > publication of a final version of this document.
 
 ## Since draft-duke-quic-load-balancers-02
-
-- Add Config Rotation.
-- Reserve 16 bits of plaintext CID for server use
+- Added Config Rotation
+- Added failover mode
+- Tweaks to existing CID algorithms
+- Added Block Cipher CID algorithm
+- Reformatted QUIC-LB packets
 
 ## Since draft-duke-quic-load-balancers-01
 
