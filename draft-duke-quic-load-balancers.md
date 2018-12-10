@@ -262,7 +262,9 @@ determines a server ID length (in octets) sufficiently large to encode all
 server IDs, including potential future servers.
 
 The load balancer also selects a nonce length and an 16-octet AES-CTR key to use
-for connection ID decryption.  The nonce length MUST be at least eight octets.
+for connection ID decryption.  The nonce length MUST be at least eight octets and
+no more than 16 octets. The nonce length and server ID length MUST sum to 18 or
+fewer octets.
 
 The load balancer shares these three values with servers, as explained in
 {{protocol-description}}.
