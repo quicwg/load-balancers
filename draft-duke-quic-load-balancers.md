@@ -312,7 +312,7 @@ The Block Cipher CID Algorithm, by using a full 16 octets of Plaintext and a
 spurious connection IDs. However, it also requires connection IDs of at least
 17 octets, increasing overhead of client-to-server packets.
 
-## Load Balancer Actions
+### Load Balancer Actions
 
 The load balancer assigns a server ID to every server in its pool, and
 determines a server ID length (in octets) sufficiently large to encode all
@@ -662,7 +662,7 @@ algorithm and parameters to incoming packets.
 Servers MUST NOT generate new connection IDs using an old configuration when it
 has sent an Ack payload for a new configuration.
 
-Load balancers SHOULD not use a codepoint to represent a new configuration until
+Load balancers SHOULD NOT use a codepoint to represent a new configuration until
 it takes precautions to make sure that all connections using IDs with an old
 configuration at that codepoint have closed or transitioned.  They MAY drop
 connection IDs with the old configuration after a reasonable interval to
