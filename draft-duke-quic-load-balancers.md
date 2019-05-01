@@ -303,7 +303,7 @@ The load balancer assigns a server ID to every server in its pool, and
 determines a server ID length (in octets) sufficiently large to encode all
 server IDs, including potential future servers.
 
-The load balancer also selects a nonce length and an 16-octet AES-CTR key to use
+The load balancer also selects a nonce length and an 16-octet AES-ECB key to use
 for connection ID decryption.  The nonce length MUST be at least eight octets and
 no more than 16 octets. The nonce length and server ID length MUST sum to 18 or
 fewer octets.
@@ -315,12 +315,13 @@ Upon receipt of a QUIC packet that is not of type Initial or 0-RTT, the load
 balancer extracts as many of the earliest octets from the destination connection
 ID as necessary to match the nonce length. The server ID immediately follows.
 
-The load balancer decrypts the server ID using 128-bit AES in counter (CTR)
-mode, much like QUIC packet number decryption. The nonce octets are padded
-to 16 octets using the as many of the first octets of the token as necessary,
-and used as counter input to AES-CTR.
+The load balancer decrypts the server ID using 128-bit AES Electronic Codebook (ECB)
+mode, much like QUIC header protection. The nonce octets are padded to 16 octets
+using the as many of the first octets of the token as necessary. AES-ECB encrypts
+this nonce using its key to generate a mask which it applies to the encrypted
+server id.
 
-server_id = AES-CTR(key, padded-nonce, encrypted_server_id)
+server_id = encrypted_server_id ^ AES-ECB(key, padded-nonce)
 
 For example, if the nonce length is 10 octets and the server ID length is 2
 octets, the connection ID can be as small as 12 octets.  The load balancer uses
@@ -340,12 +341,12 @@ and additional bits MAY encode additional information, but SHOULD appear
 essentially random to observers. The first two bits of the first octet are
 reserved for config rotation {{config-rotation}}, but form part of the nonce.
 
-The server then encrypts the server ID octets using 128-bit AES in counter (CTR)
-mode, much like QUIC packet number encryption. The server pads its nonce to 16
-octets using the earliest octets of the token, and uses the result as the counter
-input to AES-CTR.
+The server decrypts the server ID using 128-bit AES Electronic Codebook (ECB)
+mode, much like QUIC header protection. The nonce octets are padded to 16 octets
+using the as many of the first octets of the token as necessary. AES-ECB encrypts
+this nonce using its key to generate a mask which it applies to the server id.
 
-encrypted_server_id = AES-CTR(key, padded-nonce, server-id)
+encrypted_server_id = server_id ^ AES-ECB(key, padded-nonce)
 
 ## Block Cipher CID Algorithm
 
