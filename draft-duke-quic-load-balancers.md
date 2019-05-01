@@ -192,6 +192,48 @@ two bits of the connection ID to multiplex incoming SCIDs over these schemes.
 
 ### Load Balancer Actions
 
+The load balancer selects a number of bytes of the server connection ID
+(SCID) that it will use to route to a given server, called the "routing bytes".
+The number of bytes MUST have enough entropy to have a different code point for
+each server.
+
+The load balancer shares this value with servers, as explained in
+{{protocol-description}}, along with the value that represents that server.
+
+On each incoming packet, the load balancer extracts consecutive octets,
+beginning with the second byte. These bytes represent the server ID.
+
+### Server Actions
+
+The server chooses a connection ID length.  This MUST be at least one byte
+longer than the routing bytes.
+
+When a server needs a new connection ID, it encodes its assigned server ID
+in consecutive octets beginning with the second. All other bits in the
+connection ID, except for the config rotation bits, MAY be set to any other
+value. These other bits SHOULD appear random to observers.
+
+The figure below clarifies the format. The first two bits are reserved for
+config rotation. The server can assign the next 6 bits to any value. The
+specified number of bytes encodes the server ID, and the server may decide
+how many trailing octets of information to include up to the QUIC limit
+of 18-octet CIDs.
+
+~~~~~
+0                   1                   2                   3
+0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+|C R|    Any  |             Server ID (variable)                |      
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+|                        Any (variable)                         |
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+~~~~~
+{: #plaintext-cid-format title="Plaintext CID Format"}
+
+## Obfuscated CID Algorithm {#obfuscated-cid-algorithm}
+
+### Load Balancer Actions
+
 The load balancer selects an arbitrary set of bits of the server connection ID
 (SCID) that it will use to route to a given server, called the "routing bits".
 The number of bits MUST have enough entropy to have a different code point for
@@ -359,7 +401,7 @@ The fundamental protocol requirement is to share the choice of routing
 algorithm, and the relevant parameters for that algorithm, between load balancer
 and server.
 
-For Plaintext CID Routing, this consists of the Routing Bits, Divisor, and
+For Obfuscated CID Routing, this consists of the Routing Bits, Divisor, and
 Modulus. The Modulus is unique to each server, but the others MUST be global.
 
 For Stream Cipher CID Routing, this consists of the Server ID, Server ID Length,
@@ -416,7 +458,7 @@ server configuration.
 | Message Type  |
 +-+-+-+-+-+-+-+-+
 ~~~~~
-{: #quic-lb-packet-fromat title="QUIC-LB Packet Format"}
+{: #quic-lb-packet-format title="QUIC-LB Packet Format"}
 
 The Version field allows QUIC-LB to use the Version Negotiation mechanism.  All
 messages in this specification are specific to QUIC-LBv1.  It should be set to
@@ -486,7 +528,7 @@ message the server supports or remove the server from the server pool.
 ### ROUTING_INFO Message {#message-routing-info}
 
 A load balancer uses the ROUTING_INFO message (type=0x02) to exchange all the
-parameters for the plaintext CID algorithm.
+parameters for the Obfuscated CID algorithm.
 
 ~~~~~
 0                   1                   2                   3
@@ -512,7 +554,7 @@ Routing Bit Mask
  connection ID that will encode routing information.
 
 These bits, along with the Modulus and Divisor,  are chosen by the load balancer
-as described in {{plaintext-cid-algorithm}}.
+as described in {{obfuscated-cid-algorithm}}.
 
 ### STREAM_CID Message {#message-stream-cid}
 
@@ -621,7 +663,7 @@ must be sent in-band. The fields are identical to their counterparts in the
 ### MODULUS Message {#message-modulus}
 
 A load balancer uses the MODULUS message (type=0x06) to exchange just the
-modulus used in the plaintext CID algorithm.
+modulus used in the Obfuscated CID algorithm.
 
 ~~~~~
 0                   1                   2                   3
@@ -635,9 +677,31 @@ modulus used in the plaintext CID algorithm.
 +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
 ~~~~~
 
-Load balancers send the MODULUS when all global values for Plaintext CIDs are
-sent out-of-band, so that only the server-unique values must be sent in-band.
-The Modulus field is identical to its counterpart in the ROUTING_INFO message.
+Load balancers send the MODULUS when all global values for Obfuscated CIDs
+are sent out-of-band, so that only the server-unique values must be sent
+in-band. The Modulus field is identical to its counterpart in the
+ROUTING_INFO message.
+
+### PLAINTEXT Message {#message-plaintext}
+
+A load balancer uses the PLAINTEXT message (type=0x07) to exchange all
+parameters needed for the Plaintext CID algorithm.
+
+~~~~~
+0                   1                   2                   3
+0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+|   SIDL (8)  |
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+|                                                               |
++                      Server ID (variable)                     +
+|                                                               |
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+~~~~~
+
+The SIDL field indicates the length of the server ID field. The
+Server ID field indicates the encoding that represents the
+destination server.
 
 # Config Rotation {#config-rotation}
 
@@ -710,6 +774,14 @@ explicit message to agree on one or the other.
 QUIC-LB is intended to preserve routability and prevent linkability.  Attacks on
 the protocol would compromise at least one of these objectives.
 
+Note that the Plaintext CID algorithm makes no attempt to obscure the server
+mapping, and therefore does not address these concerns. It exists to allow
+consistent CID encoding for compatibility across a network infrastructure.
+Servers that are running the Plaintext CID algorithm SHOULD only use it to
+generate new CIDs for the Server Initial Packet, and SHOULD NOT send CIDs
+in QUIC NEW_CONNECTION_ID frames. Doing so might falsely suggest to the client
+that said CIDs were generated in a secure fashion.
+
 A routability attack would inject QUIC-LB messages so that load balancers
 incorrectly route QUIC connections.
 
@@ -730,7 +802,7 @@ struggle to link them.
 
 On-path outside attackers might try to link connection IDs to the same QUIC
 connection.  The Encrypted CID algorithm provides robust entropy to making any
-sort of linkage.  The Plaintext CID obscures the mapping and prevents trivial
+sort of linkage.  The Obfuscated CID obscures the mapping and prevents trivial
 brute-force attacks to determine the routing parameters, but does not provide
 robust protection against sophisticated attacks.
 
@@ -761,6 +833,10 @@ There are no IANA requirements.
 
 > **RFC Editor's Note:**  Please remove this section prior to
 > publication of a final version of this document.
+
+## Since draft-duke-quic-load-balancers-03
+- Renamed Plaintext CID algorithm as Obfuscated CID
+- Added new Plaintext CID algorihtm
 
 ## Since draft-duke-quic-load-balancers-02
 - Added Config Rotation
