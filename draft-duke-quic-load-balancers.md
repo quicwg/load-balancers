@@ -24,7 +24,7 @@ normative:
     title: "QUIC: A UDP-Based Multiplexed and Secure Transport"
     date: {DATE}
     seriesinfo:
-      Internet-Draft: draft-ietf-quic-transport-latest
+      Internet-Draft: draft-ietf-quic-transport
     author:
       -
         ins: J. Iyengar
@@ -45,7 +45,7 @@ load balancers.  They also can prevent linkability of connections across
 deliberate address migration through the use of protected communications between
 client and server.  This creates issues for load-balancing intermediaries.  This
 specification standardizes methods for encoding routing information and proposes
-an optional protocol called QUIC_LB to exchange the parameters of that encoding.
+an optional protocol called QUIC-LB to exchange the parameters of that encoding.
 
 --- middle
 
@@ -837,7 +837,7 @@ There are no IANA requirements.
 
 ## Since draft-duke-quic-load-balancers-03
 - Renamed Plaintext CID algorithm as Obfuscated CID
-- Added new Plaintext CID algorihtm
+- Added new Plaintext CID algorithm
 
 ## Since draft-duke-quic-load-balancers-02
 - Added Config Rotation
