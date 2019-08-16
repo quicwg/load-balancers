@@ -190,6 +190,21 @@ two bits of the connection ID to multiplex incoming SCIDs over these schemes.
 
 ## Plaintext CID Algorithm {#plaintext-cid-algorithm}
 
+The Plaintext CID Algorithm makes no attempt to obscure the mapping of
+connections to servers, significantly increasing linkability. The format is
+depicted in the figure below.
+
+~~~~~
+0                   1                   2                   3
+0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+|C R|    Any  |             Server ID (X=8..152)                |      
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+|                        Any (0..152-X)                         |
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+~~~~~
+{: #plaintext-cid-format title="Plaintext CID Format"}
+
 ### Load Balancer Actions
 
 The load balancer selects a number of bytes of the server connection ID
@@ -216,21 +231,23 @@ value. These other bits SHOULD appear random to observers.
 The figure below clarifies the format. The first two bits are reserved for
 config rotation. The server can assign the next 6 bits to any value. The
 specified number of bytes encodes the server ID, and the server may decide
-how many trailing octets of information to include up to the QUIC limit
-of 18-octet CIDs.
+how many trailing octets of information to include up to the QUICv1 limit
+of 20-octet CIDs.
+
+## Obfuscated CID Algorithm {#obfuscated-cid-algorithm}
+
+The Obfuscated CID Algorithm makes an attempt to obscure the mapping of
+connections to servers to reduce linkability, while not requiring true
+encryption and decryption. The format is depicted in the figure below.
 
 ~~~~~
 0                   1                   2                   3
 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
 +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-|C R|    Any  |             Server ID (variable)                |      
-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-|                        Any (variable)                         |
+|C R|       Mixed routing and non-routing bits (62..158)        |      
 +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
 ~~~~~
-{: #plaintext-cid-format title="Plaintext CID Format"}
-
-## Obfuscated CID Algorithm {#obfuscated-cid-algorithm}
+{: #obfuscated-cid-format title="Obfuscated CID Format"}
 
 ### Load Balancer Actions
 
@@ -240,7 +257,7 @@ The number of bits MUST have enough entropy to have a different code point for
 each server, and SHOULD have enough entropy so that there are many codepoints
 for each server.
 
-The load balancer MUST NOT select a routing mask that with more than 126 routing
+The load balancer MUST NOT select a routing mask with more than 142 routing
 bits set to 1, which allows at least 2 bits for config rotation (see
 {{config-rotation}}) and 16 for server purposes in a maximum-length connection
 ID.
@@ -287,15 +304,28 @@ integer value implied by the number of routing bits. The choice of multiple
 should appear random within these constraints.
 
 The server encodes the result in the routing bits. It MAY put any other value
-into the non-routing bits except the config rotation bits.  The non-routing bits
+into bits that used neither for routing nor config rotation.  These bits
 SHOULD appear random to observers.
 
 ## Stream Cipher CID Algorithm
 
-The Encrypted CID algorithm provides true cryptographic protection, rather than
-mere obfuscation, at the cost of additional per-packet processing at the load
-balancer to decrypt every incoming connection ID except for Initial and 0RTT
-packets.
+The Stream Cipher CID algorithm provides true cryptographic protection, rather
+than mere obfuscation, at the cost of additional per-packet processing at the
+load balancer to decrypt every incoming connection ID except for those in
+Initial and 0RTT packets. The CID format is depicted below.
+
+~~~~~
+0                   1                   2                   3
+0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+|C R|                      Nonce (X=64..144)                    |      
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+|                 Encrypted Server ID (Y=8..158-X)              |
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+|                   For server use (0..160-X-Y)                 |
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+~~~~~
+{: #stream-cipher-cid-format title="Stream Cipher CID Format"}
 
 ### Load Balancer Actions
 
@@ -304,8 +334,8 @@ determines a server ID length (in octets) sufficiently large to encode all
 server IDs, including potential future servers.
 
 The load balancer also selects a nonce length and an 16-octet AES-ECB key to use
-for connection ID decryption.  The nonce length MUST be at least eight octets and
-no more than 16 octets. The nonce length and server ID length MUST sum to 18 or
+for connection ID decryption.  The nonce length MUST be at least 8 octets and no
+more than 16 octets. The nonce length and server ID length MUST sum to 20 or
 fewer octets.
 
 The load balancer shares these three values with servers, as explained in
@@ -350,10 +380,25 @@ encrypted_server_id = server_id ^ AES-ECB(key, padded-nonce)
 
 ## Block Cipher CID Algorithm
 
-The Block Cipher CID Algorithm, by using a full 16 octets of Plaintext and a
+The Block Cipher CID Algorithm, by using a full 16 octets of plaintext and a
 128-bit cipher, provides higher cryptographic protection and detection of
 spurious connection IDs. However, it also requires connection IDs of at least
 17 octets, increasing overhead of client-to-server packets.
+
+~~~~~
+0                   1                   2                   3
+0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+|C R|  srvr use |       Encrypted server ID (X=8..144)          |      
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+|             Encrypted Zero Padding (Y=0..144-X)               |
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+            Encrypted bits for server use (144-X-Y)             |
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+|           Unencrypted bits for server use (0..24)             |
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+~~~~~
+{: #block-cipher-cid-format title="Block Cipher CID Format"}
 
 ### Load Balancer Actions
 
@@ -386,12 +431,12 @@ MUST drop the packet. The load balancer uses the server ID octets for routing.
 ### Server Actions
 
 When generating a routable connection ID, the server MUST choose a connection ID
-length of 17 or 18 octets. The server writes its provided server ID into the
-server ID octets, zeroes into the zero-padding octets, and arbitrary bits into
-the remaining bits. These arbitrary bits MAY encode additional information. Bits
-in the first and eighteenth octets SHOULD appear essentially random to observers.
-The first two bits of the first octet are reserved for config rotation
-{{config-rotation}}.
+length between 17 and 20 octets. The server writes its provided server ID into
+the server ID octets, zeroes into the zero-padding octets, and arbitrary bits
+into the remaining bits. These arbitrary bits MAY encode additional information.
+Bits in the first, eighteenth, nineteenth, and twentieth octets SHOULD appear
+essentially random to observers. The first two bits of the first octet are
+reserved for config rotation {{config-rotation}}.
 
 The server then encrypts the second through seventeenth octets using the 128-bit
 AES-ECB cipher.
@@ -401,6 +446,9 @@ AES-ECB cipher.
 The fundamental protocol requirement is to share the choice of routing
 algorithm, and the relevant parameters for that algorithm, between load balancer
 and server.
+
+For Plaintext CID Routing, this consists of the Server ID and the routing bytes.
+The Server ID is unique to each server, an the routing bytes are global.
 
 For Obfuscated CID Routing, this consists of the Routing Bits, Divisor, and
 Modulus. The Modulus is unique to each server, but the others MUST be global.
@@ -473,7 +521,7 @@ The length of the DCIL and SCIL fields are 0x00.
 
 CR
 
-: The 2-bit. CR field indicates the Config Rotation described in
+: The 2-bit CR field indicates the Config Rotation described in
   {{config-rotation}}.
 
 Authentication Token
@@ -656,10 +704,11 @@ explicit server IDs.
 +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
 ~~~~~
 
-Load balancers send the SERVER_ID message when all global values for Stream
-or Block CIDs are sent out-of-band, so that only the server-unique values
-must be sent in-band. The fields are identical to their counterparts in the
-{{message-stream-cid}} payload.
+Load balancers send the SERVER_ID message when all global values for Stream or
+Block CIDs are sent out-of-band, so that only the server-unique values must be
+sent in-band. It also provides all necessary paramters for Plaintext CIDs. The
+fields are identical to their counterparts in the {{message-stream-cid}}
+payload.
 
 ### MODULUS Message {#message-modulus}
 
@@ -779,7 +828,7 @@ Note that the Plaintext CID algorithm makes no attempt to obscure the server
 mapping, and therefore does not address these concerns. It exists to allow
 consistent CID encoding for compatibility across a network infrastructure.
 Servers that are running the Plaintext CID algorithm SHOULD only use it to
-generate new CIDs for the Server Initial Packet, and SHOULD NOT send CIDs
+generate new CIDs for the Server Initial Packet and SHOULD NOT send CIDs
 in QUIC NEW_CONNECTION_ID frames. Doing so might falsely suggest to the client
 that said CIDs were generated in a secure fashion.
 
@@ -838,6 +887,7 @@ There are no IANA requirements.
 ## Since draft-duke-quic-load-balancers-03
 - Renamed Plaintext CID algorithm as Obfuscated CID
 - Added new Plaintext CID algorithm
+- Updated to allow 20B CIDs
 
 ## Since draft-duke-quic-load-balancers-02
 - Added Config Rotation
