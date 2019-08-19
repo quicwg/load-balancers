@@ -913,6 +913,7 @@ There are no IANA requirements.
 - Renamed Plaintext CID algorithm as Obfuscated CID
 - Added new Plaintext CID algorithm
 - Updated to allow 20B CIDs
+- Added self-encoding of CID length
 
 ## Since draft-duke-quic-load-balancers-02
 - Added Config Rotation
