@@ -83,6 +83,11 @@ specifies a protocol that provides those properties. This protocol supports
 multiple encoding schemes that increase in complexity as they address paths
 between load balancer and server with weaker trust dynamics.
 
+Aside from load balancing, adding structure to the Connection ID can enable
+other network functions from trusted intermediaries. Though not directly
+relevant to load balancing, QUIC-LB includes optional extensions to structure
+the connection ID for these other purposes.
+
 ## Terminology
 
 The key words "MUST", "MUST NOT", "REQUIRED", "SHALL", "SHALL NOT", "SHOULD",
@@ -168,6 +173,70 @@ balancers in the path, by using different parts of the connection ID to encoding
 routing information for each load balancer, this use case is out of scope for
 QUIC-LB.
 
+# First CID octet
+
+The first octet of a Connection ID is reserved for two special purposes, one
+mandatory (config rotation) and one optional (length self-description).
+
+Subsequent sections of this document refer to the contents of this octet as the
+"first octet."
+
+## Config Rotation {#config-rotation}
+
+The first two bits of any connection-ID MUST encode the configuration phase of
+that ID.  QUIC-LB messages indicate the phase of the algorithm and parameters
+that they encode.
+
+A new configuration may change one or more parameters of the old configuration,
+or change the algorithm used.
+
+It is possible for servers to have mutually exclusive sets of supported
+algorithms, or for a transition from one algorithm to another to result in Fail
+Payloads.  The four states encoded in these two bits allow two mutually
+exclusive server pools to coexist, and for each of them to transition to a new
+set of parameters.
+
+When new configuration is distributed to servers, there will be a transition
+period when connection IDs reflecting old and new configuration coexist in the
+network.  The rotation bits allow load balancers to apply the correct routing
+algorithm and parameters to incoming packets.
+
+Servers MUST NOT generate new connection IDs using an old configuration when it
+has sent an Ack payload for a new configuration.
+
+Load balancers SHOULD NOT use a codepoint to represent a new configuration until
+it takes precautions to make sure that all connections using IDs with an old
+configuration at that codepoint have closed or transitioned.  They MAY drop
+connection IDs with the old configuration after a reasonable interval to
+accelerate this process.
+
+## Configuration Failover
+
+If a server is configured to expect QUIC-LB messages, and it has not received
+these, it MUST generate connection IDs with the config rotation bits set to
+'0b11' and MUST use the "disable_migration" transport parameter in all new
+QUIC connections. It MUST NOT send NEW_CONNECTION_ID frames with new values.
+
+A load balancer that sees a connection ID with config rotation bits set to
+'0b11' MUST revert to 5-tuple routing.
+
+## Length Self-Description
+
+Local hardware cryptographic offload devices may accelerate QUIC servers by
+receiving keys from the QUIC implementation indexed to the connection ID.
+However, on physical devices operating multiple QUIC servers, it is impractical,
+as a practical matter, to efficiently lookup these keys if the connection ID
+does not self-encode its own length.
+
+Note that this is a function of particular server devices and is irrelevant to
+load balancers. As such, it is not negotiated between servers and load
+balancers. However, the remaining 6 bits in the first octet of the Connection ID
+are reserved to express the length of the following connection ID, not
+including the first octet.
+
+A server not using this functionality SHOULD make the six bits appear to be
+random.
+
 # Routing Algorithms
 
 In QUIC-LB, load balancers do not send individual connection IDs to servers.
@@ -198,7 +267,7 @@ depicted in the figure below.
 0                   1                   2                   3
 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
 +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-|C R|    Any  |             Server ID (X=8..152)                |      
+|  First octet  |             Server ID (X=8..152)              |      
 +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
 |                        Any (0..152-X)                         |
 +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
@@ -244,7 +313,7 @@ encryption and decryption. The format is depicted in the figure below.
 0                   1                   2                   3
 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
 +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-|C R|       Mixed routing and non-routing bits (62..158)        |      
+|  First octet  |  Mixed routing and non-routing bits (64..152) |      
 +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
 ~~~~~
 {: #obfuscated-cid-format title="Obfuscated CID Format"}
@@ -257,13 +326,9 @@ The number of bits MUST have enough entropy to have a different code point for
 each server, and SHOULD have enough entropy so that there are many codepoints
 for each server.
 
-The load balancer MUST NOT select a routing mask with more than 142 routing
-bits set to 1, which allows at least 2 bits for config rotation (see
-{{config-rotation}}) and 16 for server purposes in a maximum-length connection
-ID.
-
-The first two bits of an SCID MUST NOT be routing bits; these are reserved for
-config rotation.
+The load balancer MUST NOT select a routing mask with more than 136 routing
+bits set to 1, which allows for the first octet and up to 2 octets for server
+purposes in a maximum-length connection ID.
 
 The load balancer selects a divisor that MUST be larger than the number of
 servers.  It SHOULD be large enough to accommodate reasonable increases in the
@@ -296,7 +361,7 @@ these packets if not a QUIC Initial or 0-RTT packet.
 ### Server Actions
 
 The server chooses a connection ID length.  This MUST contain all of the routing
-bits and MUST be at least 8 octets to provide adequate entropy.
+bits and MUST be at least 9 octets to provide adequate entropy.
 
 When a server needs a new connection ID, it adds an arbitrary nonnegative
 integer multiple of the divisor to its modulus, without exceeding the maximum
@@ -318,11 +383,11 @@ Initial and 0RTT packets. The CID format is depicted below.
 0                   1                   2                   3
 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
 +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-|C R|                      Nonce (X=64..144)                    |      
+|  First Octet  |            Nonce (X=64..144)                  |      
 +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-|                 Encrypted Server ID (Y=8..158-X)              |
+|                 Encrypted Server ID (Y=8..152-X)              |
 +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-|                   For server use (0..160-X-Y)                 |
+|                   For server use (0..152-X-Y)                 |
 +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
 ~~~~~
 {: #stream-cipher-cid-format title="Stream Cipher CID Format"}
@@ -335,7 +400,7 @@ server IDs, including potential future servers.
 
 The load balancer also selects a nonce length and an 16-octet AES-ECB key to use
 for connection ID decryption.  The nonce length MUST be at least 8 octets and no
-more than 16 octets. The nonce length and server ID length MUST sum to 20 or
+more than 16 octets. The nonce length and server ID length MUST sum to 19 or
 fewer octets.
 
 The load balancer shares these three values with servers, as explained in
@@ -354,10 +419,10 @@ server id.
 server_id = encrypted_server_id ^ AES-ECB(key, padded-nonce)
 
 For example, if the nonce length is 10 octets and the server ID length is 2
-octets, the connection ID can be as small as 12 octets.  The load balancer uses
-the first 10 octets (including the config rotation bits) of the connection ID
-for the nonce, pads it to 16 octets using the first 6 octets of the token, and
-uses this to decrypt the server ID in the eleventh and twelfth octet.
+octets, the connection ID can be as small as 13 octets.  The load balancer uses
+the the second through eleventh of the connection ID for the nonce, pads it to 16
+octets using the first 6 octets of the token, and uses this to decrypt the server ID
+in the twelfth and thirteenth octet.
 
 The output of the decryption is the server ID that the load balancer uses for
 routing.
@@ -368,8 +433,7 @@ When generating a routable connection ID, the server writes arbitrary bits into
 its nonce octets, and its provided server ID into the server ID octets. Servers
 MAY opt to have a longer connection ID beyond the nonce and server ID. The nonce
 and additional bits MAY encode additional information, but SHOULD appear
-essentially random to observers. The first two bits of the first octet are
-reserved for config rotation {{config-rotation}}, but form part of the nonce.
+essentially random to observers.
 
 The server decrypts the server ID using 128-bit AES Electronic Codebook (ECB)
 mode, much like QUIC header protection. The nonce octets are padded to 16 octets
@@ -389,7 +453,7 @@ spurious connection IDs. However, it also requires connection IDs of at least
 0                   1                   2                   3
 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
 +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-|C R|  srvr use |       Encrypted server ID (X=8..144)          |      
+|  First octet  |       Encrypted server ID (X=8..144)          |      
 +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
 |             Encrypted Zero Padding (Y=0..144-X)               |
 +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
@@ -586,7 +650,7 @@ parameters for the Obfuscated CID algorithm.
 |                                                               |
 +                                                               +
 |                                                               |
-+                       Routing Bit Mask (144)                  +
++                       Routing Bit Mask (152)                  +
 |                                                               |
 +                                                               +
 |                                                               |
@@ -752,45 +816,6 @@ parameters needed for the Plaintext CID algorithm.
 The SIDL field indicates the length of the server ID field. The
 Server ID field indicates the encoding that represents the
 destination server.
-
-# Config Rotation {#config-rotation}
-
-The first two bits of any connection-ID MUST encode the configuration phase of
-that ID.  QUIC-LB messages indicate the phase of the algorithm and parameters
-that they encode.
-
-A new configuration may change one or more parameters of the old configuration,
-or change the algorithm used.
-
-It is possible for servers to have mutually exclusive sets of supported
-algorithms, or for a transition from one algorithm to another to result in Fail
-Payloads.  The four states encoded in these two bits allow two mutually
-exclusive server pools to coexist, and for each of them to transition to a new
-set of parameters.
-
-When new configuration is distributed to servers, there will be a transition
-period when connection IDs reflecting old and new configuration coexist in the
-network.  The rotation bits allow load balancers to apply the correct routing
-algorithm and parameters to incoming packets.
-
-Servers MUST NOT generate new connection IDs using an old configuration when it
-has sent an Ack payload for a new configuration.
-
-Load balancers SHOULD NOT use a codepoint to represent a new configuration until
-it takes precautions to make sure that all connections using IDs with an old
-configuration at that codepoint have closed or transitioned.  They MAY drop
-connection IDs with the old configuration after a reasonable interval to
-accelerate this process.
-
-## Configuration Failover
-
-If a server is configured to expect QUIC-LB messages, and it has not received
-these, it MUST generate connection IDs with the config rotation bits set to
-'0b11' and MUST use the "disable_migration" transport parameter in all new
-QUIC connections. It MUST NOT send NEW_CONNECTION_ID frames with new values.
-
-A load balancer that sees a connection ID with config rotation bits set to
-'0b11' MUST revert to 5-tuple routing.
 
 # Configuration Requirements
 
