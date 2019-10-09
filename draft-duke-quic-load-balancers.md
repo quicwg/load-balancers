@@ -97,7 +97,7 @@ include hardware assist on the server host itself, that does not have access to
 fully decrypted QUIC packets. Though not directly relevant to load balancing,
 QUIC-LB includes optional extensions to structure the connection ID for these
 other purposes. In particular, this document specifies a means of offloading
-stateless reset to counter Denial of Service attacks. It also proposes a system
+stateless retry to counter Denial of Service attacks. It also proposes a system
 for self-encoding connection ID length in all packets, so that crypto offload
 can consistently look up key information.
 
