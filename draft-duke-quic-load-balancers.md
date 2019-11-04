@@ -261,13 +261,26 @@ connection IDs.
 The algorithms differ in the complexity of configuration at both load balancer
 and server. Increasing complexity improves obfuscation of the server mapping.
 
-The load balancer MUST use routing logic that can handle DCIDs in QUIC long
-headers with a length shorter than expected by its algorithm. In QUIC version 1,
-both Initial and 0RTT packets have DCIDs chosen by the client. It SHOULD
-consistently route packets with a given DCID to the same server, so that
-the 0RTT packets arrive at a server with the necessary context. Aside from the
-constraints above, the load balancer may use any such algorithm without server
-coordination.
+As clients sometimes generate the DCIDs in long headers, these might not
+conform to the expectations of the routing algorithm. These are called
+"non-compliant DCIDs":
+
+* The DCID might not be long enough for the routing algorithm to process.
+* The extracted server mapping might not correspond to an active server.
+* A field that should be all zeroes after decryption may not be so.
+
+Load balancers MUST forward packets with long headers with non-compliant DCIDs
+to an active server using an algorithm of its own choosing, without server
+coordination. The algorithm SHOULD be deterministic over short time scales so
+that related packets go to the same server. For example, a non-compliant DCID
+might be converted to an integer and divided by the number of servers, with the
+modulus used to forward the packet. The number of servers is usually consistent
+on the time scale of a QUIC connection handshake.
+
+Load balancers SHOULD drop packets with non-compliant DCIDs in a short header.
+
+Load balancers MUST forward packets with compliant DCIDs to the server in
+accordance with the chosen routing algorithm.
 
 The load balancer MUST NOT make the routing behavior dependent on any bits in
 the first octet of the QUIC packet header, except the first bit, which indicates
@@ -277,6 +290,11 @@ should not build their design on version-specific templates.
 There are situations where a server pool might be operating two or more routing
 algorithms or parameter sets simultaneously.  The load balancer uses the first
 two bits of the connection ID to multiplex incoming DCIDs over these schemes.
+
+This section describes two participants: the load balancer and the server. The
+load balancer, in this description, generates configuration parameters. Note
+that in practice a third party configuration agent MAY assume this
+responsibility.
 
 ## Plaintext CID Algorithm {#plaintext-cid-algorithm}
 
@@ -370,8 +388,8 @@ not know the divisor or the routing bits will therefore have difficulty
 identifying that two SCIDs route to the same server.
 
 Note also that not all Connection IDs are necessarily routable, as the computed
-modulus may not match one assigned to any server.  Load balancers SHOULD drop
-these packets if not a QUIC Initial or 0-RTT packet.
+modulus may not match one assigned to any server. These DCIDs are non-compliant
+as described above.
 
 ### Server Actions
 
@@ -434,9 +452,9 @@ server_id = encrypted_server_id ^ AES-ECB(key, padded-nonce)
 
 For example, if the nonce length is 10 octets and the server ID length is 2
 octets, the connection ID can be as small as 13 octets.  The load balancer uses
-the the second through eleventh of the connection ID for the nonce, pads it to 16
-octets using the first 6 octets of the token, and uses this to decrypt the server ID
-in the twelfth and thirteenth octet.
+the the second through eleventh of the connection ID for the nonce, zero-pads it
+to 16 octets using the first 6 octets of the token, and uses this to decrypt the
+server ID in the twelfth and thirteenth octet.
 
 The output of the decryption is the server ID that the load balancer uses for
 routing.
@@ -450,9 +468,10 @@ and additional bits MAY encode additional information, but SHOULD appear
 essentially random to observers.
 
 The server decrypts the server ID using 128-bit AES Electronic Codebook (ECB)
-mode, much like QUIC header protection. The nonce octets are padded to 16 octets
-using the as many of the first octets of the token as necessary. AES-ECB encrypts
-this nonce using its key to generate a mask which it applies to the server id.
+mode, much like QUIC header protection. The nonce octets are zero-padded to 16
+octets using the as many of the first octets of the token as necessary. AES-ECB
+encrypts this nonce using its key to generate a mask which it applies to the
+server id.
 
 encrypted_server_id = server_id ^ AES-ECB(key, padded-nonce)
 
@@ -487,7 +506,7 @@ second octet of the decrypted connection ID and occupy continuous octets beyond
 that.
 
 The load balancer selects a zero-padding length. This SHOULD be at least four
-octets to allow detection of spurious connection IDs. The server ID and zero-
+octets to allow detection of non-compliant DCIDs. The server ID and zero-
 padding length MUST sum to no more than 16 octets. They SHOULD sum to no more
 than 12 octets, to provide servers adequate space to encode their own opaque
 data.
@@ -503,8 +522,7 @@ balancer reads the first octet to obtain the config rotation bits. It then
 decrypts the subsequent 16 octets using AES-ECB decryption and the chosen key.
 
 The decrypted plaintext contains the server id, zero padding, and opaque server
-data in that order. If the zero padding octets are not zero, the load balancer
-MUST drop the packet. The load balancer uses the server ID octets for routing.
+data in that order. The load balancer uses the server ID octets for routing.
 
 ### Server Actions
 
@@ -739,14 +757,20 @@ in the future, due to possible clock synchronization issues.
 A server MUST NOT send a Retry packet in response to an Initial packet that
 contains a retry token.
 
-# Protocol Description {#protocol-description}
+# Configuration Requirements
 
-The fundamental protocol requirement is to share the choice of routing
-algorithm, and the relevant parameters for that algorithm, between load balancer
-and server.
+QUIC-LB strives to minimize the configuration load to enable, as much as
+possible, a "plug-and-play" model. However, there are some configuration
+requirements based on algorithm and protocol choices above.
+
+If there is any in-band communication, servers MUST be explicitly configured
+with the token of the load balancer they expect to interface with.
+
+The load balancer and server MUST agree on a routing algorithm and the relevant
+parameters for that algorithm.
 
 For Plaintext CID Routing, this consists of the Server ID and the routing bytes.
-The Server ID is unique to each server, an the routing bytes are global.
+The Server ID is unique to each server, and the routing bytes are global.
 
 For Obfuscated CID Routing, this consists of the Routing Bits, Divisor, and
 Modulus. The Modulus is unique to each server, but the others MUST be global.
@@ -760,8 +784,64 @@ For Block Cipher CID Routing, this consists of the Server ID, Server ID Length,
 Key, and Zero-Padding Length. The Server ID is unique to each server, but the
 others MUST be global.
 
-Each routing configuration also requires a unique two-bit config rotation
-codepoint (see {{config-rotation}}) to identify it.
+A full QUIC-LB configuration MUST also specify the information content of the
+first CID octet and the presence and mode of any Retry Service.
+
+The following pseudocode depicts the data items necessary to store a full
+QUIC-LB configuration at the server. It is meant to describe the conceptual
+range and not specify the presentation of such configuration in an internet
+packet.
+
+~~~
+ uint2    config_rotation_bits;
+ enum     { in_band_config, out_of_band_config } config_method;
+ select (config_method) {
+     case in_band_config: uint64 config_token;
+     case out_of_band_config: null;
+ } config-method
+ boolean  first_octet_encodes_cid_length;
+ enum     { none, non_shared_state, shared_state } retry_service;
+ select (retry_service) {
+     case none: null;
+     case non_shared_state: null;
+     case shared_state: uint8 key[16];
+ } retry_service_config;
+ enum     { none, plaintext, obfuscated, stream_cipher, block_cipher }
+                   routing_algorithm;
+ select (routing_algorithm) {
+     case none: null;
+     case plaintext: struct {
+	  uint8 server_id_length; /* Between 1 and 19 */
+	  uint8 server_id[server_id_length];
+     } plaintext_config;
+     case obfuscated: struct {
+	  uint8  routing_bit_mask[19];
+	  uint16 divisor; /* Must be odd */
+	  uint16 modulus; /* Between 0 and (divisor - 1) */
+     } obfuscated_config;
+     case stream_cipher: struct {
+          uint8  nonce_length; /* Between 8 and 16 */
+	  uint8  server_id_length; /* Between 1 and (19 - nonce_length) */
+	  uint8  server_id[server_id_length];
+	  uint8  key[16];
+     } stream_cipher_config;
+     case block_cipher: struct {
+	  uint8  server_id_length;
+	  uint8  zero_padding_length; /* from 0 to (16 - server_id_length) */
+	  uint8  server_id[server_id_length];
+	  uint8  key[16];
+     } block_cipher_config;
+} routing_algorithm_config;
+~~~
+
+This specification allows for out-of-band dissemination of this configuration
+items, but also provides an in-band method for deployment models that need it.
+
+# Protocol Description {#protocol-description}
+
+There are multiple means of configuration that correspond to differing
+deployment models and increasing levels of concern about the security of the
+load balancer-server path.
 
 ## Out of band sharing
 
@@ -1072,34 +1152,6 @@ tokens.
 +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
 ~~~~~
 
-
-# Configuration Requirements
-
-QUIC-LB strives to minimize the configuration load to enable, as much as
-possible, a "plug-and-play" model. However, there are some configuration
-requirements based on algorithm and protocol choices above.
-
-There are three levels of configuration that correspond to increasing levels of
-concern about the security of the load balancer-server path.
-
-The complete information requirements are described in {{protocol-description}}.
-Load balancers MUST have configuration for all parameters of each routing
-algorithm they support.
-
-If there is any in-band communication, servers MUST be explicitly configured
-with the token of the load balancer they expect to interface with. Endpoints
-that use Stream Cipher CIDs MUST have this token regardless of the configuration
-method.
-
-Optionally, servers MAY be configured with the global parameters of supported
-routing algorithms. This allows load balancers to use Server ID and Modulus
-Payloads, limiting the information sent in-band.
-
-Finally, servers MAY be directly configured with their unique server IDs or
-modulus, eliminating need for in-band messaging at all.  In this case, servers
-and load balancers MUST enable only one routing algorithm, as there is no
-explicit message to agree on one or the other.
-
 # Security Considerations {#security-considerations}
 
 QUIC-LB is intended to preserve routability and prevent linkability.  Attacks on
@@ -1169,6 +1221,8 @@ There are no IANA requirements.
 - Editorial changes
 - Made load balancer behavior independent of QUIC version
 - Got rid of token in stream cipher encoding, because server might not have it
+- Defined "non-compliant DCID" and specified rules for handling them.
+- Added psuedocode for config schema
 
 ## Since draft-duke-quic-load-balancers-04
 - Added standard for retry services
