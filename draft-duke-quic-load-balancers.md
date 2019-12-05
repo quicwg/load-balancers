@@ -297,7 +297,7 @@ It also assigns a server ID to each server.
 ### Load Balancer Actions
 
 On each incoming packet, the load balancer extracts consecutive octets,
-beginning with the second. These bytes represent the server ID.
+beginning with the second octet. These bytes represent the server ID.
 
 ### Server Actions
 
