@@ -761,11 +761,6 @@ packet. The comments signify the range of acceptable values where applicable.
 
 ~~~
  uint2    config_rotation_bits;
- enum     { in_band_config, out_of_band_config } config_method;
- select (config_method) {
-     case in_band_config: uint64 config_token;
-     case out_of_band_config: null;
- } config-method
  boolean  first_octet_encodes_cid_length;
  enum     { none, non_shared_state, shared_state } retry_service;
  select (retry_service) {
