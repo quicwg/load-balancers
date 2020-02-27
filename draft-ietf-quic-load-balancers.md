@@ -794,7 +794,7 @@ packet. The comments signify the range of acceptable values where applicable.
 } routing_algorithm_config;
 ~~~
 
-# Load balancer chain considerations
+# Load balancer chains
 
 Some network architectures may have multiple tiers of low-state load balancers.
 Although QUIC-LB is not explicitly designed for this use case, it is possible to
