@@ -153,13 +153,6 @@ mapping to outside observers compromises QUIC's defenses against linkability.
 Though not an explicit goal of the QUIC-LB design, concealing the server mapping
 also complicates attempts to focus attacks on a specific server in the pool.
 
-## Load Balancer Chains
-
-While it is possible to construct a scheme that supports multiple low-state load
-balancers in the path, by using different parts of the connection ID to encode
-routing information for each load balancer, this use case is out of scope for
-QUIC-LB.
-
 # First CID octet {#first-octet}
 
 The first octet of a Connection ID is reserved for two special purposes, one
@@ -801,6 +794,18 @@ packet. The comments signify the range of acceptable values where applicable.
 } routing_algorithm_config;
 ~~~
 
+# Load balancer chain considerations
+
+Some network architectures may have multiple tiers of low-state load balancers.
+Although QUIC-LB is not explicitly designed for this use case, it is possible to
+support it. In the discussion below, the "first-tier" load balancers refer to
+the devices closest to the client.
+
+Each second-tier load balancer SHOULD be assigned a range of server IDs,
+while the first-tier load balancer associates that range with the second-tier
+device. Note that this solution is extensible to arbitrarily large numbers of
+load- balancing tiers, as the maximum server ID space is quite large.
+
 # Security Considerations {#security-considerations}
 
 QUIC-LB is intended to prevent linkability.  Attacks would therefore attempt to
@@ -853,6 +858,11 @@ There are no IANA requirements.
 
 > **RFC Editor's Note:**  Please remove this section prior to
 > publication of a final version of this document.
+
+## since-draft-ietf-quic-load-balancers-01
+- Deleted remnants of in-band protocol
+- Light edit of Retry Services section
+- Discussed load balancer chains
 
 ## since-draft-ietf-quic-load-balancers-00
 - Removed in-band protocol from the document
