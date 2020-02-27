@@ -796,15 +796,17 @@ packet. The comments signify the range of acceptable values where applicable.
 
 # Load balancer chains
 
-Some network architectures may have multiple tiers of low-state load balancers.
-Although QUIC-LB is not explicitly designed for this use case, it is possible to
-support it. In the discussion below, the "first-tier" load balancers refer to
-the devices closest to the client.
+Some network architectures may have multiple tiers of low-state load balancers,
+where a first tier of devices makes a routing decision to the next tier, and so
+on until packets reach the server. Although QUIC-LB is not explicitly designed
+for this use case, it is possible to support it.
 
-Each second-tier load balancer SHOULD be assigned a range of server IDs,
-while the first-tier load balancer associates that range with the second-tier
-device. Note that this solution is extensible to arbitrarily large numbers of
-load- balancing tiers, as the maximum server ID space is quite large.
+If each load balancer is assigned a range of server IDs that is a subset of the
+range of IDs assigned to devices that are closer to the client, then the first
+devices to process an incoming packet can extract the server ID and then map it
+to the correct forwrading address. Note that this solution is extensible to
+arbitrarily large numbers of load-balancing tiers, as the maximum server ID
+space is quite large.
 
 # Security Considerations {#security-considerations}
 
