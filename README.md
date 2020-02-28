@@ -21,4 +21,4 @@ This requires that you have the necessary software installed.  See
 ## Contributing
 
 See the
-[guidelines for contributions](https://github.com/quicwg/version-negotiation/blob/master/CONTRIBUTING.md).
+[guidelines for contributions](https://github.com/quicwg/load-balancers/blob/master/CONTRIBUTING.md).
