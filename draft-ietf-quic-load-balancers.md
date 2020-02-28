@@ -153,13 +153,6 @@ mapping to outside observers compromises QUIC's defenses against linkability.
 Though not an explicit goal of the QUIC-LB design, concealing the server mapping
 also complicates attempts to focus attacks on a specific server in the pool.
 
-## Load Balancer Chains
-
-While it is possible to construct a scheme that supports multiple low-state load
-balancers in the path, by using different parts of the connection ID to encode
-routing information for each load balancer, this use case is out of scope for
-QUIC-LB.
-
 # First CID octet {#first-octet}
 
 The first octet of a Connection ID is reserved for two special purposes, one
@@ -796,6 +789,20 @@ packet. The comments signify the range of acceptable values where applicable.
 } routing_algorithm_config;
 ~~~
 
+# Load balancer chains
+
+Some network architectures may have multiple tiers of low-state load balancers,
+where a first tier of devices makes a routing decision to the next tier, and so
+on until packets reach the server. Although QUIC-LB is not explicitly designed
+for this use case, it is possible to support it.
+
+If each load balancer is assigned a range of server IDs that is a subset of the
+range of IDs assigned to devices that are closer to the client, then the first
+devices to process an incoming packet can extract the server ID and then map it
+to the correct forwrading address. Note that this solution is extensible to
+arbitrarily large numbers of load-balancing tiers, as the maximum server ID
+space is quite large.
+
 # Security Considerations {#security-considerations}
 
 QUIC-LB is intended to prevent linkability.  Attacks would therefore attempt to
@@ -848,6 +855,11 @@ There are no IANA requirements.
 
 > **RFC Editor's Note:**  Please remove this section prior to
 > publication of a final version of this document.
+
+## since-draft-ietf-quic-load-balancers-01
+- Deleted remnants of in-band protocol
+- Light edit of Retry Services section
+- Discussed load balancer chains
 
 ## since-draft-ietf-quic-load-balancers-00
 - Removed in-band protocol from the document
