@@ -526,6 +526,11 @@ trusted network service. One requires no shared state; the server need only be
 configured to trust a retry service, though this imposes other operational
 constraints. The other requires shared key, but has no such constraints.
 
+Retry services MUST forward all QUIC packets that are not of type Initial or
+0-RTT. Other packets types might involve changed IP addresses or connection IDs,
+so it is not practical for Retry Services to identify such packets as valid or
+invalid.
+
 ## Common Requirements
 
 Regardless of mechanism, a retry service has an active mode, where it is
@@ -536,7 +541,7 @@ stochastic process or based on client address.
 
 A retry service MUST forward all packets for a QUIC version it does not
 understand. Note that if servers support versions the retry service does not,
-this may increase loads on the servers. However, dropping these packets would
+this may increase load on the servers. However, dropping these packets would
 introduce chokepoints to block deployment of new QUIC versions. Note that future
 versions of QUIC might not have Retry packets, require different information in
 Retry, or use different packet type indicators.
