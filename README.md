@@ -1,10 +1,10 @@
-# QUIC Load Balancer
+# QUIC-LB: Generating Routable QUIC Connection IDs
 
-This is the working area for the IETF QUIC WG Internet-Draft, "QUIC-LB: Generating Routable QUIC Connection IDs"
+This is the working area for the IETF [QUIC Working Group](https://datatracker.ietf.org/wg/quic/documents/) Internet-Draft, "QUIC-LB: Generating Routable QUIC Connection IDs".
 
-* [Editor's Copy](https://quicwg.org/load-balancers/draft-ietf-quic-load-balancers.html)
+* [Editor's Copy](https://quicwg.github.io/load-balancers/#go.draft-ietf-quic-load-balancers.html)
 * [Working Group Draft](https://tools.ietf.org/html/draft-ietf-quic-load-balancers)
-* [Compare Editor's Copy to Working Group Draft](https://quicwg.org/load-balancers/#go.draft-ietf-quic-load-balancers.diff)
+* [Compare Editor's Copy to Working Group Draft](https://quicwg.github.io/load-balancers/#go.draft-ietf-quic-load-balancers.diff)
 
 ## Building the Draft
 

@@ -1,0 +1,7 @@
+<note title="Note to Readers">
+<t>Discussion of this document takes place on the
+  QUIC Working Group mailing list (quic@ietf.org),
+  which is archived at <eref target="https://mailarchive.ietf.org/arch/browse/quic/">https://mailarchive.ietf.org/arch/browse/quic/</eref>.</t>
+<t>Source for this draft and an issue tracker can be found at
+  <eref target="https://github.com/quicwg/load-balancers">https://github.com/quicwg/load-balancers</eref>.</t>
+</note>
