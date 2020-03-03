@@ -54,12 +54,12 @@ jobs:
             fi
 
       # For tagged builds, upload to the datatracker.
-#      - deploy:
-#          name: "Upload to Datatracker"
-#          command: |
-#            if [ "${CIRCLE_TAG#draft-}" != "$CIRCLE_TAG" ]; then
-#              make upload
-#            fi
+      - deploy:
+          name: "Upload to Datatracker"
+          command: |
+            if [ "${CIRCLE_TAG#draft-}" != "$CIRCLE_TAG" ]; then
+              make upload
+            fi
 
       # Save GitHub issues
       - run:
