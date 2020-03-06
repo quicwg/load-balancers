@@ -881,14 +881,14 @@ cid 0b66474fa11329e6bb947818 sid 147
 cid 0b34bd7c0882deb0252e2a58 sid ca
 cid 0b0506ee792163bf9330dc0a sid 14d
 
-cr_bits 0x0 length_self_encoding: n bitmask 4855d35f5b88ddada153af61b6707ee646
+cr_bits 0x1 length_self_encoding: n bitmask 4855d35f5b88ddada153af61b6707ee646
     divisor 301
 
-cid 112dc4c09e2d548e508dc825bbbca991c131 sid 8
-cid 11988071f9f03a25c322cc6fb1d57151d26f sid 93
-cid 1113e05071f74cdb7d0dc24d72687b21e1d1 sid c0
-cid 1123c129650c7ee66f37266044ef52e74ffa sid 60
-cid 1195f77e7e66891b57c224c5781c8c5dd8ba sid 8f
+cid 542dc4c09e2d548e508dc825bbbca991c131 sid 8
+cid 47988071f9f03a25c322cc6fb1d57151d26f sid 93
+cid 6a13e05071f74cdb7d0dc24d72687b21e1d1 sid c0
+cid 4323c129650c7ee66f37266044ef52e74ffa sid 60
+cid 5e95f77e7e66891b57c224c5781c8c5dd8ba sid 8f
 
 cr_bits 0x0 length_self_encoding: y bitmask 9f98bd3df66338c2d2c6 divisor 459
 
@@ -898,14 +898,14 @@ cid 0ac7e70a5fe6b353b824aa sid 12
 cid 0af9612ae5ccba3ef98b81 sid d1
 cid 0a94ab209ea1d2e1e23751 sid 5d
 
-cr_bits 0x0 length_self_encoding: n bitmask dfba93c4f98f57103f5ae331
+cr_bits 0x2 length_self_encoding: n bitmask dfba93c4f98f57103f5ae331
     divisor 461
 
-cid 0c70b8c69e40ef2f3f8937e817 sid d3
-cid 0c828830ea1789dab13a043795 sid 44
-cid 0c604a580baa3eb0a47812e490 sid 137
-cid 0cb4bc309337ff73e143ff6deb sid 9f
-cid 0ce75c0a984a79d3b4af40d155 sid 127
+cid 8b70b8c69e40ef2f3f8937e817 sid d3
+cid b1828830ea1789dab13a043795 sid 44
+cid 90604a580baa3eb0a47812e490 sid 137
+cid a5b4bc309337ff73e143ff6deb sid 9f
+cid fce75c0a984a79d3b4af40d155 sid 127
 
 cr_bits 0x0 length_self_encoding: y bitmask 8320fefc5309f7aa670476 divisor 379
 
@@ -929,14 +929,14 @@ cid 0e78f0325a8e34a40661f51f235906 sid 1d
 cid 0ef37923f81c32632299bceabd1d92 sid fa
 cid 0ea30788c012daa94a83865a2c7f28 sid b3
 
-cr_bits 0x0 length_self_encoding: n nonce_len 9 sid_len 2
+cr_bits 0x1 length_self_encoding: n nonce_len 9 sid_len 2
     key 906220f402ba3bd893ccc4dd9cfc04b0
 
-cid 0b33366764888138f1465352 sid b839
-cid 0b29458bbe6cb9befc04bdeb sid 3b27
-cid 0be4e8235c4ebd5442d85bb0 sid bb5c
-cid 0bd790d1d0cf2b50796cad12 sid 4ecd
-cid 0b5325eceaca3528d8c0314b sid 54fd
+cid 7b33366764888138f1465352 sid b839
+cid 4329458bbe6cb9befc04bdeb sid 3b27
+cid 61e4e8235c4ebd5442d85bb0 sid bb5c
+cid 4fd790d1d0cf2b50796cad12 sid 4ecd
+cid 725325eceaca3528d8c0314b sid 54fd
 
 cr_bits 0x0 length_self_encoding: y nonce_len 8 sid_len 3
     key 0a9b8ccdee977a65e3519693fcd55c8c
@@ -950,11 +950,11 @@ cid 0b3133feac7ae7125b1d0702 sid 1a5db3
 cr_bits 0x0 length_self_encoding: n nonce_len 8 sid_len 4
     key 66c5acdb45a40c91da8cfbbdc77c157e
 
-cid 0ca078bbf87c71264879c58a5a sid 20f1e37e
-cid 0c577ce3800cf22ead7f9ba9a5 sid 29e462c4
-cid 0c0f6592fcd9167d0aa201e228 sid a0b0fb8a
-cid 0ce4df0eb7db00363b1721e4a4 sid 31f15006
-cid 0c54b24c7bd39f081f00f44295 sid 551b8c28
+cid 2da078bbf87c71264879c58a5a sid 20f1e37e
+cid 04577ce3800cf22ead7f9ba9a5 sid 29e462c4
+cid 1a0f6592fcd9167d0aa201e228 sid a0b0fb8a
+cid 11e4df0eb7db00363b1721e4a4 sid 31f15006
+cid 3d54b24c7bd39f081f00f44295 sid 551b8c28
 
 cr_bits 0x0 length_self_encoding: y nonce_len 12 sid_len 5
     key ba4909a865c19d0234e090197d61bab9
@@ -988,14 +988,14 @@ cid:  0d32102be441600f608c95841fd40ce978aa7a02 sid: 0c8b
 cid:  2e6bfc53c91c275019cd809200fa8e23836565ab sid: feca
 cid:  29b87a902ed129c26f7e4e918a68703dc71a6e0a sid: 8941
 
-cr_bits 0x0 length_self_encoding: y sid_len 3 zp_len 9
+cr_bits 0x1 length_self_encoding: y sid_len 3 zp_len 9
     key 42e657946b96b7052ab8e6eeb863ee24
 
-cid:  13c48f7884d73fd9016f63e50453bfd9bcfc637d sid: b46b68
-cid:  13f45532f6a4f0e1757fa15c35f9a2ab0fcce621 sid: 2147b4
-cid:  1361fd4bbcee881a637210f4fffc02134772cc76 sid: e4bf4b
-cid:  13881ffde14e613ef151e50ba875769d6392809b sid: c2afee
-cid:  13ad0d60204d88343492334e6c4c4be88d4a3add sid: ae0331
+cid:  53c48f7884d73fd9016f63e50453bfd9bcfc637d sid: b46b68
+cid:  53f45532f6a4f0e1757fa15c35f9a2ab0fcce621 sid: 2147b4
+cid:  5361fd4bbcee881a637210f4fffc02134772cc76 sid: e4bf4b
+cid:  53881ffde14e613ef151e50ba875769d6392809b sid: c2afee
+cid:  53ad0d60204d88343492334e6c4c4be88d4a3add sid: ae0331
 
 cr_bits 0x0 length_self_encoding: n sid_len 4 zp_len 8
     key ee2dc6a3359a94b0043ca0c82715ce71
@@ -1006,14 +1006,14 @@ cid:  202f424376f234d5f014f41cebc38de2619c6c71 sid: f94ff800
 cid:  146ac3e4bbb750d3bfb617ef4b0cb51a1cae5868 sid: c2071b1b
 cid:  36dfe886538af7eb16a196935b3705c9d741479f sid: 26359dbb
 
-cr_bits 0x0 length_self_encoding: y sid_len 5 zp_len 7
+cr_bits 0x2 length_self_encoding: y sid_len 5 zp_len 7
     key 700837da8834840afe7720186ec610c9
 
-cid:  131ef3cc07e2eaf08d4c1902cd564d907cc3377c sid: 759b1d419a
-cid:  1398c3d0203ab15f1dfeb5aa8f81e52888c32008 sid: 77cc0d3310
-cid:  13f4ba09ab08a9ef997db4fa37a97dbf2b4c5481 sid: f7db9dce32
-cid:  13744f4bedf95e04dd6607592ecf775825403093 sid: e264d714d2
-cid:  13256308e3d349f8839dec840b0a90c7e7a1fc20 sid: 618b07791f
+cid:  931ef3cc07e2eaf08d4c1902cd564d907cc3377c sid: 759b1d419a
+cid:  9398c3d0203ab15f1dfeb5aa8f81e52888c32008 sid: 77cc0d3310
+cid:  93f4ba09ab08a9ef997db4fa37a97dbf2b4c5481 sid: f7db9dce32
+cid:  93744f4bedf95e04dd6607592ecf775825403093 sid: e264d714d2
+cid:  93256308e3d349f8839dec840b0a90c7e7a1fc20 sid: 618b07791f
 
 # Acknowledgments
 
