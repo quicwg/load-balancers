@@ -799,7 +799,12 @@ packet. The comments signify the range of acceptable values where applicable.
 } routing_algorithm_config;
 ~~~
 
-# Load balancer chains
+# Additional Use Cases
+
+This section discusses considerations for some deployment scenarios not implied
+by the specification above.
+
+## Load balancer chains
 
 Some network architectures may have multiple tiers of low-state load balancers,
 where a first tier of devices makes a routing decision to the next tier, and so
@@ -812,6 +817,19 @@ devices to process an incoming packet can extract the server ID and then map it
 to the correct forwrading address. Note that this solution is extensible to
 arbitrarily large numbers of load-balancing tiers, as the maximum server ID
 space is quite large.
+
+## Moving connections between servers
+
+Some deployments may transparently move a connection from one server to another.
+The means of transferring connection state between servers is out of scope of
+this document.
+
+To support a handover, a server involved in the transition could issue CIDs that
+map to the new server via a NEW_CONNECTION_ID frame, and retire CIDs associated
+with the new server.
+
+Alternately, if the old server is going offline, the load balancer could simply
+map its server ID to the new server's address.
 
 # Security Considerations {#security-considerations}
 
