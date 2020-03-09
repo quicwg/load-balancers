@@ -187,9 +187,9 @@ Configuration Agents SHOULD make an effort to deliver new configurations to
 load balancers before doing so to servers, so that load balancers are ready to
 process CIDs using the new parameters when they arrive.
 
-Configuration Agents SHOULD NOT use a codepoint to represent a new configuration
-until it takes precautions to make sure that all connections using CIDs with an
-old configuration at that codepoint have closed or transitioned.
+A Configuration Agent SHOULD NOT use a codepoint to represent a new
+configuration until it takes precautions to make sure that all connections using
+CIDs with an old configuration at that codepoint have closed or transitioned.
 
 Servers MUST NOT generate new connection IDs using an old configuration after
 receiving a new one from the configuration agent. Servers MUST send
@@ -848,9 +848,9 @@ mapping, and therefore does not address these concerns. It exists to allow
 consistent CID encoding for compatibility across a network infrastructure, which
 makes QUIC robust to NAT rebinding. Servers that are running the Plaintext CID
 algorithm SHOULD only use it to generate new CIDs for the Server Initial Packet
-and SHOULD NOT send CIDs in QUIC NEW_CONNECTION_ID frames, except that sends one
-new Connection ID in the event of config rotation {{config-rotation}}.  Doing so
-might falsely suggest to the client that said CIDs were generated in a
+and SHOULD NOT send CIDs in QUIC NEW_CONNECTION_ID frames, except that it sends
+one new Connection ID in the event of config rotation {{config-rotation}}.
+Doing so might falsely suggest to the client that said CIDs were generated in a
 secure fashion.
 
 A linkability attack would find some means of determining that two connection
