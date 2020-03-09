@@ -116,7 +116,9 @@ significance described in RFC 2119.
 In this document, "client" and "server" refer to the endpoints of a QUIC
 connection unless otherwise indicated.  A "load balancer" is an intermediary for
 that connection that does not possess QUIC connection keys, but it may rewrite
-IP addresses or conduct other IP or UDP processing.
+IP addresses or conduct other IP or UDP processing. A "configuration agent" is
+the entity that determines the QUIC-LB configuration parameters for the network
+and leverages some system to distribute that configuration.
 
 Note that stateful load balancers that act as proxies, by terminating a QUIC
 connection with the client and then retrieving data from the server using QUIC
@@ -181,14 +183,19 @@ period when connection IDs reflecting old and new configuration coexist in the
 network.  The rotation bits allow load balancers to apply the correct routing
 algorithm and parameters to incoming packets.
 
-Servers MUST NOT generate new connection IDs using an old configuration when it
-has sent an Ack payload for a new configuration.
+Configuration Agents SHOULD make an effort to deliver new configurations to
+load balancers before doing so to servers, so that load balancers are ready to
+process CIDs using the new parameters when they arrive.
 
-Load balancers SHOULD NOT use a codepoint to represent a new configuration until
-it takes precautions to make sure that all connections using IDs with an old
-configuration at that codepoint have closed or transitioned.  They MAY drop
-connection IDs with the old configuration after a reasonable interval to
-accelerate this process.
+Configuration Agents SHOULD NOT use a codepoint to represent a new configuration
+until it takes precautions to make sure that all connections using CIDs with an
+old configuration at that codepoint have closed or transitioned.
+
+Servers MUST NOT generate new connection IDs using an old configuration after
+receiving a new one from the configuration agent. Servers MUST send
+NEW_CONNECTION_ID frames that provide CIDS using the new configuration, and
+retire CIDs using the old configuration using the "Retire Prior To" field of
+that frame.
 
 ## Configuration Failover
 
@@ -838,11 +845,13 @@ subvert this purpose.
 
 Note that the Plaintext CID algorithm makes no attempt to obscure the server
 mapping, and therefore does not address these concerns. It exists to allow
-consistent CID encoding for compatibility across a network infrastructure.
-Servers that are running the Plaintext CID algorithm SHOULD only use it to
-generate new CIDs for the Server Initial Packet and SHOULD NOT send CIDs
-in QUIC NEW_CONNECTION_ID frames. Doing so might falsely suggest to the client
-that said CIDs were generated in a secure fashion.
+consistent CID encoding for compatibility across a network infrastructure, which
+makes QUIC robust to NAT rebinding. Servers that are running the Plaintext CID
+algorithm SHOULD only use it to generate new CIDs for the Server Initial Packet
+and SHOULD NOT send CIDs in QUIC NEW_CONNECTION_ID frames, except that sends one
+new Connection ID in the event of config rotation {{config-rotation}}.  Doing so
+might falsely suggest to the client that said CIDs were generated in a
+secure fashion.
 
 A linkability attack would find some means of determining that two connection
 IDs route to the same server. As described above, there is no scheme that
@@ -852,12 +861,12 @@ frustrate any analysis of server ID encoding have diminishing returns.
 ## Attackers not between the load balancer and server
 
 Any attacker might open a connection to the server infrastructure and
-aggressively retire connection IDs to obtain a large sample of IDs that map to
-the same server. It could then apply analytical techniques to try to obtain the
+aggressively simulate migration to obtain a large sample of IDs that map to the
+same server. It could then apply analytical techniques to try to obtain the
 server encoding.
 
-The Encrypted CID algorithm provides robust entropy to making any sort of
-linkage.  The Obfuscated CID obscures the mapping and prevents trivial
+The Stream and Block Cipher CID algorithms provide robust entropy to making any
+sort of linkage.  The Obfuscated CID obscures the mapping and prevents trivial
 brute-force attacks to determine the routing parameters, but does not provide
 robust protection against sophisticated attacks.
 
@@ -1039,6 +1048,9 @@ cid:  93256308e3d349f8839dec840b0a90c7e7a1fc20 sid: 618b07791f
 
 > **RFC Editor's Note:**  Please remove this section prior to
 > publication of a final version of this document.
+
+## since-draft-ietf-quic-load-balancers-02
+- Cleaned up text about config rotation
 
 ## since-draft-ietf-quic-load-balancers-01
 - Test vectors for load balancer decoding
