@@ -859,6 +859,162 @@ There are no IANA requirements.
 
 --- back
 
+# Load Balancer Test Vectors {#test-vectors}
+
+Because any connection ID encoding in this specification includes many bits
+for server use without affecting extraction of the connection ID, there are
+many possible connection IDs for any given set of parameters. However, every
+connection ID should result in a unique server ID. The following connection
+IDs can be used to verify that a load balancer implementation extracts the
+correct server ID.
+
+## Obfuscated Connection ID Algorithm
+
+The following section lists a set of OCID load balancer configuration, followed
+by five CIDs from which the load balancer can extract the server ID.
+
+cr_bits 0x0 length_self_encoding: y bitmask ddc2f17788d77e3239b4ea divisor 345
+
+cid 0b72715d4745ce26cca8c750 sid b
+cid 0b63a1785b6c0b0857225e96 sid 3f
+cid 0b66474fa11329e6bb947818 sid 147
+cid 0b34bd7c0882deb0252e2a58 sid ca
+cid 0b0506ee792163bf9330dc0a sid 14d
+
+cr_bits 0x1 length_self_encoding: n bitmask 4855d35f5b88ddada153af61b6707ee646
+    divisor 301
+
+cid 542dc4c09e2d548e508dc825bbbca991c131 sid 8
+cid 47988071f9f03a25c322cc6fb1d57151d26f sid 93
+cid 6a13e05071f74cdb7d0dc24d72687b21e1d1 sid c0
+cid 4323c129650c7ee66f37266044ef52e74ffa sid 60
+cid 5e95f77e7e66891b57c224c5781c8c5dd8ba sid 8f
+
+cr_bits 0x0 length_self_encoding: y bitmask 9f98bd3df66338c2d2c6 divisor 459
+
+cid 0ad52216e7798c28340fd6 sid 125
+cid 0a78f8ecbd087083639f94 sid 4b
+cid 0ac7e70a5fe6b353b824aa sid 12
+cid 0af9612ae5ccba3ef98b81 sid d1
+cid 0a94ab209ea1d2e1e23751 sid 5d
+
+cr_bits 0x2 length_self_encoding: n bitmask dfba93c4f98f57103f5ae331
+    divisor 461
+
+cid 8b70b8c69e40ef2f3f8937e817 sid d3
+cid b1828830ea1789dab13a043795 sid 44
+cid 90604a580baa3eb0a47812e490 sid 137
+cid a5b4bc309337ff73e143ff6deb sid 9f
+cid fce75c0a984a79d3b4af40d155 sid 127
+
+cr_bits 0x0 length_self_encoding: y bitmask 8320fefc5309f7aa670476 divisor 379
+
+cid 0bb110af53dca7295e7d4b7e sid 101
+cid 0b0d284cdff364a634a4b93b sid e3
+cid 0b82ff1555c4a95f9b198090 sid 14e
+cid 0b7a427d3e508ad71e98b797 sid 14e
+cid 0b71d1d4e3e3cd54d435b3fd sid eb
+
+## Stream Cipher Connection ID Algorithm
+
+Like the previous section, the text below lists a set of load balancer
+configuration and 5 CIDs generated with that configuration.
+
+cr_bits 0x0 length_self_encoding: y nonce_len 13 sid_len 1
+    key 16eff325e8bf8dfebdae003543fb845f
+
+cid 0eb9eb1fc72eed820cf5658cdd7888 sid 9c
+cid 0e6f4de5beb5aa4170f44104318c5b sid c0
+cid 0e78f0325a8e34a40661f51f235906 sid 1d
+cid 0ef37923f81c32632299bceabd1d92 sid fa
+cid 0ea30788c012daa94a83865a2c7f28 sid b3
+
+cr_bits 0x1 length_self_encoding: n nonce_len 9 sid_len 2
+    key 906220f402ba3bd893ccc4dd9cfc04b0
+
+cid 7b33366764888138f1465352 sid b839
+cid 4329458bbe6cb9befc04bdeb sid 3b27
+cid 61e4e8235c4ebd5442d85bb0 sid bb5c
+cid 4fd790d1d0cf2b50796cad12 sid 4ecd
+cid 725325eceaca3528d8c0314b sid 54fd
+
+cr_bits 0x0 length_self_encoding: y nonce_len 8 sid_len 3
+    key 0a9b8ccdee977a65e3519693fcd55c8c
+
+cid 0bfced0b5727be40af49102e sid 08d342
+cid 0b160042b34fe728a9f05376 sid 4d61e0
+cid 0b933157fc8c352ee9490ae7 sid 34a912
+cid 0b80d1d567aafedb737ed0eb sid 4f2a92
+cid 0b3133feac7ae7125b1d0702 sid 1a5db3
+
+cr_bits 0x0 length_self_encoding: n nonce_len 8 sid_len 4
+    key 66c5acdb45a40c91da8cfbbdc77c157e
+
+cid 2da078bbf87c71264879c58a5a sid 20f1e37e
+cid 04577ce3800cf22ead7f9ba9a5 sid 29e462c4
+cid 1a0f6592fcd9167d0aa201e228 sid a0b0fb8a
+cid 11e4df0eb7db00363b1721e4a4 sid 31f15006
+cid 3d54b24c7bd39f081f00f44295 sid 551b8c28
+
+cr_bits 0x0 length_self_encoding: y nonce_len 12 sid_len 5
+    key ba4909a865c19d0234e090197d61bab9
+
+cid 11325919a7205f4f5e222c2ac94ec3309c1e sid 10f115363a
+cid 11ca85a9e5d02563ebb119acfacb3007993d sid 4108093aaf
+cid 1196ef4f0936cb6062b5db441395ef9f3831 sid 383c14e754
+cid 11ce3a6611da0e75f59dc8fe3cf4cfc6a61d sid d0da150dbf
+cid 116bd4cf085659d26b39dd5dd107ae87a694 sid b2945466df
+
+## Block Cipher Connection ID Algorithm
+
+Like the previous section, the text below lists a set of load balancer
+configuration and 5 CIDs generated with that configuration.
+
+cr_bits 0x0 length_self_encoding: y sid_len 1 zp_len 11
+    key 8c24cb9b9c3289b4ee63c3f3d7f93a9a
+
+cid:  1378e44f874642624fa69e7b4aec15a2a678b8b5 sid: 48
+cid:  13772c82fe8ce6a00813f76a211b730eb4b20363 sid: 66
+cid:  135ccf507b1c209457f80df0217b9a1df439c4b2 sid: 30
+cid:  13898459900426c073c66b1001c867f9098a7aab sid: fe
+cid:  1397a18da00bf912f20049d9f0a007444f8b6699 sid: 30
+
+cr_bits 0x0 length_self_encoding: n sid_len 2 zp_len 10
+    key cc7ec42794664a8428250c12a7fb16fa
+
+cid:  0cb28bfc1f65c3de14752bc0fc734ef824ce8f78 sid: 33fa
+cid:  2345e9fc7a7be55b4ba1ff6ffa04f3f5f8c67009 sid: ee47
+cid:  0d32102be441600f608c95841fd40ce978aa7a02 sid: 0c8b
+cid:  2e6bfc53c91c275019cd809200fa8e23836565ab sid: feca
+cid:  29b87a902ed129c26f7e4e918a68703dc71a6e0a sid: 8941
+
+cr_bits 0x1 length_self_encoding: y sid_len 3 zp_len 9
+    key 42e657946b96b7052ab8e6eeb863ee24
+
+cid:  53c48f7884d73fd9016f63e50453bfd9bcfc637d sid: b46b68
+cid:  53f45532f6a4f0e1757fa15c35f9a2ab0fcce621 sid: 2147b4
+cid:  5361fd4bbcee881a637210f4fffc02134772cc76 sid: e4bf4b
+cid:  53881ffde14e613ef151e50ba875769d6392809b sid: c2afee
+cid:  53ad0d60204d88343492334e6c4c4be88d4a3add sid: ae0331
+
+cr_bits 0x0 length_self_encoding: n sid_len 4 zp_len 8
+    key ee2dc6a3359a94b0043ca0c82715ce71
+
+cid:  058b9da37f436868cca3cef40c7f98001797c611 sid: eaf846c7
+cid:  1259fc97439adaf87f61250afea059e5ddf66e44 sid: 4cc5e84a
+cid:  202f424376f234d5f014f41cebc38de2619c6c71 sid: f94ff800
+cid:  146ac3e4bbb750d3bfb617ef4b0cb51a1cae5868 sid: c2071b1b
+cid:  36dfe886538af7eb16a196935b3705c9d741479f sid: 26359dbb
+
+cr_bits 0x2 length_self_encoding: y sid_len 5 zp_len 7
+    key 700837da8834840afe7720186ec610c9
+
+cid:  931ef3cc07e2eaf08d4c1902cd564d907cc3377c sid: 759b1d419a
+cid:  9398c3d0203ab15f1dfeb5aa8f81e52888c32008 sid: 77cc0d3310
+cid:  93f4ba09ab08a9ef997db4fa37a97dbf2b4c5481 sid: f7db9dce32
+cid:  93744f4bedf95e04dd6607592ecf775825403093 sid: e264d714d2
+cid:  93256308e3d349f8839dec840b0a90c7e7a1fc20 sid: 618b07791f
+
 # Acknowledgments
 
 # Change Log
@@ -867,6 +1023,7 @@ There are no IANA requirements.
 > publication of a final version of this document.
 
 ## since-draft-ietf-quic-load-balancers-01
+- Test vectors for load balancer decoding
 - Deleted remnants of in-band protocol
 - Light edit of Retry Services section
 - Discussed load balancer chains
