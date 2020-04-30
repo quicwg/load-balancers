@@ -132,7 +132,7 @@ QUIC is intended to provide unlinkability across connection migration, but
 servers are not required to provide additional connection IDs that effectively
 prevent linkability.  If the coordination scheme is too difficult to implement,
 servers behind load balancers using connection IDs for routing will use
-trivially linkable connection IDs. Clients will therefore be forced choose
+trivially linkable connection IDs. Clients will therefore be forced to choose
 between terminating the connection during migration or remaining linkable,
 subverting a design objective of QUIC.
 
