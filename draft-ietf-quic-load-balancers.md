@@ -764,7 +764,7 @@ others MUST be global.
 A full QUIC-LB configuration MUST also specify the information content of the
 first CID octet and the presence and mode of any Retry Service.
 
-The following pseudocode depicts the data items necessary to store a full
+The following pseudocode describes the data items necessary to store a full
 QUIC-LB configuration at the server. It is meant to describe the conceptual
 range and not specify the presentation of such configuration in an internet
 packet. The comments signify the range of acceptable values where applicable.
