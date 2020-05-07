@@ -880,7 +880,7 @@ the connection. For example, 0RTT and Initial packets use the same CIDs and
 ports.
 
 If these assumptions are invalid, this specification is likely to lead to loss of
-packets that contain non-compliant DCIDs, and in extremee cases connection
+packets that contain non-compliant DCIDs, and in extreme cases connection
 failure.
 
 # Security Considerations {#security-considerations}
