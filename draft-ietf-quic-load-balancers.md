@@ -43,6 +43,18 @@ normative:
         org: Mozilla
         role: editor
 
+  QUIC-INVARIANTS:
+    title: "Version-Independent Properties of QUIC"
+    date: {DATE}
+    seriesinfo:
+      Internet-Draft: draft-ietf-quic-invariants
+    author:
+      -
+        ins: M. Thomson
+        name: Martin Thomson
+        org: Mozilla
+        role: editor
+
 --- abstract
 
 QUIC connection IDs allow continuation of connections across address/port
@@ -225,7 +237,7 @@ the first octet.
 A server not using this functionality SHOULD make the six bits appear to be
 random.
 
-# Routing Algorithms
+# Routing Algorithms {#routing-algorithms}
 
 In QUIC-LB, load balancers do not generate individual connection IDs to servers.
 Instead, they communicate the parameters of an algorithm to generate routable
@@ -246,10 +258,12 @@ Load balancers MUST forward packets with long headers with non-compliant DCIDs
 to an active server using an algorithm of its own choosing. It need not
 coordinate this algorithm with the servers. The algorithm SHOULD be
 deterministic over short time scales so that related packets go to the same
-server. For example, a non-compliant DCID might be converted to an integer and
-divided by the number of servers, with the modulus used to forward the packet.
-The number of servers is usually consistent on the time scale of a QUIC
-connection handshake.
+server. The design of this algorithm SHOULD consider the version-invariant
+properties of QUIC described in {{QUIC-INVARIANTS}} to maximize its robustness to
+future versions of QUIC. For example, a non-compliant DCID might be converted to
+an integer and divided by the number of servers, with the modulus used to forward
+the packet. The number of servers is usually consistent on the time scale of a
+QUIC connection handshake.
 
 Load balancers SHOULD drop packets with non-compliant DCIDs in a short header.
 
@@ -838,6 +852,37 @@ with the new server using the "Retire Prior To" field in that frame.
 Alternately, if the old server is going offline, the load balancer could simply
 map its server ID to the new server's address.
 
+# Version Invariance of QUIC-LB
+
+Retry Services are inherently dependent on the format (and existence) of Retry
+Packets in each version of QUIC, and so Retry Service configuration explicitly
+includes the supported QUIC versions.
+
+The server ID encodings, and requirements for their handling, are designed to be
+QUIC version independent (see {{QUIC-INVARIANTS}}). A QUIC-LB load balancer will
+generally not require changes as servers deploy new versions of QUIC. However,
+there are several unlikely future design decisions that could impact the
+operation of QUIC-LB.
+
+The maximum Connection ID length could be below the minimum necessary for one or
+more encoding algorithms.
+
+{{routing-algorithms}} provides guidance about how load balancers should handle
+non-compliant DCIDs. This guidance, and the implementation of an algorithm to
+handle these DCIDs, rests on some assumptions:
+
+* Incoming short headers do not contain DCIDs that are client-generated.
+* The use of client-generated incoming DCIDs does not persist beyond a few round
+trips in the connection.
+* In this interval, some exposed fields (e.g. UDP address and port, source and
+client-generated destination Connection ID) remain constant for all packets in
+the connection. For example, 0RTT and Initial packets use the same CIDs and
+ports.
+
+If these assumptions are invalid, this specification is likely to lead to loss of
+packets that contain non-compliant DCIDs, and in extremee cases connection
+failure.
+
 # Security Considerations {#security-considerations}
 
 QUIC-LB is intended to prevent linkability.  Attacks would therefore attempt to
@@ -1050,6 +1095,7 @@ cid:  93256308e3d349f8839dec840b0a90c7e7a1fc20 sid: 618b07791f
 > publication of a final version of this document.
 
 ## since-draft-ietf-quic-load-balancers-02
+- Added discussion of version invariance
 - Cleaned up text about config rotation
 
 ## since-draft-ietf-quic-load-balancers-01
