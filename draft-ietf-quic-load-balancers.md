@@ -136,6 +136,8 @@ Note that stateful load balancers that act as proxies, by terminating a QUIC
 connection with the client and then retrieving data from the server using QUIC
 or another protocol, are treated as a server with respect to this specification.
 
+For brevity, "Connection ID" will often be abbreviated as "CID".
+
 # Protocol Objectives
 
 ## Simplicity
@@ -302,9 +304,8 @@ depicted in the figure below.
 ### Configuration Agent Actions
 
 The configuration agent selects a number of bytes of the server connection ID
-(SCID) to encode individual server IDs, called the "routing bytes". The number
-of bytes MUST have enough entropy to have a different code point for each
-server.
+to encode individual server IDs, called the "routing bytes". The number of bytes
+MUST have enough entropy to have a different code point for each server.
 
 It also assigns a server ID to each server.
 
@@ -341,10 +342,10 @@ encryption and decryption. The format is depicted in the figure below.
 ### Configuration Agent Actions
 
 The configuration agent selects an arbitrary set of bits of the server
-connection ID (SCID) that it will use to route to a given server, called the
-"routing bits". The number of bits MUST have enough entropy to have a different
-code point for each server, and SHOULD have enough entropy so that there are
-many codepoints for each server.
+connection ID that it will use to route to a given server, called the "routing
+bits". The number of bits MUST have enough entropy to have a different code
+point for each server, and SHOULD have enough entropy so that there are many
+codepoints for each server.
 
 The configuration agent MUST NOT select a routing mask with more than 136
 routing bits set to 1, which allows for the first octet and up to 2 octets for
@@ -362,15 +363,15 @@ distributed across the entire number space between zero and the divisor.
 ### Load Balancer Actions
 
 Upon receipt of a QUIC packet, the load balancer extracts the selected bits of
-the SCID and expresses them as an unsigned integer of that length.  The load
-balancer then divides the result by the chosen divisor. The modulus of this
+the Server CID and expresses them as an unsigned integer of that length.  The
+load balancer then divides the result by the chosen divisor. The modulus of this
 operation maps to the modulus for the destination server.
 
-Note that any SCID that contains a server's modulus, plus an arbitrary integer
-multiple of the divisor, in the routing bits is routable to that server
+Note that any Server CID that contains a server's modulus, plus an arbitrary
+integer multiple of the divisor, in the routing bits is routable to that server
 regardless of the contents of the non-routing bits. Outside observers that do
 not know the divisor or the routing bits will therefore have difficulty
-identifying that two SCIDs route to the same server.
+identifying that two Server CIDs route to the same server.
 
 Note also that not all Connection IDs are necessarily routable, as the computed
 modulus may not match one assigned to any server. These DCIDs are non-compliant
