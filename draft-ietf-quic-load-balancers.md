@@ -874,10 +874,12 @@ handle these DCIDs, rests on some assumptions:
 * Incoming short headers do not contain DCIDs that are client-generated.
 * The use of client-generated incoming DCIDs does not persist beyond a few round
 trips in the connection.
-* In this interval, some exposed fields (e.g. UDP address and port, source and
-client-generated destination Connection ID) remain constant for all packets in
-the connection. For example, 0RTT and Initial packets use the same CIDs and
-ports.
+* In this interval, some exposed fields (e.g. UDP address and port, client-
+generated destination Connection ID) remain constant for all packets in the
+connection. For example, 0RTT and Initial packets use the same DCIDs and ports.
+While this document does not update the commitments in {{QUIC-INVARIANTS}}, the
+authors believe that the listed examples are a likely set of constants that load
+balancers can use with minimal risk of version-dependence.
 
 If these assumptions are invalid, this specification is likely to lead to loss
 of packets that contain non-compliant DCIDs, and in extreme cases connection
