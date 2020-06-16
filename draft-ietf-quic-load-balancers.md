@@ -521,6 +521,25 @@ essentially random to observers. The first octet is reserved as described in
 The server then encrypts the second through seventeenth octets using the 128-bit
 AES-ECB cipher.
 
+# ICMP Processing
+
+For protocols where 4-tuple load balancing is sufficient, it is straightforward
+to deliver ICMP packets from the network to the server that can consume it, by
+reading the IP and transport-layer headers to obtain the 4-tuple. When routing
+is based on connection ID, further measures are required, as most QUIC packets
+that trigger ICMP responses will only contain a client-generated connection ID
+that contains no routing information.
+
+To solve this problem, load balancers MAY maintain a mapping of Client IP and
+port to server ID based on recently observed packets.
+
+Alternatively, servers MAY implement the technique described in Section 14.4.1
+of {{QUIC-TRANSPORT}} to increase the likelihood a Source Connection ID is
+included in ICMP responses to Path Maximum Transmission Unit (PMTU) probes. Load
+balancers MAY parse the echoed packet to extract the Source Connection ID, if
+it contains a QUIC long header, and extract the Server ID as if it were in a
+Destination CID.
+
 # Retry Service {#retry-offload}
 
 When a server is under load, QUICv1 allows it to defer storage of connection
