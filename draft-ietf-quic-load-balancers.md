@@ -926,6 +926,27 @@ connection IDs to the same server.  The QUIC-LB algorithms do prevent the
 linkage of two connection IDs to the same individual connection if servers make
 reasonable selections when generating new IDs for that connection.
 
+## Limited configuration deployment
+
+A naive deployment of QUIC-LB in a cloud provider might use the same global
+QUIC-LB configuration across all the load balancers in its enterprise. An
+attacker could then simply become a customer, obtain the configuration, and then
+extract server IDs of other customers' connections at will.
+
+To avoid this, the entities that manage load balancers SHOULD use a single
+configuration instance in as narrow a deployment as possible. Ideally, a load
+balancer would not have any QUIC-LB configuration relevant to a server to which
+it cannot route.
+
+## Stateless Reset Oracle
+
+Section 21.9 of {{QUIC-TRANSPORT}} discusses the Stateless Reset Oracle attack.
+For a server deployment to be vulnerable, an attacking client must be able to
+cause two packets with the same Destination CID to arrive at two different
+servers that share the same cryptographic context for Stateless Reset tokens. As
+QUIC-LB requires deterministic routing of DCIDs over the life of a connection,
+it is a sufficient means of avoiding an Oracle without additional measures.
+
 # IANA Considerations
 
 There are no IANA requirements.
