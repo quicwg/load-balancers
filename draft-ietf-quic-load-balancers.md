@@ -926,17 +926,18 @@ connection IDs to the same server.  The QUIC-LB algorithms do prevent the
 linkage of two connection IDs to the same individual connection if servers make
 reasonable selections when generating new IDs for that connection.
 
-## Limited configuration deployment
+## Limited configuration scope
 
 A naive deployment of QUIC-LB in a cloud provider might use the same global
-QUIC-LB configuration across all the load balancers in its enterprise. An
-attacker could then simply become a customer, obtain the configuration, and then
-extract server IDs of other customers' connections at will.
+QUIC-LB configuration across all its load balancers that route to customer
+servers. An attacker could then simply become a customer, obtain the
+configuration, and then extract server IDs of other customers' connections at
+will.
 
-To avoid this, the entities that manage load balancers SHOULD use a single
-configuration instance in as narrow a deployment as possible. Ideally, a load
-balancer would not have any QUIC-LB configuration relevant to a server to which
-it cannot route.
+To avoid this, the entities that manage load balancers that route to mutually
+distrustful servers SHOULD use a single configuration instance in as narrow a
+deployment as possible. Ideally, a load balancer would not have any QUIC-LB
+configuration relevant to a server to which it cannot route.
 
 ## Stateless Reset Oracle
 
@@ -1119,6 +1120,7 @@ cid:  93256308e3d349f8839dec840b0a90c7e7a1fc20 sid: 618b07791f
 ## since-draft-ietf-quic-load-balancers-02
 - Added discussion of version invariance
 - Cleaned up text about config rotation
+- Added Reset Oracle and limited configuration considerations
 
 ## since-draft-ietf-quic-load-balancers-01
 - Test vectors for load balancer decoding
