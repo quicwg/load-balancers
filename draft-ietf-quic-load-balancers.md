@@ -524,7 +524,7 @@ AES-ECB cipher.
 # ICMP Processing
 
 For protocols where 4-tuple load balancing is sufficient, it is straightforward
-to deliver ICMP packets from the network to the server that can consume it, by
+to deliver ICMP packets from the network to the correct server, by
 reading the IP and transport-layer headers to obtain the 4-tuple. When routing
 is based on connection ID, further measures are required, as most QUIC packets
 that trigger ICMP responses will only contain a client-generated connection ID
@@ -1164,4 +1164,3 @@ cid:  93256308e3d349f8839dec840b0a90c7e7a1fc20 sid: 618b07791f
 
 - Converted to markdown
 - Added variable length connection IDs
-
