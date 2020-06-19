@@ -526,15 +526,15 @@ AES-ECB cipher.
 When a server is under load, QUICv1 allows it to defer storage of connection
 state until the client proves it can receive packets at its advertised IP
 address.  Through the use of a Retry packet, a token in subsequent client
-Initial packets, and the original_connection_id transport parameter, servers
-verify address ownership and clients verify that there is no "man in the middle"
-generating Retry packets.
+Initial packets, and the original_destination_connection_id transport parameter,
+servers verify address ownership and clients verify that there is no "man in the
+middle" generating Retry packets.
 
 As a trusted Retry Service is literally a "man in the middle," the service must
-communicate the original_connection_id back to the server so that in can pass
-client verification. It also must either verify the address itself (with the
-server trusting this verification) or make sure there is common context for the
-server to verify the address using a service-generated token.
+communicate the original_destination_connection_id back to the server so that it
+can pass client verification. It also must either verify the address itself
+(with the server trusting this verification) or make sure there is common
+context for the server to verify the address using a service-generated token.
 
 There are two different mechanisms to allow offload of DoS mitigation to a
 trusted network service. One requires no shared state; the server need only be
@@ -639,9 +639,9 @@ bit set to '0'. If successful, the service MUST forward the packet with the
 token intact. If unsuccessful, it MUST either drop the packet or forward it
 with the token removed. The latter requires decryption and re-encryption of the
 entire Initial packet to avoid authentication failure. Forwarding the packet
-causes the server to respond without the original_connection_id transport
-parameter, which preserves the normal QUIC signal to the client that there is
-an unauthorized man in the middle.
+causes the server to respond without the original_destination_connection_id
+transport parameter, which preserves the normal QUIC signal to the client that
+there is an unauthorized man in the middle.
 
 ### Server Requirements
 
@@ -724,7 +724,8 @@ token was generated. The format of date-time is described in Section 5.6 of
 Opaque Data: The server may use this field to encode additional information,
 such as congestion window, RTT, or MTU. Opaque data SHOULD also allow servers
 to distinguish between retry tokens (which trigger use of the
-original_connection_id transport parameter) and NEW_TOKEN frame tokens.
+original_destination_connection_id transport parameter) and NEW_TOKEN frame
+tokens.
 
 ### Configuration Agent Actions
 
