@@ -935,8 +935,8 @@ configuration, and then extract server IDs of other customers' connections at
 will.
 
 To avoid this, the entities that manage load balancers that route to mutually
-distrustful servers SHOULD use a single configuration instance in as narrow a
-deployment as possible. Ideally, a load balancer would not have any QUIC-LB
+distrustful servers use a single configuration instance in as narrow a
+deployment as possible. A load balancer SHOULD NOT have any QUIC-LB
 configuration relevant to a server to which it cannot route.
 
 ## Stateless Reset Oracle
