@@ -877,7 +877,9 @@ handle these DCIDs, rests on some assumptions:
 trips in the connection.
 * While the client is using DCIDs it generated, some exposed fields (IP address,
 UDP port, client-generated destination Connection ID) remain constant for all
-packets sent on the same connection. While this document does not update the
+packets sent on the same connection.
+
+While this document does not update the
 commitments in {{QUIC-INVARIANTS}}, the additional assumptions are minimal and
 narrowly scoped, and provide a likely set of constants that load balancers can
 use with minimal risk of version-dependence.
@@ -1147,4 +1149,3 @@ cid:  93256308e3d349f8839dec840b0a90c7e7a1fc20 sid: 618b07791f
 
 - Converted to markdown
 - Added variable length connection IDs
-
