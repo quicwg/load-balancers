@@ -391,7 +391,7 @@ The server encodes the result in the routing bits. It MAY put any other value
 into bits that used neither for routing nor config rotation.  These bits
 SHOULD appear random to observers.
 
-## Stream Cipher CID Algorithm
+## Stream Cipher CID Algorithm {#stream-cipher-cid-algorithm}
 
 The Stream Cipher CID algorithm provides true cryptographic protection, rather
 than mere obfuscation, at the cost of additional per-packet processing at the
@@ -411,7 +411,7 @@ depicted below.
 ~~~~~
 {: #stream-cipher-cid-format title="Stream Cipher CID Format"}
 
-### Configuration Agent Actions
+### Configuration Agent Actions {#stream-cipher-cid-format-configuration}
 
 The configuration agent assigns a server ID to every server in its pool, and
 determines a server ID length (in octets) sufficiently large to encode all
@@ -459,6 +459,73 @@ encrypts this nonce using its key to generate a mask which it applies to the
 server id.
 
 encrypted_server_id = server_id ^ AES-ECB(key, padded-nonce)
+
+## Triple Stream Cipher CID Algorithm {#triple-stream-cipher-cid-algorithm}
+
+The Triple Stream Cipher CID algorithm is a variant of the stream
+cipher algorithm {{stream-cipher-cid-algorithm}} that provides true
+cryptographic protection and also mitigates the malleability issues
+with a simple stream cipher application. The CID format is the
+the same as depicted in {{stream-cipher-cid-format}}.
+
+### Configuration Agent Actions
+
+The configuration agent actions are the same as in {{stream-cipher-cid-format-configuration}}.
+
+### Load Balancer Actions {#triple-stream-cipher-load-balancer-actions}
+
+Upon receipt of a QUIC packet that is not of type Initial or 0-RTT, the load
+balancer extracts as many of the earliest octets from the destination connection
+ID as necessary to match the nonce length. The server ID immediately follows.
+
+The load balancer decrypts the nonce and the server ID using the following three
+pass algorithm:
+
+* Pass 1:  The load balancer decrypts the server ID using 128-bit AES Electronic Codebook
+(ECB) mode, much like QUIC header protection. The encrypted nonce octets are zero-padded
+to 16 octets.  AES-ECB encrypts this encrypted nonce using its key to generate a mask
+which it applies to the encrypted server id. This provides an intermediate
+value of the server ID, referred to as server-id intermediate.
+
+server_id_intermediate = encrypted_server_id ^ AES-ECB(key, padded-encrypted-nonce)
+
+* Pass 2:  The load balancer decrypts the nonce octets using 128-bit AES Electronic Codebook
+(ECB) mode, much like QUIC header protection, using the server-id intermediate as "nonce" for this pass.
+The server-id intermediate octets are zero-padded to 16 octets.  AES-ECB encrypts this padded server-id intermediate
+using its key to generate a mask which it applies to the encrypted nonce. This provides the
+decrypted nonce value.
+
+nonce = encrypted_nonce ^ AES-ECB(key, padded-server_id_intermediate)
+
+* Pass 3:  The load balancer decrypts the server ID using 128-bit AES Electronic Codebook
+(ECB) mode, much like QUIC header protection. The nonce octets are zero-padded
+to 16 octets.  AES-ECB encrypts this nonce using its key to generate a mask
+which it applies to the intermediate server id. This provides the dercypted
+server ID.
+
+server_id = server_id_intermediate ^ AES-ECB(key, padded-nonce)
+
+This three pass algorithm is a simplified version of the FFX algorithm. It has the
+same connection ID length requirements as the Stream Cipher CID Algorithm, with
+the additional property that each encrypted nonce value depends on all server ID
+bits, and each encrypted server ID bit depends on all nonce bits and all server
+ID bits. This mitigates attacks against stream ciphers in which attackers simply
+flip encrypted server-ID bits.
+
+The output of the decryption is the server ID that the load balancer uses for
+routing.
+
+### Server Actions
+
+When generating a routable connection ID, the server writes arbitrary bits into
+its nonce octets, and its provided server ID into the server ID octets. Servers
+MAY opt to have a longer connection ID beyond the nonce and server ID. The nonce
+and additional bits MAY encode additional information, but SHOULD appear
+essentially random to observers.
+
+The server encrypts the server ID using exactly the algorithm as described in
+{{triple-stream-cipher-load-balancer-actions}}, performing the three passes
+in reverse order.
 
 ## Block Cipher CID Algorithm
 
