@@ -261,11 +261,11 @@ to an active server using an algorithm of its own choosing. It need not
 coordinate this algorithm with the servers. The algorithm SHOULD be
 deterministic over short time scales so that related packets go to the same
 server. The design of this algorithm SHOULD consider the version-invariant
-properties of QUIC described in {{QUIC-INVARIANTS}} to maximize its robustness to
-future versions of QUIC. For example, a non-compliant DCID might be converted to
-an integer and divided by the number of servers, with the modulus used to forward
-the packet. The number of servers is usually consistent on the time scale of a
-QUIC connection handshake.
+properties of QUIC described in {{QUIC-INVARIANTS}} to maximize its robustness
+to future versions of QUIC. For example, a non-compliant DCID might be converted
+to an integer and divided by the number of servers, with the modulus used to
+forward the packet. The number of servers is usually consistent on the time
+scale of a QUIC connection handshake. See also {{version-invariance}}.
 
 Load balancers SHOULD drop packets with non-compliant DCIDs in a short header.
 
@@ -903,7 +903,7 @@ with the new server using the "Retire Prior To" field in that frame.
 Alternately, if the old server is going offline, the load balancer could simply
 map its server ID to the new server's address.
 
-# Version Invariance of QUIC-LB
+# Version Invariance of QUIC-LB {#version-invariance}
 
 Retry Services are inherently dependent on the format (and existence) of Retry
 Packets in each version of QUIC, and so Retry Service configuration explicitly
@@ -925,10 +925,14 @@ handle these DCIDs, rests on some assumptions:
 * Incoming short headers do not contain DCIDs that are client-generated.
 * The use of client-generated incoming DCIDs does not persist beyond a few round
 trips in the connection.
-* In this interval, some exposed fields (e.g. UDP address and port, source and
-client-generated destination Connection ID) remain constant for all packets in
-the connection. For example, 0RTT and Initial packets use the same CIDs and
-ports.
+* While the client is using DCIDs it generated, some exposed fields (IP address,
+UDP port, client-generated destination Connection ID) remain constant for all
+packets sent on the same connection.
+
+While this document does not update the commitments in {{QUIC-INVARIANTS}}, the
+additional assumptions are minimal and narrowly scoped, and provide a likely
+set of constants that load balancers can use with minimal risk of version-
+dependence.
 
 If these assumptions are invalid, this specification is likely to lead to loss
 of packets that contain non-compliant DCIDs, and in extreme cases connection
