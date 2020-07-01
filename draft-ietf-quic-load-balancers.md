@@ -879,10 +879,10 @@ trips in the connection.
 UDP port, client-generated destination Connection ID) remain constant for all
 packets sent on the same connection.
 
-While this document does not update the
-commitments in {{QUIC-INVARIANTS}}, the additional assumptions are minimal and
-narrowly scoped, and provide a likely set of constants that load balancers can
-use with minimal risk of version-dependence.
+While this document does not update the commitments in {{QUIC-INVARIANTS}}, the
+additional assumptions are minimal and narrowly scoped, and provide a likely
+set of constants that load balancers can use with minimal risk of version-
+dependence.
 
 If these assumptions are invalid, this specification is likely to lead to loss
 of packets that contain non-compliant DCIDs, and in extreme cases connection
