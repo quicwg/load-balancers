@@ -934,11 +934,15 @@ servers. An attacker could then simply become a customer, obtain the
 configuration, and then extract server IDs of other customers' connections at
 will.
 
-To avoid this, when supporting mutually distrustful servers, each QUIC-LB
-configuration instance is deployed in as narrow a set of load balancers as
-possible. The configuration agent SHOULD NOT assign or distribute the same
-QUIC-LB cryptographic or obfuscation parameters (e.g., key or routing mask) to
-servers that do not share a common load balancer.
+To avoid this, the configuration agent SHOULD issue QUIC-LB configurations to
+mutually distrustful servers that have different keys (for the block cipher or
+stream cipher algorithms) or routing masks and divisors (for the obfuscated
+algorithm). The load balancers can distinguish these configurations by external
+IP address, or by assigning different values to the config rotation bits
+({{config-rotation}}).
+
+These techniques are not necessary for the plaintext algorithm, as it does not
+attempt to conceal the server ID.
 
 ## Stateless Reset Oracle
 
