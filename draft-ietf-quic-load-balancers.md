@@ -179,18 +179,18 @@ Subsequent sections of this document refer to the contents of this octet as the
 
 ## Config Rotation {#config-rotation}
 
-The first two bits of any connection-ID MUST encode the configuration phase of
-that ID.  QUIC-LB messages indicate the phase of the algorithm and parameters
+The first three bits of any connection-ID MUST encode the configuration phase
+of that ID.  QUIC-LB messages indicate the phase of the algorithm and parameters
 that they encode.
 
 A new configuration may change one or more parameters of the old configuration,
 or change the algorithm used.
 
 It is possible for servers to have mutually exclusive sets of supported
-algorithms, or for a transition from one algorithm to another to result in Fail
-Payloads.  The four states encoded in these two bits allow two mutually
-exclusive server pools to coexist, and for each of them to transition to a new
-set of parameters.
+algorithms, or for servers to not have the trust relationship necessary to
+share QUIC-LB keys or other sensitive material.  The eight states encoded in
+these three bits allow three mutually exclusive server pools to coexist, and for
+each of them to transition to a new set of parameters.
 
 When new configuration is distributed to servers, there will be a transition
 period when connection IDs reflecting old and new configuration coexist in the
@@ -215,12 +215,12 @@ that frame.
 
 If a server has not received a valid QUIC-LB configuration, and believes that
 low-state, Connection-ID aware load balancers are in the path, it SHOULD
-generate connection IDs with the config rotation bits set to '11' and SHOULD use
-the "disable_migration" transport parameter in all new QUIC connections. It
+generate connection IDs with the config rotation bits set to '111' and SHOULD
+use the "disable_migration" transport parameter in all new QUIC connections. It
 SHOULD NOT send NEW_CONNECTION_ID frames with new values.
 
 A load balancer that sees a connection ID with config rotation bits set to
-'11' MUST revert to 5-tuple routing.
+'111' MUST revert to 5-tuple routing.
 
 ## Length Self-Description
 
@@ -232,7 +232,7 @@ own length.
 
 Note that this is a function of particular server devices and is irrelevant to
 load balancers. As such, load balancers MAY omit this from their configuration.
-However, the remaining 6 bits in the first octet of the Connection ID are
+However, the remaining 5 bits in the first octet of the Connection ID are
 reserved to express the length of the following connection ID, not including
 the first octet.
 
@@ -915,8 +915,10 @@ generally not require changes as servers deploy new versions of QUIC. However,
 there are several unlikely future design decisions that could impact the
 operation of QUIC-LB.
 
-The maximum Connection ID length could be below the minimum necessary for one or
-more encoding algorithms.
+The maximum Connection ID length could be below the minimum necessary for one
+or more encoding algorithms. Alternately, a future version might require a server
+to select a connection ID of more than 32 bytes, which could not be encoded in
+the first octet.
 
 {{routing-algorithms}} provides guidance about how load balancers should handle
 non-compliant DCIDs. This guidance, and the implementation of an algorithm to
@@ -929,14 +931,14 @@ trips in the connection.
 UDP port, client-generated destination Connection ID) remain constant for all
 packets sent on the same connection.
 
+If these assumptions are invalid, this specification is likely to lead to loss
+of packets that contain non-compliant DCIDs, and in extreme cases connection
+failure.
+
 While this document does not update the commitments in {{QUIC-INVARIANTS}}, the
 additional assumptions are minimal and narrowly scoped, and provide a likely
 set of constants that load balancers can use with minimal risk of version-
 dependence.
-
-If these assumptions are invalid, this specification is likely to lead to loss
-of packets that contain non-compliant DCIDs, and in extreme cases connection
-failure.
 
 # Security Considerations {#security-considerations}
 
