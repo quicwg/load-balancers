@@ -424,9 +424,9 @@ or fewer octets.
 
 ### Load Balancer Actions
 
-Upon receipt of a QUIC packet that is not of type Initial or 0-RTT, the load
-balancer extracts as many of the earliest octets from the destination connection
-ID as necessary to match the nonce length. The server ID immediately follows.
+Upon receipt of a QUIC packet, the load balancer extracts as many of the
+earliest octets from the destination connection ID as necessary to match the
+nonce length. The server ID immediately follows.
 
 The load balancer decrypts the server ID using 128-bit AES Electronic Codebook
 (ECB) mode, much like QUIC header protection. The nonce octets are zero-padded
