@@ -1153,6 +1153,7 @@ cid:  93256308e3d349f8839dec840b0a90c7e7a1fc20 sid: 618b07791f
 
 ## since-draft-ietf-quic-load-balancers-02
 - Added discussion of version invariance
+- Added third bit for config rotation
 - Cleaned up text about config rotation
 
 ## since-draft-ietf-quic-load-balancers-01
