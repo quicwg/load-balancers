@@ -236,7 +236,7 @@ However, the remaining 5 bits in the first octet of the Connection ID are
 reserved to express the length of the following connection ID, not including
 the first octet.
 
-A server not using this functionality SHOULD make the six bits appear to be
+A server not using this functionality SHOULD make the five bits appear to be
 random.
 
 # Routing Algorithms {#routing-algorithms}
@@ -279,7 +279,7 @@ would cannot build their design on version-specific templates.
 
 There are situations where a server pool might be operating two or more routing
 algorithms or parameter sets simultaneously.  The load balancer uses the first
-two bits of the connection ID to multiplex incoming DCIDs over these schemes.
+three bits of the connection ID to multiplex incoming DCIDs over these schemes.
 
 This section describes three participants: the configuration agent, the load
 balancer, and the server.
