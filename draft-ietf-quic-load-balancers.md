@@ -980,6 +980,35 @@ connection IDs to the same server.  The QUIC-LB algorithms do prevent the
 linkage of two connection IDs to the same individual connection if servers make
 reasonable selections when generating new IDs for that connection.
 
+## Limited configuration scope
+
+A simple deployment of QUIC-LB in a cloud provider might use the same global
+QUIC-LB configuration across all its load balancers that route to customer
+servers. An attacker could then simply become a customer, obtain the
+configuration, and then extract server IDs of other customers' connections at
+will.
+
+To avoid this, the configuration agent SHOULD issue QUIC-LB configurations to
+mutually distrustful servers that have different keys (for the block cipher or
+stream cipher algorithms) or routing masks and divisors (for the obfuscated
+algorithm). The load balancers can distinguish these configurations by external
+IP address, or by assigning different values to the config rotation bits
+({{config-rotation}}). Note that either of these techniques exposes information
+to outside observers, as traffic destined for each server set can be easily
+distinguished.
+
+These techniques are not necessary for the plaintext algorithm, as it does not
+attempt to conceal the server ID.
+
+## Stateless Reset Oracle
+
+Section 21.9 of {{QUIC-TRANSPORT}} discusses the Stateless Reset Oracle attack.
+For a server deployment to be vulnerable, an attacking client must be able to
+cause two packets with the same Destination CID to arrive at two different
+servers that share the same cryptographic context for Stateless Reset tokens. As
+QUIC-LB requires deterministic routing of DCIDs over the life of a connection,
+it is a sufficient means of avoiding an Oracle without additional measures.
+
 # IANA Considerations
 
 There are no IANA requirements.
@@ -1152,6 +1181,7 @@ cid:  93256308e3d349f8839dec840b0a90c7e7a1fc20 sid: 618b07791f
 ## since-draft-ietf-quic-load-balancers-02
 - Added discussion of version invariance
 - Cleaned up text about config rotation
+- Added Reset Oracle and limited configuration considerations
 
 ## since-draft-ietf-quic-load-balancers-01
 - Test vectors for load balancer decoding
