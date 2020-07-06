@@ -267,6 +267,13 @@ to an integer and divided by the number of servers, with the modulus used to
 forward the packet. The number of servers is usually consistent on the time
 scale of a QUIC connection handshake. See also {{version-invariance}}.
 
+As a partial exception to the above, load balancers MAY drop packets with long
+headers and non-compliant DCIDs if and only if it knows that the encoded QUIC
+version does not allow a non-compliant DCID in a packet with that signature. For
+example, a load balancer can safely drop a QUIC version 1 Handshake packet with
+a non-compliant DCIDs. The prohibition against dropping packets with long
+headers remains for unknown QUIC versions.
+
 Load balancers SHOULD drop packets with non-compliant DCIDs in a short header.
 
 Load balancers MUST forward packets with compliant DCIDs to a server in
@@ -1182,6 +1189,7 @@ cid:  93256308e3d349f8839dec840b0a90c7e7a1fc20 sid: 618b07791f
 - Added discussion of version invariance
 - Cleaned up text about config rotation
 - Added Reset Oracle and limited configuration considerations
+- Allow dropped long-header packets for known QUIC versions
 
 ## since-draft-ietf-quic-load-balancers-01
 - Test vectors for load balancer decoding
