@@ -1058,8 +1058,8 @@ There are no IANA requirements.
 # Load Balancer Test Vectors {#test-vectors}
 
 Because any connection ID encoding in this specification includes many bits
-for server use without affecting extraction of the connection ID, there are
-many possible connection IDs for any given set of parameters. However, every
+for server use without affecting extraction of the server ID, there are many
+possible connection IDs for any given set of parameters. However, every
 connection ID should result in a unique server ID. The following connection
 IDs can be used to verify that a load balancer implementation extracts the
 correct server ID.
