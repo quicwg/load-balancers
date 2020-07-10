@@ -276,6 +276,11 @@ headers remains for unknown QUIC versions.
 
 Load balancers SHOULD drop packets with non-compliant DCIDs in a short header.
 
+A QUIC-LB configuration MAY significantly over-provision the server ID space
+(i.e., provide far more codepoints than there are servers) to increase the
+probability that a randomly generated Destination Connection ID is non-
+compliant.
+
 Load balancers MUST forward packets with compliant DCIDs to a server in
 accordance with the chosen routing algorithm.
 
@@ -398,7 +403,7 @@ The server encodes the result in the routing bits. It MAY put any other value
 into bits that used neither for routing nor config rotation.  These bits
 SHOULD appear random to observers.
 
-## Stream Cipher CID Algorithm {#triple-stream-cipher-cid-algorithm}
+## Stream Cipher CID Algorithm {#stream-cipher-cid-algorithm}
 
 The Stream Cipher CID algorithm provides true cryptographic protection, rather
 than mere obfuscation, at the cost of additional per-packet processing at the
