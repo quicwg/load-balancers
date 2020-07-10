@@ -276,6 +276,11 @@ headers remains for unknown QUIC versions.
 
 Load balancers SHOULD drop packets with non-compliant DCIDs in a short header.
 
+A QUIC-LB configuration MAY significantly over-provision the server ID space
+(i.e., provide far more codepoints than there are servers) to increase the
+probability that a randomly generated Destination Connection ID is non-
+compliant.
+
 Load balancers MUST forward packets with compliant DCIDs to a server in
 accordance with the chosen routing algorithm.
 
@@ -418,7 +423,7 @@ depicted below.
 ~~~~~
 {: #stream-cipher-cid-format title="Stream Cipher CID Format"}
 
-### Configuration Agent Actions {#stream-cipher-cid-format-configuration}
+### Configuration Agent Actions
 
 The configuration agent assigns a server ID to every server in its pool, and
 determines a server ID length (in octets) sufficiently large to encode all
@@ -429,58 +434,7 @@ to use for connection ID decryption.  The nonce length MUST be at least 8 octets
 and no more than 16 octets. The nonce length and server ID length MUST sum to 19
 or fewer octets.
 
-### Load Balancer Actions
-
-Upon receipt of a QUIC packet, the load balancer extracts as many of the
-earliest octets from the destination connection ID as necessary to match the
-nonce length. The server ID immediately follows.
-
-The load balancer decrypts the server ID using 128-bit AES Electronic Codebook
-(ECB) mode, much like QUIC header protection. The nonce octets are zero-padded
-to 16 octets.  AES-ECB encrypts this nonce using its key to generate a mask
-which it applies to the encrypted server id.
-
-server_id = encrypted_server_id ^ AES-ECB(key, padded-nonce)
-
-For example, if the nonce length is 10 octets and the server ID length is 2
-octets, the connection ID can be as small as 13 octets.  The load balancer uses
-the the second through eleventh of the connection ID for the nonce, zero-pads it
-to 16 octets using the first 6 octets of the token, and uses this to decrypt the
-server ID in the twelfth and thirteenth octet.
-
-The output of the decryption is the server ID that the load balancer uses for
-routing.
-
-### Server Actions
-
-When generating a routable connection ID, the server writes arbitrary bits into
-its nonce octets, and its provided server ID into the server ID octets. Servers
-MAY opt to have a longer connection ID beyond the nonce and server ID. The nonce
-and additional bits MAY encode additional information, but SHOULD appear
-essentially random to observers.
-
-The server decrypts the server ID using 128-bit AES Electronic Codebook (ECB)
-mode, much like QUIC header protection. The nonce octets are zero-padded to 16
-octets using the as many of the first octets of the token as necessary. AES-ECB
-encrypts this nonce using its key to generate a mask which it applies to the
-server id.
-
-encrypted_server_id = server_id ^ AES-ECB(key, padded-nonce)
-
-## Triple Stream Cipher CID Algorithm {#triple-stream-cipher-cid-algorithm}
-
-The Triple Stream Cipher CID algorithm is a variant of the stream cipher
-algorithm {{stream-cipher-cid-algorithm}} that provides true cryptographic
-protection and also mitigates the malleability issues with a simple stream
-cipher application. The CID format is the the same as depicted in
-{{stream-cipher-cid-format}}.
-
-### Configuration Agent Actions
-
-The configuration agent actions are the same as in
-{{stream-cipher-cid-format-configuration}}.
-
-### Load Balancer Actions {#triple-stream-cipher-load-balancer-actions}
+### Load Balancer Actions {#stream-cipher-load-balancer-actions}
 
 Upon receipt of a QUIC packet, the load balancer extracts as many of the
 earliest octets from the destination connection ID as necessary to match the
@@ -513,12 +467,20 @@ This provides the decrypted server ID.
 
 server_id = server_id_intermediate ^ AES-ECB(key, padded-nonce)
 
-This three-pass algorithm is a simplified version of the FFX algorithm. It has
-the same connection ID length requirements as the Stream Cipher CID Algorithm,
-with the additional property that each encrypted nonce value depends on all
-server ID bits, and each encrypted server ID bit depends on all nonce bits and
-all server ID bits. This mitigates attacks against stream ciphers in which
-attackers simply flip encrypted server-ID bits.
+For example, if the nonce length is 10 octets and the server ID length is 2
+octets, the connection ID can be as small as 13 octets.  The load balancer uses
+the the second through eleventh octets of the connection ID for the nonce,
+zero-pads it to 16 octets, uses xors the result with the twelfth and thirteenth
+octet. The result is padded with 14 octets of zeros and encrypted to obtain a
+mask that is xored with the nonce octets. Finally, the nonce octets are padded
+with six octets of zeros, encrypted, and the first two octets xored with the
+server ID octets to obtain the actual server ID.
+
+This three-pass algorithm is a simplified version of the FFX algorithm, with
+the property that each encrypted nonce value depends on all server ID bits, and
+each encrypted server ID bit depends on all nonce bits and all server ID bits.
+This mitigates attacks against stream ciphers in which attackers simply flip
+encrypted server-ID bits.
 
 The output of the decryption is the server ID that the load balancer uses for
 routing.
@@ -535,7 +497,7 @@ If the decrypted nonce bits increase monotonically, that guarantees that nonces
 are not reused between connection IDs from the same server.
 
 The server encrypts the server ID using exactly the algorithm as described in
-{{triple-stream-cipher-load-balancer-actions}}, performing the three passes
+{{stream-cipher-load-balancer-actions}}, performing the three passes
 in reverse order.
 
 ## Block Cipher CID Algorithm
@@ -1151,56 +1113,6 @@ cid 0b71d1d4e3e3cd54d435b3fd sid eb
 
 ## Stream Cipher Connection ID Algorithm
 
-Like the previous section, the text below lists a set of load balancer
-configuration and 5 CIDs generated with that configuration.
-
-cr_bits 0x0 length_self_encoding: y nonce_len 13 sid_len 1
-    key 16eff325e8bf8dfebdae003543fb845f
-
-cid 0eb9eb1fc72eed820cf5658cdd7888 sid 9c<br/>
-cid 0e6f4de5beb5aa4170f44104318c5b sid c0<br/>
-cid 0e78f0325a8e34a40661f51f235906 sid 1d<br/>
-cid 0ef37923f81c32632299bceabd1d92 sid fa<br/>
-cid 0ea30788c012daa94a83865a2c7f28 sid b3
-
-cr_bits 0x1 length_self_encoding: n nonce_len 9 sid_len 2
-    key 906220f402ba3bd893ccc4dd9cfc04b0
-
-cid 7b33366764888138f1465352 sid b839<br/>
-cid 4329458bbe6cb9befc04bdeb sid 3b27<br/>
-cid 61e4e8235c4ebd5442d85bb0 sid bb5c<br/>
-cid 4fd790d1d0cf2b50796cad12 sid 4ecd<br/>
-cid 725325eceaca3528d8c0314b sid 54fd
-
-cr_bits 0x0 length_self_encoding: y nonce_len 8 sid_len 3
-    key 0a9b8ccdee977a65e3519693fcd55c8c
-
-cid 0bfced0b5727be40af49102e sid 08d342<br/>
-cid 0b160042b34fe728a9f05376 sid 4d61e0<br/>
-cid 0b933157fc8c352ee9490ae7 sid 34a912<br/>
-cid 0b80d1d567aafedb737ed0eb sid 4f2a92<br/>
-cid 0b3133feac7ae7125b1d0702 sid 1a5db3
-
-cr_bits 0x0 length_self_encoding: n nonce_len 8 sid_len 4
-    key 66c5acdb45a40c91da8cfbbdc77c157e
-
-cid 2da078bbf87c71264879c58a5a sid 20f1e37e<br/>
-cid 04577ce3800cf22ead7f9ba9a5 sid 29e462c4<br/>
-cid 1a0f6592fcd9167d0aa201e228 sid a0b0fb8a<br/>
-cid 11e4df0eb7db00363b1721e4a4 sid 31f15006<br/>
-cid 3d54b24c7bd39f081f00f44295 sid 551b8c28
-
-cr_bits 0x0 length_self_encoding: y nonce_len 12 sid_len 5
-    key ba4909a865c19d0234e090197d61bab9
-
-cid 11325919a7205f4f5e222c2ac94ec3309c1e sid 10f115363a<br/>
-cid 11ca85a9e5d02563ebb119acfacb3007993d sid 4108093aaf<br/>
-cid 1196ef4f0936cb6062b5db441395ef9f3831 sid 383c14e754<br/>
-cid 11ce3a6611da0e75f59dc8fe3cf4cfc6a61d sid d0da150dbf<br/>
-cid 116bd4cf085659d26b39dd5dd107ae87a694 sid b2945466df
-
-## Triple Stream Cipher Connection ID Algorithm
-
 TBD
 
 ## Block Cipher Connection ID Algorithm
@@ -1261,7 +1173,7 @@ cid:  93256308e3d349f8839dec840b0a90c7e7a1fc20 sid: 618b07791f
 > publication of a final version of this document.
 
 ## since-draft-ietf-quic-load-balancers-02
-- Added triple stream cipher algorithm
+- Replaced stream cipher algorithm with three-pass version
 - Added discussion of version invariance
 - Cleaned up text about config rotation
 - Added Reset Oracle and limited configuration considerations
