@@ -1,7 +1,7 @@
 ---
 title: "QUIC-LB: Generating Routable QUIC Connection IDs"
 abbrev: QUIC-LB
-docname: draft-ietf-quic-load-balancers-03
+docname: draft-ietf-quic-load-balancers-04
 date: {DATE}
 category: std
 ipr: trust200902
@@ -1171,6 +1171,8 @@ cid:  93256308e3d349f8839dec840b0a90c7e7a1fc20 sid: 618b07791f
 
 > **RFC Editor's Note:**  Please remove this section prior to
 > publication of a final version of this document.
+
+## since-draft-ietf-quic-load-balancers-03
 
 ## since-draft-ietf-quic-load-balancers-02
 - Replaced stream cipher algorithm with three-pass version
