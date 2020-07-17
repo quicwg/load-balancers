@@ -1113,7 +1113,45 @@ cid 0b71d1d4e3e3cd54d435b3fd sid eb
 
 ## Stream Cipher Connection ID Algorithm
 
-TBD
+cr_bits 0x0 length_self_encoding: y nonce_len 10 sid_len 1 key 9c46142f1597511357cf437841721d4b
+
+cid len 12 0b05be7bf896ed26cb4cc59a sid ab
+cid len 12 0b43909398577dd7df1597d4 sid 37
+cid len 12 0bf85fa27034785803747464 sid 0e
+cid len 12 0bc630c588fdecbfbdb62e61 sid 44
+cid len 12 0b8788901684f5d4e4dc6aeb sid 83
+
+cr_bits 0x0 length_self_encoding: n nonce_len 9 sid_len 2 key 434ae6fbf36aca0773a6a75f10e3f747
+
+cid len 12 08644a29067622f363d4c83e sid 846a
+cid len 12 234b2899f9b213a70abfe193 sid 4417
+cid len 12 3ff4ef53bbaad327c1e18fa5 sid 7554
+cid len 12 08a0eaf4cc08f184e6cf7743 sid b78a
+cid len 12 3fb2f5cf1b3e08bf97709c42 sid ed7e
+
+cr_bits 0x0 length_self_encoding: y nonce_len 12 sid_len 3 key 02e895bf84f6a80c3c7156da88a96755
+
+cid len 16 0f7405813570b8f9a6a10564d7b92834 sid 49023c
+cid len 16 0f3bb656319c6af210239dcaef77d3b9 sid b0a8ce
+cid len 16 0f3ae6d54ee97fc6907b5e2d60436caf sid 21f035
+cid len 16 0f4774918a6576c88f85829306f6450f sid 9e46ea
+cid len 16 0f7467db6ca1eb4c185e642b0c9f8f44 sid c33db0
+
+cr_bits 0x0 length_self_encoding: n nonce_len 11 sid_len 4 key ccb612da03f5dc205faf9b0b1d5429cb
+
+cid len 16 0c4b23e27639aef72f861ad2dce39d96 sid 125fdba1
+cid len 16 063ed9a173d22be11818b77a3bd5ec37 sid 0f3f82bc
+cid len 16 1a14e39b0f6ca6a3a48f6fdd2083fa09 sid 05950af2
+cid len 16 36cb4df5a7776edb21ec87c35c24e988 sid 3cb80d59
+cid len 16 05749809112a91327fef4b3152335298 sid 4746cb79
+
+cr_bits 0x0 length_self_encoding: y nonce_len 8 sid_len 5 key 625696d413ea1a352401afce6eec2432
+
+cid len 14 0d2a7b43eeaac8b36fce2c14ac96 sid 4b00da143a
+cid len 14 0ddd6cdb6685e75b91f4a1bb0dde sid f9aa795663
+cid len 14 0d870ea4d173d29484e41ea4a189 sid e430dcfb3f
+cid len 14 0df12abe175241b5ab035d23910f sid 8bc66a2596
+cid len 14 0d390df5de76903ca94b2e9daa49 sid 7637d0c172
 
 ## Block Cipher Connection ID Algorithm
 
@@ -1173,6 +1211,7 @@ cid:  93256308e3d349f8839dec840b0a90c7e7a1fc20 sid: 618b07791f
 > publication of a final version of this document.
 
 ## since-draft-ietf-quic-load-balancers-03
+- Added stream cipher test vectors
 
 ## since-draft-ietf-quic-load-balancers-02
 - Replaced stream cipher algorithm with three-pass version
