@@ -254,7 +254,6 @@ conform to the expectations of the routing algorithm. These are called
 
 * The DCID might not be long enough for the routing algorithm to process.
 * The extracted server mapping might not correspond to an active server.
-* A field that should be all zeroes after decryption may not be so.
 
 Load balancers MUST forward packets with long headers with non-compliant DCIDs
 to an active server using an algorithm of its own choosing. It need not
@@ -513,9 +512,7 @@ least 17 octets, increasing overhead of client-to-server packets.
 +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
 |  First octet  |       Encrypted server ID (X=8..128)          |
 +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-|             Encrypted Zero Padding (Y=0..128-X)               |
-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-|           Encrypted bits for server use (128-X-Y)             |
+|           Encrypted bits for server use (128-X)               |
 +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
 |           Unencrypted bits for server use (0..24)             |
 +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
@@ -530,9 +527,7 @@ server IDs, including potential future servers.  The server ID will start in the
 second octet of the decrypted connection ID and occupy continuous octets beyond
 that.
 
-The configuration agent selects a zero-padding length. This SHOULD be at least
-four octets to allow detection of non-compliant DCIDs. The server ID and zero-
-padding length MUST sum to no more than 16 octets. They SHOULD sum to no more
+They server ID length MUST be no more than 16 octets and SHOULD sum to no more
 than 12 octets, to provide servers adequate space to encode their own opaque
 data.
 
@@ -545,18 +540,17 @@ Upon receipt of a QUIC packet, the load balancer reads the first octet to
 obtain the config rotation bits. It then decrypts the subsequent 16 octets using
 AES-ECB decryption and the chosen key.
 
-The decrypted plaintext contains the server id, zero padding, and opaque server
-data in that order. The load balancer uses the server ID octets for routing.
+The decrypted plaintext contains the server id and opaque server data in that
+order. The load balancer uses the server ID octets for routing.
 
 ### Server Actions
 
 When generating a routable connection ID, the server MUST choose a connection ID
 length between 17 and 20 octets. The server writes its provided server ID into
-the server ID octets, zeroes into the zero-padding octets, and arbitrary bits
-into the remaining bits. These arbitrary bits MAY encode additional information.
-Bits in the first, eighteenth, nineteenth, and twentieth octets SHOULD appear
-essentially random to observers. The first octet is reserved as described in
-{{first-octet}}.
+the server ID octets and arbitrary bits into the remaining bits. These arbitrary
+bits MAY encode additional information. Bits in the eighteenth, nineteenth, and
+twentieth octets SHOULD appear essentially random to observers. The first octet
+is reserved as described in {{first-octet}}.
 
 The server then encrypts the second through seventeenth octets using the 128-bit
 AES-ECB cipher.
