@@ -179,27 +179,18 @@ Subsequent sections of this document refer to the contents of this octet as the
 
 ## Config Rotation {#config-rotation}
 
-The first two bits of any connection-ID MUST encode the configuration phase of
-that ID.  QUIC-LB messages indicate the phase of the algorithm and parameters
-that they encode.
-
-A new configuration may change one or more parameters of the old configuration,
-or change the algorithm used.
-
-It is possible for servers to have mutually exclusive sets of supported
-algorithms, or for a transition from one algorithm to another to result in Fail
-Payloads.  The four states encoded in these two bits allow two mutually
-exclusive server pools to coexist, and for each of them to transition to a new
-set of parameters.
+The first two bits of any connection ID MUST encode an identifier for the
+configuration that the connection ID uses. This enables incremental deployment
+of new QUIC-LB settings (e.g., keys).
 
 When new configuration is distributed to servers, there will be a transition
 period when connection IDs reflecting old and new configuration coexist in the
 network.  The rotation bits allow load balancers to apply the correct routing
 algorithm and parameters to incoming packets.
 
-Configuration Agents SHOULD make an effort to deliver new configurations to
-load balancers before doing so to servers, so that load balancers are ready to
-process CIDs using the new parameters when they arrive.
+Configuration Agents SHOULD deliver new configurations to load balancers before
+doing so to servers, so that load balancers are ready to process CIDs using the
+new parameters when they arrive.
 
 A Configuration Agent SHOULD NOT use a codepoint to represent a new
 configuration until it takes precautions to make sure that all connections using
@@ -207,17 +198,20 @@ CIDs with an old configuration at that codepoint have closed or transitioned.
 
 Servers MUST NOT generate new connection IDs using an old configuration after
 receiving a new one from the configuration agent. Servers MUST send
-NEW_CONNECTION_ID frames that provide CIDS using the new configuration, and
+NEW_CONNECTION_ID frames that provide CIDs using the new configuration, and
 retire CIDs using the old configuration using the "Retire Prior To" field of
 that frame.
+
+It also possible to use these bits for more long-lived distinction of different
+configurations, but this has privacy implications (see {{multiple-configs}}).
 
 ## Configuration Failover
 
 If a server has not received a valid QUIC-LB configuration, and believes that
 low-state, Connection-ID aware load balancers are in the path, it SHOULD
 generate connection IDs with the config rotation bits set to '11' and SHOULD use
-the "disable_migration" transport parameter in all new QUIC connections. It
-SHOULD NOT send NEW_CONNECTION_ID frames with new values.
+the "disable_active_migration" transport parameter in all new QUIC connections.
+It SHOULD NOT send NEW_CONNECTION_ID frames with new values.
 
 A load balancer that sees a connection ID with config rotation bits set to
 '11' MUST revert to 5-tuple routing.
@@ -238,6 +232,24 @@ the first octet.
 
 A server not using this functionality SHOULD make the six bits appear to be
 random.
+
+## Format
+
+~~~~~
+0                   1                   2                   3
+0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+|C R|  CID Len  |
++-+-+-+-+-+-+-+-+
+~~~~~
+{: #first-octet-format title="First Octet Format"}
+
+The first octet has the following fields:
+
+CR: Config Rotation bits.
+
+CID Len: Length Self-Description (if applicable). Encodes the length of the
+Connection ID following the First Octet.
 
 # Routing Algorithms {#routing-algorithms}
 
@@ -1020,6 +1032,14 @@ connection IDs to the same server.  The QUIC-LB algorithms do prevent the
 linkage of two connection IDs to the same individual connection if servers make
 reasonable selections when generating new IDs for that connection.
 
+## Multiple Configuration IDs {#multiple-configs}
+
+During the period in which there are multiple deployed configuration IDs (see
+{{config-rotation}}), there is a slight increase in linkability. The server
+space is effectively divided into segments with CIDs that have different config
+rotation bits. Entities that manage servers SHOULD strive to minimize these
+periods by quickly deploying new configurations across the server pool.
+
 ## Limited configuration scope
 
 A simple deployment of QUIC-LB in a cloud provider might use the same global
@@ -1033,9 +1053,8 @@ mutually distrustful servers that have different keys (for the block cipher or
 stream cipher algorithms) or routing masks and divisors (for the obfuscated
 algorithm). The load balancers can distinguish these configurations by external
 IP address, or by assigning different values to the config rotation bits
-({{config-rotation}}). Note that either of these techniques exposes information
-to outside observers, as traffic destined for each server set can be easily
-distinguished.
+({{config-rotation}}). Note that either solution has a privay impact; see
+{{multiple-configs}}.
 
 These techniques are not necessary for the plaintext algorithm, as it does not
 attempt to conceal the server ID.
@@ -1216,6 +1235,7 @@ cid:  93256308e3d349f8839dec840b0a90c7e7a1fc20 sid: 618b07791f
 > publication of a final version of this document.
 
 ## since-draft-ietf-quic-load-balancers-03
+- Improved Config Rotation text
 - Added stream cipher test vectors
 
 ## since-draft-ietf-quic-load-balancers-02
