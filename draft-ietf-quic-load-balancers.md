@@ -916,7 +916,6 @@ packet. The comments signify the range of acceptable values where applicable.
      } stream_cipher_config;
      case block_cipher: struct {
          uint8  server_id_length;
-         uint8  zero_padding_length; /* 0..(16 - server_id_length) */
          uint8  server_id[server_id_length];
          uint8  key[16];
      } block_cipher_config;
