@@ -347,79 +347,11 @@ in consecutive octets beginning with the second. All other bits in the
 connection ID, except for the first octet, MAY be set to any other value. These
 other bits SHOULD appear random to observers.
 
-## Obfuscated CID Algorithm {#obfuscated-cid-algorithm}
-
-The Obfuscated CID Algorithm makes an attempt to obscure the mapping of
-connections to servers to reduce linkability, while not requiring true
-encryption and decryption. The format is depicted in the figure below.
-
-~~~~~
-0                   1                   2                   3
-0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-|  First octet  |  Mixed routing and non-routing bits (64..152) |
-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-~~~~~
-{: #obfuscated-cid-format title="Obfuscated CID Format"}
-
-### Configuration Agent Actions
-
-The configuration agent selects an arbitrary set of bits of the server
-connection ID that it will use to route to a given server, called the "routing
-bits". The number of bits MUST have enough entropy to have a different code
-point for each server, and SHOULD have enough entropy so that there are many
-codepoints for each server.
-
-The configuration agent MUST NOT select a routing mask with more than 136
-routing bits set to 1, which allows for the first octet and up to 2 octets for
-server purposes in a maximum-length connection ID.
-
-The configuration agent selects a divisor that MUST be larger than the number of
-servers.  It SHOULD be large enough to accommodate reasonable increases in the
-number of servers. The divisor MUST be an odd integer so certain addition
-operations do not always produce an even number.
-
-The configuration agent also assigns each server a "modulus", an integer between
-0 and the divisor minus 1. These MUST be unique for each server, and SHOULD be
-distributed across the entire number space between zero and the divisor.
-
-### Load Balancer Actions
-
-Upon receipt of a QUIC packet, the load balancer extracts the selected bits of
-the Server CID and expresses them as an unsigned integer of that length.  The
-load balancer then divides the result by the chosen divisor. The modulus of this
-operation maps to the modulus for the destination server.
-
-Note that any Server CID that contains a server's modulus, plus an arbitrary
-integer multiple of the divisor, in the routing bits is routable to that server
-regardless of the contents of the non-routing bits. Outside observers that do
-not know the divisor or the routing bits will therefore have difficulty
-identifying that two Server CIDs route to the same server.
-
-Note also that not all Connection IDs are necessarily routable, as the computed
-modulus may not match one assigned to any server. These DCIDs are non-compliant
-as described above.
-
-### Server Actions
-
-The server chooses a connection ID length.  This MUST contain all of the routing
-bits and MUST be at least 9 octets to provide adequate entropy.
-
-When a server needs a new connection ID, it adds an arbitrary nonnegative
-integer multiple of the divisor to its modulus, without exceeding the maximum
-integer value implied by the number of routing bits. The choice of multiple
-should appear random within these constraints.
-
-The server encodes the result in the routing bits. It MAY put any other value
-into bits that used neither for routing nor config rotation.  These bits
-SHOULD appear random to observers.
-
 ## Stream Cipher CID Algorithm {#stream-cipher-cid-algorithm}
 
-The Stream Cipher CID algorithm provides true cryptographic protection, rather
-than mere obfuscation, at the cost of additional per-packet processing at the
-load balancer to decrypt every incoming connection ID. The CID format is
-depicted below.
+The Stream Cipher CID algorithm provides cryptographic protection at the cost of
+additional per-packet processing at the load balancer to decrypt every incoming
+connection ID. The CID format is depicted below.
 
 ~~~~~
 0                   1                   2                   3
@@ -860,9 +792,6 @@ parameters for that algorithm.
 For Plaintext CID Routing, this consists of the Server ID and the routing bytes.
 The Server ID is unique to each server, and the routing bytes are global.
 
-For Obfuscated CID Routing, this consists of the Routing Bits, Divisor, and
-Modulus. The Modulus is unique to each server, but the others MUST be global.
-
 For Stream Cipher CID Routing, this consists of the Server ID, Server ID Length,
 Key, and Nonce Length.  The Server ID is unique to each server, but the others
 MUST be global. The authentication token MUST be distributed out of band for
@@ -889,7 +818,7 @@ packet. The comments signify the range of acceptable values where applicable.
      case non_shared_state: uint32 list_of_quic_versions[];
      case shared_state:     uint8 key[16];
  } retry_service_config;
- enum     { none, plaintext, obfuscated, stream_cipher, block_cipher }
+ enum     { none, plaintext, stream_cipher, block_cipher }
                    routing_algorithm;
  select (routing_algorithm) {
      case none: null;
@@ -897,11 +826,6 @@ packet. The comments signify the range of acceptable values where applicable.
          uint8 server_id_length; /* 1..19 */
          uint8 server_id[server_id_length];
      } plaintext_config;
-     case obfuscated: struct {
-         uint8  routing_bit_mask[19];
-         uint16 divisor; /* Must be odd */
-         uint16 modulus; /* 0..(divisor - 1) */
-     } obfuscated_config;
      case stream_cipher: struct {
          uint8  nonce_length; /* 8..16 */
          uint8  server_id_length; /* 1..(19 - nonce_length) */
@@ -1011,9 +935,8 @@ same server. It could then apply analytical techniques to try to obtain the
 server encoding.
 
 The Stream and Block Cipher CID algorithms provide robust entropy to making any
-sort of linkage.  The Obfuscated CID obscures the mapping and prevents trivial
-brute-force attacks to determine the routing parameters, but does not provide
-robust protection against sophisticated attacks.
+sort of linkage. The Plaintext CID algorithm makes no attempt to protect this
+encoding.
 
 Were this analysis to obtain the server encoding, then on-path observers might
 apply this analysis to correlating different client IP addresses.
@@ -1042,11 +965,10 @@ configuration, and then extract server IDs of other customers' connections at
 will.
 
 To avoid this, the configuration agent SHOULD issue QUIC-LB configurations to
-mutually distrustful servers that have different keys (for the block cipher or
-stream cipher algorithms) or routing masks and divisors (for the obfuscated
-algorithm). The load balancers can distinguish these configurations by external
+mutually distrustful servers that have different keys for encryption
+algorithms. The load balancers can distinguish these configurations by external
 IP address, or by assigning different values to the config rotation bits
-({{config-rotation}}). Note that either solution has a privay impact; see
+({{config-rotation}}). Note that either solution has a privacy impact; see
 {{multiple-configs}}.
 
 These techniques are not necessary for the plaintext algorithm, as it does not
@@ -1076,52 +998,9 @@ connection ID should result in a unique server ID. The following connection
 IDs can be used to verify that a load balancer implementation extracts the
 correct server ID.
 
-## Obfuscated Connection ID Algorithm
+## Plaintext Connection ID Algorithm
 
-The following section lists a set of OCID load balancer configuration, followed
-by five CIDs from which the load balancer can extract the server ID.
-
-cr_bits 0x0 length_self_encoding: y bitmask ddc2f17788d77e3239b4ea divisor 345
-
-cid 0b72715d4745ce26cca8c750 sid b<br/>
-cid 0b63a1785b6c0b0857225e96 sid 3f<br/>
-cid 0b66474fa11329e6bb947818 sid 147<br/>
-cid 0b34bd7c0882deb0252e2a58 sid ca<br/>
-cid 0b0506ee792163bf9330dc0a sid 14d
-
-cr_bits 0x1 length_self_encoding: n bitmask 4855d35f5b88ddada153af61b6707ee646
-    divisor 301
-
-cid 542dc4c09e2d548e508dc825bbbca991c131 sid 8<br/>
-cid 47988071f9f03a25c322cc6fb1d57151d26f sid 93<br/>
-cid 6a13e05071f74cdb7d0dc24d72687b21e1d1 sid c0<br/>
-cid 4323c129650c7ee66f37266044ef52e74ffa sid 60<br/>
-cid 5e95f77e7e66891b57c224c5781c8c5dd8ba sid 8f
-
-cr_bits 0x0 length_self_encoding: y bitmask 9f98bd3df66338c2d2c6 divisor 459
-
-cid 0ad52216e7798c28340fd6 sid 125<br/>
-cid 0a78f8ecbd087083639f94 sid 4b<br/>
-cid 0ac7e70a5fe6b353b824aa sid 12<br/>
-cid 0af9612ae5ccba3ef98b81 sid d1<br/>
-cid 0a94ab209ea1d2e1e23751 sid 5d
-
-cr_bits 0x2 length_self_encoding: n bitmask dfba93c4f98f57103f5ae331
-    divisor 461
-
-cid 8b70b8c69e40ef2f3f8937e817 sid d3<br/>
-cid b1828830ea1789dab13a043795 sid 44<br/>
-cid 90604a580baa3eb0a47812e490 sid 137<br/>
-cid a5b4bc309337ff73e143ff6deb sid 9f<br/>
-cid fce75c0a984a79d3b4af40d155 sid 127
-
-cr_bits 0x0 length_self_encoding: y bitmask 8320fefc5309f7aa670476 divisor 379
-
-cid 0bb110af53dca7295e7d4b7e sid 101<br/>
-cid 0b0d284cdff364a634a4b93b sid e3<br/>
-cid 0b82ff1555c4a95f9b198090 sid 14e<br/>
-cid 0b7a427d3e508ad71e98b797 sid 14e<br/>
-cid 0b71d1d4e3e3cd54d435b3fd sid eb
+TBD
 
 ## Stream Cipher Connection ID Algorithm
 
@@ -1226,6 +1105,9 @@ cid:  93256308e3d349f8839dec840b0a90c7e7a1fc20 sid: 618b07791f
 
 > **RFC Editor's Note:**  Please remove this section prior to
 > publication of a final version of this document.
+
+## since draft-ietf-quic-load-balancers-04
+- Deleted the Obfuscated CID algorithm
 
 ## since-draft-ietf-quic-load-balancers-03
 - Improved Config Rotation text
