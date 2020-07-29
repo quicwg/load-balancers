@@ -934,9 +934,9 @@ aggressively simulate migration to obtain a large sample of IDs that map to the
 same server. It could then apply analytical techniques to try to obtain the
 server encoding.
 
-The Stream and Block Cipher CID algorithms provide robust entropy to making any
-sort of linkage. The Plaintext CID algorithm makes no attempt to protect this
-encoding.
+The Stream and Block Cipher CID algorithms provide robust protection against
+any sort of linkage. The Plaintext CID algorithm makes no attempt to protect
+this encoding.
 
 Were this analysis to obtain the server encoding, then on-path observers might
 apply this analysis to correlating different client IP addresses.
