@@ -1106,12 +1106,10 @@ cid:  93256308e3d349f8839dec840b0a90c7e7a1fc20 sid: 618b07791f
 > **RFC Editor's Note:**  Please remove this section prior to
 > publication of a final version of this document.
 
-## since draft-ietf-quic-load-balancers-04
-- Deleted the Obfuscated CID algorithm
-
 ## since-draft-ietf-quic-load-balancers-03
 - Improved Config Rotation text
 - Added stream cipher test vectors
+- Deleted the Obfuscated CID algorithm
 
 ## since-draft-ietf-quic-load-balancers-02
 - Replaced stream cipher algorithm with three-pass version
