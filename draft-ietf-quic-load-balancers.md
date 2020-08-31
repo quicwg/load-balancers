@@ -287,6 +287,11 @@ headers remains for unknown QUIC versions.
 
 Load balancers SHOULD drop packets with non-compliant DCIDs in a short header.
 
+Servers that receive packets with noncompliant CIDs MUST use the available
+mechanisms to induce the client to use a compliant CID in future packets. In
+QUIC version 1, this requires using a compliant CID in the Source CID field of
+server-generated long headers.
+
 A QUIC-LB configuration MAY significantly over-provision the server ID space
 (i.e., provide far more codepoints than there are servers) to increase the
 probability that a randomly generated Destination Connection ID is non-
