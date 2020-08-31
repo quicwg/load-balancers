@@ -801,6 +801,9 @@ For Block Cipher CID Routing, this consists of the Server ID, Server ID Length,
 Key, and Zero-Padding Length. The Server ID is unique to each server, but the
 others MUST be global.
 
+Note that server IDs are opaque bytes, not integers, so there is no notion of
+network order or host order.
+
 A full QUIC-LB configuration MUST also specify the information content of the
 first CID octet and the presence and mode of any Retry Service.
 
@@ -991,113 +994,165 @@ There are no IANA requirements.
 
 # Load Balancer Test Vectors {#test-vectors}
 
-Because any connection ID encoding in this specification includes many bits
-for server use without affecting extraction of the server ID, there are many
-possible connection IDs for any given set of parameters. However, every
-connection ID should result in a unique server ID. The following connection
-IDs can be used to verify that a load balancer implementation extracts the
-correct server ID.
+Each section of this draft includes multiple sets of load balancer
+configuration, each of which has five examples of server ID and server use
+bytes and how they are encoded in a CID.
+
+In some cases, there are no server use bytes. Note that, for simplicity, the
+first octet bits used for neither config rotation nor length self-encoding are
+random, rather than listed in the server use field. Therefore, a server
+implementation using these parameters may generate CIDs with a slightly different
+first octet.
+
+This section uses the following abbreviations:
+
+cid      Connection ID
+cr_bits  Config Rotation Bits
+LB       Load Balancer
+sid      Server ID
+sid_len  Server ID length
+su       Server Use Bytes
+
+All values except length_self_encoding and sid_len are expressed in hexidecimal
+format.
 
 ## Plaintext Connection ID Algorithm
 
-TBD
+LB configuration: cr_bits 0x0 length_self_encoding: y sid_len 1
+
+cid 01be sid be su 
+cid 0221b7 sid 21 su b7
+cid 03cadfd8 sid ca su dfd8
+cid 041e0c9328 sid 1e su 0c9328
+cid 050c8f6d9129 sid 0c su 8f6d9129
+
+LB configuration: cr_bits 0x0 length_self_encoding: n sid_len 2
+
+cid 02aab0 sid aab0 su 
+cid 3ac4b106 sid c4b1 su 06
+cid 08bd3cf4a0 sid bd3c su f4a0
+cid 3771d59502d6 sid 71d5 su 9502d6
+cid 1d57dee8b888f3 sid 57de su e8b888f3
+
+LB configuration: cr_bits 0x0 length_self_encoding: y sid_len 3
+
+cid 0336c976 sid 36c976 su 
+cid 04aa291806 sid aa2918 su 06
+cid 0586897bd8b6 sid 86897b su d8b6
+cid 063625bcae4de0 sid 3625bc su ae4de0
+cid 07966fb1f3cb535f sid 966fb1 su f3cb535f
+
+LB configuration: cr_bits 0x0 length_self_encoding: n sid_len 4
+
+cid 185172fab8 sid 5172fab8 su 
+cid 2eb7ff2c9297 sid b7ff2c92 su 97
+cid 14f3eb3dd3edbe sid f3eb3dd3 su edbe
+cid 3feb31cece744b74 sid eb31cece su 744b74
+cid 06b9f34c353ce23bb5 sid b9f34c35 su 3ce23bb5
+
+LB configuration: cr_bits 0x0 length_self_encoding: y sid_len 5
+
+cid 05bdcd8d0b1d sid bdcd8d0b1d su 
+cid 06aee673725a63 sid aee673725a su 63
+cid 07bbf338ddbf37f4 sid bbf338ddbf su 37f4
+cid 08fbbca64c26756840 sid fbbca64c26 su 756840
+cid 09e7737c495b93894e34 sid e7737c495b su 93894e34
 
 ## Stream Cipher Connection ID Algorithm
 
-cr_bits 0x0 length_self_encoding: y nonce_len 10 sid_len 1
-    key 9c46142f1597511357cf437841721d4b
+In each case below, the server is using a plain text nonce value of zero.
 
-cid 0b05be7bf896ed26cb4cc59a sid ab
-cid 0b43909398577dd7df1597d4 sid 37
-cid 0bf85fa27034785803747464 sid 0e
-cid 0bc630c588fdecbfbdb62e61 sid 44
-cid 0b8788901684f5d4e4dc6aeb sid 83
+LB configuration: cr_bits 0x0 length_self_encoding: y nonce_len 12 sid_len 1
+    key 4d9d0fd25a25e7f321ef464e13f9fa3d
 
-cr_bits 0x0 length_self_encoding: n nonce_len 9 sid_len 2
-    key 434ae6fbf36aca0773a6a75f10e3f747
+cid 0d69fe8ab8293680395ae256e89c sid c5 su 
+cid 0e420d74ed99b985e10f5073f43027 sid d5 su 27
+cid 0f380f440c6eefd3142ee776f6c16027 sid 10 su 6027
+cid 1020607efbe82049ddbf3a7c3d9d32604d sid 3c su 32604d
+cid 11e132d12606a1bb0fa17e1caef00ec54c10 sid e3 su 0ec54c10
 
-cid 08644a29067622f363d4c83e sid 846a
-cid 234b2899f9b213a70abfe193 sid 4417
-cid 3ff4ef53bbaad327c1e18fa5 sid 7554
-cid 08a0eaf4cc08f184e6cf7743 sid b78a
-cid 3fb2f5cf1b3e08bf97709c42 sid ed7e
+LB configuration: cr_bits 0x0 length_self_encoding: n nonce_len 12 sid_len 2
+    key 49e1cec7fd264b1f4af37413baf8ada9
 
-cr_bits 0x0 length_self_encoding: y nonce_len 12 sid_len 3
-    key 02e895bf84f6a80c3c7156da88a96755
+cid 3d3a5e1126414271cc8dc2ec7c8c15 sid f7fe su 
+cid 007042539e7c5f139ac2adfbf54ba748 sid eaf4 su 48
+cid 2bc125dd2aed2aafacf59855d99e029217 sid e880 su 9217
+cid 3be6728dc082802d9862c6c8e4dda3d984d8 sid 62c6 su d984d8
+cid 1afe9c6259ad350fc7bad28e0aeb2e8d4d4742 sid 8502 su 8d4d4742
 
-cid 0f7405813570b8f9a6a10564d7b92834 sid 49023c
-cid 0f3bb656319c6af210239dcaef77d3b9 sid b0a8ce
-cid 0f3ae6d54ee97fc6907b5e2d60436caf sid 21f035
-cid 0f4774918a6576c88f85829306f6450f sid 9e46ea
-cid 0f7467db6ca1eb4c185e642b0c9f8f44 sid c33db0
+LB configuration: cr_bits 0x0 length_self_encoding: y nonce_len 14 sid_len 3
+    key 2c70df0b399bd33a7335523dcdb884ad
 
-cr_bits 0x0 length_self_encoding: n nonce_len 11 sid_len 4
-    key ccb612da03f5dc205faf9b0b1d5429cb
+cid 11d62e8670565cd30b552edff6782ff5a740 sid d794bb su 
+cid 12c70e481f49363cabd9370d1fd5012c12bca5 sid 2cbd5d su a5
+cid 133b95dfd8ad93566782f8424df82458069fc9e9 sid d126cd su c9e9
+cid 13ac6ffcd635532ab60370306c7ee572d6b6e795 sid 539e42 su e795
+cid 1383ed07a9700777ff450bb39bb9c1981266805c sid 9094dd su 805c
 
-cid 0c4b23e27639aef72f861ad2dce39d96 sid 125fdba1
-cid 063ed9a173d22be11818b77a3bd5ec37 sid 0f3f82bc
-cid 1a14e39b0f6ca6a3a48f6fdd2083fa09 sid 05950af2
-cid 36cb4df5a7776edb21ec87c35c24e988 sid 3cb80d59
-cid 05749809112a91327fef4b3152335298 sid 4746cb79
+LB configuration: cr_bits 0x0 length_self_encoding: n nonce_len 12 sid_len 4
+    key 2297b8a95c776cf9c048b76d9dc27019
 
-cr_bits 0x0 length_self_encoding: y nonce_len 8 sid_len 5
-    key 625696d413ea1a352401afce6eec2432
+cid 32873890c3059ca62628089439c44c1f84 sid 7398d8ca su 
+cid 1ff7c7d7b9823954b178636c99a7dc93ac83 sid 9655f091 su 83
+cid 31044000a5ebb3bf2fa7629a17f2c78b077c17 sid 8b035fc6 su 7c17
+cid 1791bd28c66721e8fea0c6f34fd2d8e663a6ef70 sid 6672e0e2 su a6ef70
+cid 3df1d90ad5ccd5f8f475f040e90aeca09ec9839d sid b98b1fff su c9839d
 
-cid 0d2a7b43eeaac8b36fce2c14ac96 sid 4b00da143a
-cid 0ddd6cdb6685e75b91f4a1bb0dde sid f9aa795663
-cid 0d870ea4d173d29484e41ea4a189 sid e430dcfb3f
-cid 0df12abe175241b5ab035d23910f sid 8bc66a2596
-cid 0d390df5de76903ca94b2e9daa49 sid 7637d0c172
+LB configuration: cr_bits 0x0 length_self_encoding: y nonce_len 8 sid_len 5
+    key 484b2ed942d9f4765e45035da3340423
+
+cid 0da995b7537db605bfd3a38881ae sid 391a7840dc su 
+cid 0ed8d02d55b91d06443540d1bf6e98 sid 10f7f7b284 su 98
+cid 0f3f74be6d46a84ccb1fd1ee92cdeaf2 sid 0606918fc0 su eaf2
+cid 1045626dbf20e03050837633cc5650f97c sid e505eea637 su 50f97c
+cid 11bb9a17f691ab446a938427febbeb593eaa sid 99343a2a96 su eb593eaa
 
 ## Block Cipher Connection ID Algorithm
 
-Like the previous section, the text below lists a set of load balancer
-configuration and 5 CIDs generated with that configuration.
+LB configuration: cr_bits 0x0 length_self_encoding: y sid_len 1
+    key 411592e4160268398386af84ea7505d4
 
-cr_bits 0x0 length_self_encoding: y sid_len 1 zp_len 11
-    key 8c24cb9b9c3289b4ee63c3f3d7f93a9a
+cid 10564f7c0df399f6d93bdddb1a03886f25 sid 23 su 05231748a80884ed58007847eb9fd0
+cid 10d5c03f9dd765d73b3d8610b244f74d02 sid 15 su 76cd6b6f0d3f0b20fc8e633e3a05f3
+cid 108ca55228ab23b92845341344a2f956f2 sid 64 su 65c0ce170a9548717498b537cb8790
+cid 10e73f3d034aef2f6f501e3a7693d6270a sid 07 su f9ad10c84cc1e89a2492221d74e707
+cid 101a6ce13d48b14a77ecfd365595ad2582 sid 6c su 76ce4689b0745b956ef71c2608045d
 
-cid:  1378e44f874642624fa69e7b4aec15a2a678b8b5 sid: 48<br/>
-cid:  13772c82fe8ce6a00813f76a211b730eb4b20363 sid: 66<br/>
-cid:  135ccf507b1c209457f80df0217b9a1df439c4b2 sid: 30<br/>
-cid:  13898459900426c073c66b1001c867f9098a7aab sid: fe<br/>
-cid:  1397a18da00bf912f20049d9f0a007444f8b6699 sid: 30
+LB configuration: cr_bits 0x0 length_self_encoding: n sid_len 2
+    key 92ce44aecd636aeeff78da691ef48f77
 
-cr_bits 0x0 length_self_encoding: n sid_len 2 zp_len 10
-    key cc7ec42794664a8428250c12a7fb16fa
+cid 20aa09bc65ed52b1ccd29feb7ef995d318 sid a52f su 99278b92a86694ff0ecd64bc2f73
+cid 30b8dbef657bd78a2f870e93f9485d5211 sid 6c49 su 7381c8657a388b4e9594297afe96
+cid 043a8137331eacd2e78383279b202b9a6d sid 4188 su 5ac4b0e0b95f4e7473b49ee2d0dd
+cid 3ba71ea2bcf0ab95719ab59d3d7fde770d sid 8ccc su 08728807605db25f2ca88be08e0f
+cid 37ef1956b4ec354f40dc68336a23d42b31 sid c89d su 5a3ccd1471caa0de221ad6c185c0
 
-cid:  0cb28bfc1f65c3de14752bc0fc734ef824ce8f78 sid: 33fa<br/>
-cid:  2345e9fc7a7be55b4ba1ff6ffa04f3f5f8c67009 sid: ee47<br/>
-cid:  0d32102be441600f608c95841fd40ce978aa7a02 sid: 0c8b<br/>
-cid:  2e6bfc53c91c275019cd809200fa8e23836565ab sid: feca<br/>
-cid:  29b87a902ed129c26f7e4e918a68703dc71a6e0a sid: 8941
+LB configuration: cr_bits 0x0 length_self_encoding: y sid_len 3
+    key 5c49cb9265efe8ae7b1d3886948b0a34
 
-cr_bits 0x1 length_self_encoding: y sid_len 3 zp_len 9
-    key 42e657946b96b7052ab8e6eeb863ee24
+cid 10efcffc161d232d113998a49b1dbc4aa0 sid 0690b3 su 958fc9f38fe61b83881b2c5780
+cid 10fc13bdbcb414ba90e391833400c19505 sid 031ac3 su 9a55e1e1904e780346fcc32c3c
+cid 10d3cc1efaf5dc52c7a0f6da2746a8c714 sid 572d3a su ff2ec9712664e7174dc03ca3f8
+cid 107edf37f6788e33c0ec7758a485215f2b sid 562c25 su 02c5a5dcbea629c3840da5f567
+cid 10bc28da122582b7312e65aa096e9724fc sid 2fa4f0 su 8ae8c666bfc0fc364ebfd06b9a
 
-cid:  53c48f7884d73fd9016f63e50453bfd9bcfc637d sid: b46b68<br/>
-cid:  53f45532f6a4f0e1757fa15c35f9a2ab0fcce621 sid: 2147b4<br/>
-cid:  5361fd4bbcee881a637210f4fffc02134772cc76 sid: e4bf4b<br/>
-cid:  53881ffde14e613ef151e50ba875769d6392809b sid: c2afee<br/>
-cid:  53ad0d60204d88343492334e6c4c4be88d4a3add sid: ae0331
+LB configuration: cr_bits 0x0 length_self_encoding: n sid_len 4
+    key e787a3a491551fb2b4901a3fa15974f3
 
-cr_bits 0x0 length_self_encoding: n sid_len 4 zp_len 8
-    key ee2dc6a3359a94b0043ca0c82715ce71
+cid 26125351da12435615e3be6b16fad35560 sid 0cb227d3 su 65b40b1ab54e05bff55db046
+cid 14de05fc84e41b611dfbe99ed5b1c9d563 sid 6a0f23ad su d73bee2f3a7e72b3ffea52d9
+cid 1306052c3f973db87de6d7904914840ff1 sid ca21402d su 5829465f7418b56ee6ada431
+cid 1d202b5811af3e1dba9ea2950d27879a92 sid b14e1307 su 4902aba8b23a5f24616df3cf
+cid 26538b78efc2d418539ad1de13ab73e477 sid a75e0148 su 0040323f1854e75aeb449b9f
 
-cid:  058b9da37f436868cca3cef40c7f98001797c611 sid: eaf846c7<br/>
-cid:  1259fc97439adaf87f61250afea059e5ddf66e44 sid: 4cc5e84a<br/>
-cid:  202f424376f234d5f014f41cebc38de2619c6c71 sid: f94ff800<br/>
-cid:  146ac3e4bbb750d3bfb617ef4b0cb51a1cae5868 sid: c2071b1b<br/>
-cid:  36dfe886538af7eb16a196935b3705c9d741479f sid: 26359dbb
+LB configuration: cr_bits 0x0 length_self_encoding: y sid_len 5
+    key d5a6d7824336fbe0f25d28487cdda57c
 
-cr_bits 0x2 length_self_encoding: y sid_len 5 zp_len 7
-    key 700837da8834840afe7720186ec610c9
-
-cid:  931ef3cc07e2eaf08d4c1902cd564d907cc3377c sid: 759b1d419a<br/>
-cid:  9398c3d0203ab15f1dfeb5aa8f81e52888c32008 sid: 77cc0d3310<br/>
-cid:  93f4ba09ab08a9ef997db4fa37a97dbf2b4c5481 sid: f7db9dce32<br/>
-cid:  93744f4bedf95e04dd6607592ecf775825403093 sid: e264d714d2<br/>
-cid:  93256308e3d349f8839dec840b0a90c7e7a1fc20 sid: 618b07791f
+cid 10a2794871aadb20ddf274a95249e57fde sid 82d3b0b1a1 su 0935471478c2edb8120e60
+cid 108122fe80a6e546a285c475a3b8613ec9 sid fbcc902c9d su 59c47946882a9a93981c15
+cid 104d227ad9dd0fef4c8cb6eb75887b6ccc sid 2808e22642 su 2a7ef40e2c7e17ae40b3fb
+cid 10b3f367d8627b36990a28d67f50b97846 sid 5e018f0197 su 2289cae06a566e5cb6cfa4
+cid 1024412bfe25f4547510204bdda6143814 sid 8a8dd3d036 su 4b12933a135e5eaaebc6fd
 
 # Acknowledgments
 
@@ -1105,6 +1160,10 @@ cid:  93256308e3d349f8839dec840b0a90c7e7a1fc20 sid: 618b07791f
 
 > **RFC Editor's Note:**  Please remove this section prior to
 > publication of a final version of this document.
+
+## since draft-ietf-quic-load-balancers-04
+- Eliminated zero padding from the test vectors
+- Added server use bytes to the test vectors
 
 ## since-draft-ietf-quic-load-balancers-03
 - Improved Config Rotation text
