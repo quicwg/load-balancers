@@ -524,10 +524,10 @@ When a server is under load, QUICv1 allows it to defer storage of connection
 state until the client proves it can receive packets at its advertised IP
 address.  Through the use of a Retry packet, a token in subsequent client
 Initial packets, and the original_destination_connection_id transport parameter,
-servers verify address ownership and clients verify that there is no "man in the
-middle" generating Retry packets.
+servers verify address ownership and clients verify that there is no on-path
+attacker generating Retry packets.
 
-As a trusted Retry Service is literally a "man in the middle," the service must
+As a trusted Retry Service is literally an on-path entity, the service must
 communicate the original_destination_connection_id back to the server so that it
 can pass client verification. It also must either verify the address itself
 (with the server trusting this verification) or make sure there is common
@@ -651,7 +651,7 @@ with the token removed. The latter requires decryption and re-encryption of the
 entire Initial packet to avoid authentication failure. Forwarding the packet
 causes the server to respond without the original_destination_connection_id
 transport parameter, which preserves the normal QUIC signal to the client that
-there is an unauthorized man in the middle.
+there is an on-path attacker.
 
 ### Server Requirements
 
