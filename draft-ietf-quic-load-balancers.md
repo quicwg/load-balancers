@@ -265,6 +265,8 @@ conform to the expectations of the routing algorithm. These are called
 "non-compliant DCIDs":
 
 * The DCID might not be long enough for the routing algorithm to process.
+* The config rotation bits {{config-rotation}} may not correspond to an active
+configuration.
 * The extracted server mapping might not correspond to an active server.
 
 Load balancers MUST forward packets with long headers with non-compliant DCIDs
