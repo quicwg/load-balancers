@@ -265,6 +265,8 @@ conform to the expectations of the routing algorithm. These are called
 "non-compliant DCIDs":
 
 * The DCID might not be long enough for the routing algorithm to process.
+* The config rotation bits {{config-rotation}} may not correspond to an active
+configuration.
 * The extracted server mapping might not correspond to an active server.
 
 Load balancers MUST forward packets with long headers with non-compliant DCIDs
@@ -286,6 +288,11 @@ a non-compliant DCIDs. The prohibition against dropping packets with long
 headers remains for unknown QUIC versions.
 
 Load balancers SHOULD drop packets with non-compliant DCIDs in a short header.
+
+Servers that receive packets with noncompliant CIDs MUST use the available
+mechanisms to induce the client to use a compliant CID in future packets. In
+QUIC version 1, this requires using a compliant CID in the Source CID field of
+server-generated long headers.
 
 A QUIC-LB configuration MAY significantly over-provision the server ID space
 (i.e., provide far more codepoints than there are servers) to increase the
