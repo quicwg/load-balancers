@@ -1171,6 +1171,7 @@ cid 1024412bfe25f4547510204bdda6143814 sid 8a8dd3d036 su 4b12933a135e5eaaebc6fd
 ## since draft-ietf-quic-load-balancers-04
 - Eliminated zero padding from the test vectors
 - Added server use bytes to the test vectors
+- Additional compliant DCID criteria
 
 ## since-draft-ietf-quic-load-balancers-03
 - Improved Config Rotation text
