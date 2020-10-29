@@ -55,6 +55,12 @@ normative:
         org: Mozilla
         role: editor
 
+  TIME_T:
+    title: "Open Group Standard: Vol. 1: Base Definitions, Issue 7"
+    date: 2018
+    seriesinfo: IEEE Std 1003.1
+    target: http://pubs.opengroup.org/onlinepubs/9699919799/basedefs/V1_chap04.html#tag_04_16
+
 --- abstract
 
 QUIC connection IDs allow continuation of connections across address/port
@@ -714,13 +720,7 @@ not a multiple of 16 octets, the last block is padded with zeroes.
 |                                                               |
 +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
 |                                                               |
-+                                                               +
-|                                                               |
-+                                                               +
-|                         date-time (160)                       |
-+                                                               +
-|                                                               |
-+                                                               +
++                        Timestamp (64)                         +
 |                                                               |
 +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
 |                      Opaque Data (optional)                   |
@@ -746,9 +746,8 @@ Client IP Address: The source IP address from the triggering Initial packet.
 The client IP address is 16 octets. If an IPv4 address, the last 12 octets are
 zeroes.
 
-date-time: The date-time string is a total of 20 octets and encodes the time the
-token was generated. The format of date-time is described in Section 5.6 of
-{{!RFC3339}}. This ASCII field MUST use the "Z" character for time-offset.
+Timestamp: The timestamp is a 64-bit integer, in network order, that expresses
+the number of seconds in POSIX time (see Sec. 4.16 of {{TIME_T}}).
 
 Opaque Data: The server may use this field to encode additional information,
 such as congestion window, RTT, or MTU. Opaque data SHOULD also allow servers
@@ -1172,6 +1171,7 @@ cid 1024412bfe25f4547510204bdda6143814 sid 8a8dd3d036 su 4b12933a135e5eaaebc6fd
 - Eliminated zero padding from the test vectors
 - Added server use bytes to the test vectors
 - Additional compliant DCID criteria
+- More compact timestamp in Retry token
 
 ## since-draft-ietf-quic-load-balancers-03
 - Improved Config Rotation text
