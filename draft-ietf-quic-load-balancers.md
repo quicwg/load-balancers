@@ -271,11 +271,11 @@ conform to the expectations of the routing algorithm. These are called
 "non-compliant DCIDs":
 
 * The DCID might not be long enough for the routing algorithm to process.
-* The config rotation bits {{config-rotation}} may not correspond to an active
+* The config rotation bits ({{config-rotation}}) may not correspond to an active
 configuration.
 * The extracted server mapping might not correspond to an active server.
 
-Load balancers MUST forward packets with long headers with non-compliant DCIDs
+Load balancers MUST forward packets with long headers and non-compliant DCIDs
 to an active server using an algorithm of its own choosing. It need not
 coordinate this algorithm with the servers. The algorithm SHOULD be
 deterministic over short time scales so that related packets go to the same
@@ -290,7 +290,7 @@ As a partial exception to the above, load balancers MAY drop packets with long
 headers and non-compliant DCIDs if and only if it knows that the encoded QUIC
 version does not allow a non-compliant DCID in a packet with that signature. For
 example, a load balancer can safely drop a QUIC version 1 Handshake packet with
-a non-compliant DCIDs. The prohibition against dropping packets with long
+a non-compliant DCID. The prohibition against dropping packets with long
 headers remains for unknown QUIC versions.
 
 Load balancers SHOULD drop packets with non-compliant DCIDs in a short header.
@@ -311,7 +311,7 @@ accordance with the chosen routing algorithm.
 The load balancer MUST NOT make the routing behavior dependent on any bits in
 the first octet of the QUIC packet header, except the first bit, which indicates
 a long header. All other bits are QUIC version-dependent and intermediaries
-would cannot build their design on version-specific templates.
+cannot base their design on version-specific templates.
 
 There are situations where a server pool might be operating two or more routing
 algorithms or parameter sets simultaneously.  The load balancer uses the first
@@ -339,9 +339,8 @@ depicted in the figure below.
 
 ### Configuration Agent Actions
 
-The configuration agent selects a number of bytes of the server connection ID
-to encode individual server IDs, called the "routing bytes". The number of bytes
-MUST have enough entropy to have a different code point for each server.
+The configuration agent selects a length for the server ID encoding. This
+length MUST have enough entropy to have a different code point for each server.
 
 It also assigns a server ID to each server.
 
@@ -484,9 +483,8 @@ server IDs, including potential future servers.  The server ID will start in the
 second octet of the decrypted connection ID and occupy continuous octets beyond
 that.
 
-They server ID length MUST be no more than 16 octets and SHOULD sum to no more
-than 12 octets, to provide servers adequate space to encode their own opaque
-data.
+They server ID length MUST be no more than 16 octets and SHOULD be no more than
+12 octets, to provide servers adequate space to encode their own opaque data.
 
 The configuration agent also selects an 16-octet AES-ECB key to use for
 connection ID decryption.
@@ -516,10 +514,10 @@ AES-ECB cipher.
 
 For protocols where 4-tuple load balancing is sufficient, it is straightforward
 to deliver ICMP packets from the network to the correct server, by reading the
-IP and transport-layer headers to obtain the 4-tuple. When routing is based on
-connection ID, further measures are required, as most QUIC packets that trigger
-ICMP responses will only contain a client-generated connection ID that contains
-no routing information.
+echoed `IP and transport-layer headers to obtain the 4-tuple. When routing is
+based on connection ID, further measures are required, as most QUIC packets that
+trigger ICMP responses will only contain a client-generated connection ID that
+contains no routing information.
 
 To solve this problem, load balancers MAY maintain a mapping of Client IP and
 port to server ID based on recently observed packets.
@@ -536,27 +534,24 @@ Destination CID.
 When a server is under load, QUICv1 allows it to defer storage of connection
 state until the client proves it can receive packets at its advertised IP
 address.  Through the use of a Retry packet, a token in subsequent client
-Initial packets, and the original_destination_connection_id transport parameter,
-servers verify address ownership and clients verify that there is no on-path
-attacker generating Retry packets.
+Initial packets, and transport parameters, servers verify address ownership and
+clients verify that there is no on-path attacker generating Retry packets.
 
-As a trusted Retry Service is literally an on-path entity, the service must
-communicate the original_destination_connection_id back to the server so that it
-can pass client verification. It also must either verify the address itself
-(with the server trusting this verification) or make sure there is common
-context for the server to verify the address using a service-generated token.
-
-The service must also communicate the source connection ID of the Retry packet
-to the server so that it can include it in a transport parameter for client
-verification.
+A "Retry Service" detects potential Denial of Service attacks and handles
+sending of Retry packets on behalf of the server. As it is, by definition,
+literally an on-path entity, the service must communicate some of the original
+connection IDs back to the server so that it can pass client verification. It
+also must either verify the address itself (with the server trusting this
+verification) or make sure there is common context for the server to verify the
+address using a service-generated token.
 
 There are two different mechanisms to allow offload of DoS mitigation to a
 trusted network service. One requires no shared state; the server need only be
 configured to trust a retry service, though this imposes other operational
-constraints. The other requires shared key, but has no such constraints.
+constraints. The other requires a shared key, but has no such constraints.
 
 Retry services MUST forward all QUIC packets that are not of type Initial or
-0-RTT. Other packets types might involve changed IP addresses or connection IDs,
+0-RTT. Other packet types might involve changed IP addresses or connection IDs,
 so it is not practical for Retry Services to identify such packets as valid or
 invalid.
 
@@ -654,7 +649,7 @@ with the INVALID_TOKEN error code when dropping the packet.
 
 Note that this scheme has a performance drawback. When the retry service is in
 active mode, clients with a token from a NEW_TOKEN frame will suffer a 1-RTT
-penalty even though it has proof of address with its token.
+penalty even though its token provides proof of address.
 
 In inactive mode, the service MUST forward all packets that have no token or a
 token with the first bit set to '1'. It MUST validate all tokens with the first
@@ -672,7 +667,7 @@ A server behind a non-shared-state retry service MUST NOT send Retry packets
 for a QUIC version the retry service understands. It MAY send Retry for QUIC
 versions the Retry Service does not understand.
 
-Tokens sent in NEW_TOKEN frames MUST have the first bit be set to '1'.
+Tokens sent in NEW_TOKEN frames MUST have the first bit set to '1'.
 
 If a server receives an Initial Packet with the first bit set to '1', it could
 be from a server-generated NEW_TOKEN frame and should be processed in accordance
@@ -690,7 +685,7 @@ the Retry service, so servers MAY send Retry packets in response to Initial
 packets that don't include a valid token.
 
 Both server and service must have access to Universal time, though tight
-synchronization is not necessary.
+synchronization is unnecessary.
 
 All tokens, generated by either the server or retry service, MUST use the
 following format. This format is the cleartext version. On the wire, these
@@ -744,20 +739,24 @@ Source Connection ID of the Retry packet.
 
 Client IP Address: The source IP address from the triggering Initial packet.
 The client IP address is 16 octets. If an IPv4 address, the last 12 octets are
-zeroes.
+zeroes. If there is a Network Address Translator (NAT) in the server
+infrastructure that changes the client IP, the Retry Service MUST either be
+positioned behind the NAT, or the NAT must have the token key to rewrite the
+Retry token accordingly.
 
 Timestamp: The timestamp is a 64-bit integer, in network order, that expresses
 the number of seconds in POSIX time (see Sec. 4.16 of {{TIME_T}}).
 
 Opaque Data: The server may use this field to encode additional information,
-such as congestion window, RTT, or MTU. Opaque data SHOULD also allow servers
-to distinguish between retry tokens (which trigger use of the
-original_destination_connection_id transport parameter) and NEW_TOKEN frame
-tokens.
+such as congestion window, RTT, or MTU. Opaque data MAY also allow servers to
+distinguish between retry tokens (which trigger use of certain transport
+parameters) and NEW_TOKEN frame tokens.
 
 ### Configuration Agent Actions
 
-The configuration agent generates and distributes a "token key."
+The configuration agent generates and distributes a "token key" and a list of
+QUIC versions the service supports. It must also inform the service if a NAT
+lies between the service and the servers.
 
 ### Service Requirements
 
@@ -767,6 +766,9 @@ described above when it receives a client Initial packet with no token.
 In active mode, the service SHOULD decrypt incoming tokens. The service SHOULD
 drop packets with an IP address that does not match, and SHOULD forward packets
 that do, regardless of the other fields.
+
+However, the service MUST NOT decrypt or validate tokens if there is a NAT
+between it and the servers.
 
 In inactive mode, the service SHOULD forward all packets to the server so that
 the server can issue an up-to-date token to the client.
@@ -783,6 +785,8 @@ After decrypting the token, the server uses the corresponding fields to
 populate the original_destination_connection_id transport parameter, with a
 length equal to ODCIL, and the retry_source_connection_id transport parameter,
 with length equal to RSCIL.
+
+For QUIC versions the service not support, the server MAY use any token format.
 
 As discussed in {{QUIC-TRANSPORT}}, a server MUST NOT send a Retry packet in
 response to an Initial packet that contains a retry token.
@@ -825,7 +829,10 @@ packet. The comments signify the range of acceptable values where applicable.
  select (retry_service) {
      case none: null;
      case non_shared_state: uint32 list_of_quic_versions[];
-     case shared_state:     uint8 key[16];
+     case shared_state: {
+         uint8 key[16];
+         bool  nat_behind_service;
+     } shared_state_config;
  } retry_service_config;
  enum     { none, plaintext, stream_cipher, block_cipher }
                    routing_algorithm;
@@ -858,13 +865,13 @@ by the specification above.
 
 Some network architectures may have multiple tiers of low-state load balancers,
 where a first tier of devices makes a routing decision to the next tier, and so
-on until packets reach the server. Although QUIC-LB is not explicitly designed
+on, until packets reach the server. Although QUIC-LB is not explicitly designed
 for this use case, it is possible to support it.
 
 If each load balancer is assigned a range of server IDs that is a subset of the
 range of IDs assigned to devices that are closer to the client, then the first
 devices to process an incoming packet can extract the server ID and then map it
-to the correct forwrading address. Note that this solution is extensible to
+to the correct forwarding address. Note that this solution is extensible to
 arbitrarily large numbers of load-balancing tiers, as the maximum server ID
 space is quite large.
 
@@ -883,9 +890,9 @@ map its server ID to the new server's address.
 
 # Version Invariance of QUIC-LB {#version-invariance}
 
-Retry Services are inherently dependent on the format (and existence) of Retry
-Packets in each version of QUIC, and so Retry Service configuration explicitly
-includes the supported QUIC versions.
+Non-shared-state Retry Services are inherently dependent on the format (and
+existence) of Retry Packets in each version of QUIC, and so Retry Service
+configuration explicitly includes the supported QUIC versions.
 
 The server ID encodings, and requirements for their handling, are designed to be
 QUIC version independent (see {{QUIC-INVARIANTS}}). A QUIC-LB load balancer will
