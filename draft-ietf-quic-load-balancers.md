@@ -763,9 +763,9 @@ lies between the service and the servers.
 When in active mode, the service MUST generate Retry tokens with the format
 described above when it receives a client Initial packet with no token.
 
-In active mode, the service SHOULD decrypt incoming tokens. The service SHOULD
-drop packets with an IP address that does not match, and SHOULD forward packets
-that do, regardless of the other fields.
+In active mode, the service SHOULD decrypt the first 16 octets of incoming
+tokens. The service SHOULD drop packets with an IP address that does not match,
+and SHOULD forward packets that do, regardless of the other fields.
 
 However, the service MUST NOT decrypt or validate tokens if there is a NAT
 between it and the servers.
@@ -784,7 +784,7 @@ server-generated Retry tokens (if different), and NEW_TOKEN tokens.
 The server MUST validate all tokens that arrive in Initial packets, as they
 may have bypassed the Retry service.
 
-For Retry tokens that follow the format above, servers SHOULD use the date-time
+For Retry tokens that follow the format above, servers SHOULD use the timestamp
 field to apply its expiration limits for tokens. This need not be precisely
 synchronized with the retry service. However, servers MAY allow retry tokens
 marked as being a few seconds in the future, due to possible clock
@@ -801,31 +801,39 @@ format.
 As discussed in {{QUIC-TRANSPORT}}, a server MUST NOT send a Retry packet in
 response to an Initial packet that contains a retry token.
 
-#Configuration Requirements
+# Configuration Requirements
 
 QUIC-LB requires common configuration to synchronize understanding of encodings
 and guarantee explicit consent of the server.
 
 The load balancer and server MUST agree on a routing algorithm and the relevant
-parameters for that algorithm.
+parameters for that algorithm. Each server MUST know its server ID for each
+configuration, and the load balancer MUST have forwarding instructions for each
+server ID.
 
-For Plaintext CID Routing, this consists of the Server ID and the routing bytes.
-The Server ID is unique to each server, and the routing bytes are global.
+For all algorithms, the load balancer and servers MUST have a common
+understanding of the server ID length.
 
-For Stream Cipher CID Routing, this consists of the Server ID, Server ID Length,
-Key, and Nonce Length.  The Server ID is unique to each server, but the others
-MUST be global. The authentication token MUST be distributed out of band for
-this algorithm to operate.
+For Stream Cipher CID Routing, the servers and load balancer also MUST have a
+common understanding of the key and nonce length.
 
-For Block Cipher CID Routing, this consists of the Server ID, Server ID Length,
-Key, and Zero-Padding Length. The Server ID is unique to each server, but the
-others MUST be global.
+For Block Cipher CID Routing, the servers and load balancer also MUST have a
+common understanding of the key.
 
 Note that server IDs are opaque bytes, not integers, so there is no notion of
 network order or host order.
 
-A full QUIC-LB configuration MUST also specify the information content of the
-first CID octet and the presence and mode of any Retry Service.
+A server configuration MUST specify if the first octet encodes the CID length.
+Note that a load balancer does not need the CID length, as the required bytes
+are present in the QUIC packet.
+
+A full QUIC-LB server configuration MUST also specify the supported QUIC
+versions of any Retry Service. If a shared-state service, the server also must
+have the token key.
+
+A non-shared-state Retry Service need only be configured with the QUIC versions
+it supports. A shared-state Retry Service also needs the token key, and to be
+aware if a NAT sits between it and the servers.
 
 The following pseudocode describes the data items necessary to store a full
 QUIC-LB configuration at the server. It is meant to describe the conceptual
@@ -840,8 +848,8 @@ packet. The comments signify the range of acceptable values where applicable.
      case none: null;
      case non_shared_state: uint32 list_of_quic_versions[];
      case shared_state: {
-         uint8 key[16];
-         bool  nat_behind_service;
+         uint32   list_of_quic_versions[];
+         uint8    token_key[16];
      } shared_state_config;
  } retry_service_config;
  enum     { none, plaintext, stream_cipher, block_cipher }
