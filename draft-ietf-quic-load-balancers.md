@@ -696,6 +696,14 @@ not a multiple of 16 octets, the last block is padded with zeroes.
 0                   1                   2                   3
 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
 +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+|                                                               |
++                                                               +
+|                                                               |
++                    Client IP Address (128)                    +
+|                                                               |
++                                                               +
+|                                                               |
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
 |    ODCIL    |      RSCIL    |
 +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
 |        Original Destination Connection ID (0..160)            |
@@ -705,14 +713,6 @@ not a multiple of 16 octets, the last block is padded with zeroes.
 |              Retry Source Connection ID (0..160)              |
 +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
 |                             ...                               |
-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-|                                                               |
-+                                                               +
-|                                                               |
-+                    Client IP Address (128)                    +
-|                                                               |
-+                                                               +
-|                                                               |
 +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
 |                                                               |
 +                        Timestamp (64)                         +
@@ -775,23 +775,33 @@ the server can issue an up-to-date token to the client.
 
 ### Server Requirements
 
+When issuing Retry or NEW_TOKEN tokens, the server MUST encode the client IP
+address in the first 16 octets and encrypt that block with the token key. It
+MAY use any format or encryption for the remainder of the token. However, it
+MUST include a means of distinguishing service-generated Retry tokens,
+server-generated Retry tokens (if different), and NEW_TOKEN tokens.
+
 The server MUST validate all tokens that arrive in Initial packets, as they
-may have bypassed the Retry service. It SHOULD use the date-time field to apply
-its expiration limits for tokens. This need not be synchronized with the retry
-service. However, servers MAY allow retry tokens marked as being a few seconds
-in the future, due to possible clock synchronization issues.
+may have bypassed the Retry service.
+
+For Retry tokens that follow the format above, servers SHOULD use the date-time
+field to apply its expiration limits for tokens. This need not be precisely
+synchronized with the retry service. However, servers MAY allow retry tokens
+marked as being a few seconds in the future, due to possible clock
+synchronization issues.
 
 After decrypting the token, the server uses the corresponding fields to
 populate the original_destination_connection_id transport parameter, with a
 length equal to ODCIL, and the retry_source_connection_id transport parameter,
 with length equal to RSCIL.
 
-For QUIC versions the service not support, the server MAY use any token format.
+For QUIC versions the service does not support, the server MAY use any token
+format.
 
 As discussed in {{QUIC-TRANSPORT}}, a server MUST NOT send a Retry packet in
 response to an Initial packet that contains a retry token.
 
-# Configuration Requirements
+#Configuration Requirements
 
 QUIC-LB requires common configuration to synchronize understanding of encodings
 and guarantee explicit consent of the server.
@@ -1175,10 +1185,12 @@ cid 1024412bfe25f4547510204bdda6143814 sid 8a8dd3d036 su 4b12933a135e5eaaebc6fd
 > publication of a final version of this document.
 
 ## since draft-ietf-quic-load-balancers-04
+- Rearranged the shared-state retry token to simplify token processing
+- More compact timestamp in shared-state retry token
+- Revised server requirements for shared-state retries
 - Eliminated zero padding from the test vectors
 - Added server use bytes to the test vectors
 - Additional compliant DCID criteria
-- More compact timestamp in Retry token
 
 ## since-draft-ietf-quic-load-balancers-03
 - Improved Config Rotation text
