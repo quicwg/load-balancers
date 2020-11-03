@@ -359,6 +359,29 @@ in consecutive octets beginning with the second. All other bits in the
 connection ID, except for the first octet, MAY be set to any other value. These
 other bits SHOULD appear random to observers.
 
+### linkable_cid Transport Parameter {#transport-parameter}
+
+Servers that are encoding CIDs using the Plaintext CID algorithm MUST include
+the linkable_cid transport parameter in its handshake to inform the client that
+migrations may be linkable by observers. Upon an address change, the client MAY
+choose to terminate the connection and establish a new one based on this
+information.
+
+The type of this transport parameter is 0x1c. The parameter is a zero-length
+value.
+
+As migrations cannot occur before the handshake completes, there is no need to
+store this transport parameter for 0-RTT.
+
+In the event that a server transitions from an encrypted algorithm to the
+Plaintext CID Algorithm in the middle of a connection, it cannot send another
+transport parameter. Therefore, it MUST stop issuing new Connection IDs after
+issuing one to transition the client to the new configuration. This prevents
+the client from migrating.
+
+There is no way to revoke the linkable_cid transport parameter if a server
+transitions from Plaintext CID to a less linkable algorithm mid-connection.
+
 ## Stream Cipher CID Algorithm {#stream-cipher-cid-algorithm}
 
 The Stream Cipher CID algorithm provides cryptographic protection at the cost of
@@ -947,14 +970,9 @@ QUIC-LB is intended to prevent linkability.  Attacks would therefore attempt to
 subvert this purpose.
 
 Note that the Plaintext CID algorithm makes no attempt to obscure the server
-mapping, and therefore does not address these concerns. It exists to allow
-consistent CID encoding for compatibility across a network infrastructure, which
-makes QUIC robust to NAT rebinding. Servers that are running the Plaintext CID
-algorithm SHOULD only use it to generate new CIDs for the Server Initial Packet
-and SHOULD NOT send CIDs in QUIC NEW_CONNECTION_ID frames, except that it sends
-one new Connection ID in the event of config rotation {{config-rotation}}.
-Doing so might falsely suggest to the client that said CIDs were generated in a
-secure fashion.
+mapping, and therefore does not address these concerns. Servers using Plaintext
+CIDs therefore send a transport parameter in the handshake so that the client
+can make an informed decision whether to migrate a connection.
 
 A linkability attack would find some means of determining that two connection
 IDs route to the same server. As described above, there is no scheme that
@@ -1019,7 +1037,13 @@ it is a sufficient means of avoiding an Oracle without additional measures.
 
 # IANA Considerations
 
-There are no IANA requirements.
+IANA SHALL add the following entry to the QUIC Transport Parameter Registry.
+
+Name: linkable_cid
+
+Value: 0x1c
+
+Specification: This Document.
 
 --- back
 
@@ -1191,6 +1215,9 @@ cid 1024412bfe25f4547510204bdda6143814 sid 8a8dd3d036 su 4b12933a135e5eaaebc6fd
 
 > **RFC Editor's Note:**  Please remove this section prior to
 > publication of a final version of this document.
+
+## since draft-ietf-quic-load-balancers-05
+- Added linkable_cid transport parameter
 
 ## since draft-ietf-quic-load-balancers-04
 - Rearranged the shared-state retry token to simplify token processing
