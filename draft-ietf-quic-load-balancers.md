@@ -1,7 +1,7 @@
 ---
 title: "QUIC-LB: Generating Routable QUIC Connection IDs"
 abbrev: QUIC-LB
-docname: draft-ietf-quic-load-balancers-latest
+docname: draft-ietf-quic-load-balancers-05
 date: {DATE}
 category: std
 ipr: trust200902
@@ -54,6 +54,12 @@ normative:
         name: Martin Thomson
         org: Mozilla
         role: editor
+
+  TIME_T:
+    title: "Open Group Standard: Vol. 1: Base Definitions, Issue 7"
+    date: 2018
+    seriesinfo: IEEE Std 1003.1
+    target: http://pubs.opengroup.org/onlinepubs/9699919799/basedefs/V1_chap04.html#tag_04_16
 
 --- abstract
 
@@ -179,27 +185,18 @@ Subsequent sections of this document refer to the contents of this octet as the
 
 ## Config Rotation {#config-rotation}
 
-The first two bits of any connection-ID MUST encode the configuration phase of
-that ID.  QUIC-LB messages indicate the phase of the algorithm and parameters
-that they encode.
-
-A new configuration may change one or more parameters of the old configuration,
-or change the algorithm used.
-
-It is possible for servers to have mutually exclusive sets of supported
-algorithms, or for a transition from one algorithm to another to result in Fail
-Payloads.  The four states encoded in these two bits allow two mutually
-exclusive server pools to coexist, and for each of them to transition to a new
-set of parameters.
+The first two bits of any connection ID MUST encode an identifier for the
+configuration that the connection ID uses. This enables incremental deployment
+of new QUIC-LB settings (e.g., keys).
 
 When new configuration is distributed to servers, there will be a transition
 period when connection IDs reflecting old and new configuration coexist in the
 network.  The rotation bits allow load balancers to apply the correct routing
 algorithm and parameters to incoming packets.
 
-Configuration Agents SHOULD make an effort to deliver new configurations to
-load balancers before doing so to servers, so that load balancers are ready to
-process CIDs using the new parameters when they arrive.
+Configuration Agents SHOULD deliver new configurations to load balancers before
+doing so to servers, so that load balancers are ready to process CIDs using the
+new parameters when they arrive.
 
 A Configuration Agent SHOULD NOT use a codepoint to represent a new
 configuration until it takes precautions to make sure that all connections using
@@ -207,17 +204,20 @@ CIDs with an old configuration at that codepoint have closed or transitioned.
 
 Servers MUST NOT generate new connection IDs using an old configuration after
 receiving a new one from the configuration agent. Servers MUST send
-NEW_CONNECTION_ID frames that provide CIDS using the new configuration, and
+NEW_CONNECTION_ID frames that provide CIDs using the new configuration, and
 retire CIDs using the old configuration using the "Retire Prior To" field of
 that frame.
+
+It also possible to use these bits for more long-lived distinction of different
+configurations, but this has privacy implications (see {{multiple-configs}}).
 
 ## Configuration Failover
 
 If a server has not received a valid QUIC-LB configuration, and believes that
 low-state, Connection-ID aware load balancers are in the path, it SHOULD
 generate connection IDs with the config rotation bits set to '11' and SHOULD use
-the "disable_migration" transport parameter in all new QUIC connections. It
-SHOULD NOT send NEW_CONNECTION_ID frames with new values.
+the "disable_active_migration" transport parameter in all new QUIC connections.
+It SHOULD NOT send NEW_CONNECTION_ID frames with new values.
 
 A load balancer that sees a connection ID with config rotation bits set to
 '11' MUST revert to 5-tuple routing.
@@ -239,6 +239,24 @@ the first octet.
 A server not using this functionality SHOULD make the six bits appear to be
 random.
 
+## Format
+
+~~~~~
+0                   1                   2                   3
+0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+|C R|  CID Len  |
++-+-+-+-+-+-+-+-+
+~~~~~
+{: #first-octet-format title="First Octet Format"}
+
+The first octet has the following fields:
+
+CR: Config Rotation bits.
+
+CID Len: Length Self-Description (if applicable). Encodes the length of the
+Connection ID following the First Octet.
+
 # Routing Algorithms {#routing-algorithms}
 
 In QUIC-LB, load balancers do not generate individual connection IDs to servers.
@@ -253,10 +271,11 @@ conform to the expectations of the routing algorithm. These are called
 "non-compliant DCIDs":
 
 * The DCID might not be long enough for the routing algorithm to process.
+* The config rotation bits ({{config-rotation}}) may not correspond to an active
+configuration.
 * The extracted server mapping might not correspond to an active server.
-* A field that should be all zeroes after decryption may not be so.
 
-Load balancers MUST forward packets with long headers with non-compliant DCIDs
+Load balancers MUST forward packets with long headers and non-compliant DCIDs
 to an active server using an algorithm of its own choosing. It need not
 coordinate this algorithm with the servers. The algorithm SHOULD be
 deterministic over short time scales so that related packets go to the same
@@ -267,7 +286,24 @@ to an integer and divided by the number of servers, with the modulus used to
 forward the packet. The number of servers is usually consistent on the time
 scale of a QUIC connection handshake. See also {{version-invariance}}.
 
+As a partial exception to the above, load balancers MAY drop packets with long
+headers and non-compliant DCIDs if and only if it knows that the encoded QUIC
+version does not allow a non-compliant DCID in a packet with that signature. For
+example, a load balancer can safely drop a QUIC version 1 Handshake packet with
+a non-compliant DCID. The prohibition against dropping packets with long
+headers remains for unknown QUIC versions.
+
 Load balancers SHOULD drop packets with non-compliant DCIDs in a short header.
+
+Servers that receive packets with noncompliant CIDs MUST use the available
+mechanisms to induce the client to use a compliant CID in future packets. In
+QUIC version 1, this requires using a compliant CID in the Source CID field of
+server-generated long headers.
+
+A QUIC-LB configuration MAY significantly over-provision the server ID space
+(i.e., provide far more codepoints than there are servers) to increase the
+probability that a randomly generated Destination Connection ID is non-
+compliant.
 
 Load balancers MUST forward packets with compliant DCIDs to a server in
 accordance with the chosen routing algorithm.
@@ -275,7 +311,7 @@ accordance with the chosen routing algorithm.
 The load balancer MUST NOT make the routing behavior dependent on any bits in
 the first octet of the QUIC packet header, except the first bit, which indicates
 a long header. All other bits are QUIC version-dependent and intermediaries
-would cannot build their design on version-specific templates.
+cannot base their design on version-specific templates.
 
 There are situations where a server pool might be operating two or more routing
 algorithms or parameter sets simultaneously.  The load balancer uses the first
@@ -303,9 +339,8 @@ depicted in the figure below.
 
 ### Configuration Agent Actions
 
-The configuration agent selects a number of bytes of the server connection ID
-to encode individual server IDs, called the "routing bytes". The number of bytes
-MUST have enough entropy to have a different code point for each server.
+The configuration agent selects a length for the server ID encoding. This
+length MUST have enough entropy to have a different code point for each server.
 
 It also assigns a server ID to each server.
 
@@ -324,79 +359,11 @@ in consecutive octets beginning with the second. All other bits in the
 connection ID, except for the first octet, MAY be set to any other value. These
 other bits SHOULD appear random to observers.
 
-## Obfuscated CID Algorithm {#obfuscated-cid-algorithm}
+## Stream Cipher CID Algorithm {#stream-cipher-cid-algorithm}
 
-The Obfuscated CID Algorithm makes an attempt to obscure the mapping of
-connections to servers to reduce linkability, while not requiring true
-encryption and decryption. The format is depicted in the figure below.
-
-~~~~~
-0                   1                   2                   3
-0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-|  First octet  |  Mixed routing and non-routing bits (64..152) |
-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-~~~~~
-{: #obfuscated-cid-format title="Obfuscated CID Format"}
-
-### Configuration Agent Actions
-
-The configuration agent selects an arbitrary set of bits of the server
-connection ID that it will use to route to a given server, called the "routing
-bits". The number of bits MUST have enough entropy to have a different code
-point for each server, and SHOULD have enough entropy so that there are many
-codepoints for each server.
-
-The configuration agent MUST NOT select a routing mask with more than 136
-routing bits set to 1, which allows for the first octet and up to 2 octets for
-server purposes in a maximum-length connection ID.
-
-The configuration agent selects a divisor that MUST be larger than the number of
-servers.  It SHOULD be large enough to accommodate reasonable increases in the
-number of servers. The divisor MUST be an odd integer so certain addition
-operations do not always produce an even number.
-
-The configuration agent also assigns each server a "modulus", an integer between
-0 and the divisor minus 1. These MUST be unique for each server, and SHOULD be
-distributed across the entire number space between zero and the divisor.
-
-### Load Balancer Actions
-
-Upon receipt of a QUIC packet, the load balancer extracts the selected bits of
-the Server CID and expresses them as an unsigned integer of that length.  The
-load balancer then divides the result by the chosen divisor. The modulus of this
-operation maps to the modulus for the destination server.
-
-Note that any Server CID that contains a server's modulus, plus an arbitrary
-integer multiple of the divisor, in the routing bits is routable to that server
-regardless of the contents of the non-routing bits. Outside observers that do
-not know the divisor or the routing bits will therefore have difficulty
-identifying that two Server CIDs route to the same server.
-
-Note also that not all Connection IDs are necessarily routable, as the computed
-modulus may not match one assigned to any server. These DCIDs are non-compliant
-as described above.
-
-### Server Actions
-
-The server chooses a connection ID length.  This MUST contain all of the routing
-bits and MUST be at least 9 octets to provide adequate entropy.
-
-When a server needs a new connection ID, it adds an arbitrary nonnegative
-integer multiple of the divisor to its modulus, without exceeding the maximum
-integer value implied by the number of routing bits. The choice of multiple
-should appear random within these constraints.
-
-The server encodes the result in the routing bits. It MAY put any other value
-into bits that used neither for routing nor config rotation.  These bits
-SHOULD appear random to observers.
-
-## Stream Cipher CID Algorithm
-
-The Stream Cipher CID algorithm provides true cryptographic protection, rather
-than mere obfuscation, at the cost of additional per-packet processing at the
-load balancer to decrypt every incoming connection ID. The CID format is
-depicted below.
+The Stream Cipher CID algorithm provides cryptographic protection at the cost of
+additional per-packet processing at the load balancer to decrypt every incoming
+connection ID. The CID format is depicted below.
 
 ~~~~~
 0                   1                   2                   3
@@ -422,24 +389,53 @@ to use for connection ID decryption.  The nonce length MUST be at least 8 octets
 and no more than 16 octets. The nonce length and server ID length MUST sum to 19
 or fewer octets.
 
-### Load Balancer Actions
+### Load Balancer Actions {#stream-cipher-load-balancer-actions}
 
-Upon receipt of a QUIC packet that is not of type Initial or 0-RTT, the load
-balancer extracts as many of the earliest octets from the destination connection
-ID as necessary to match the nonce length. The server ID immediately follows.
+Upon receipt of a QUIC packet, the load balancer extracts as many of the
+earliest octets from the destination connection ID as necessary to match the
+nonce length. The server ID immediately follows.
 
-The load balancer decrypts the server ID using 128-bit AES Electronic Codebook
-(ECB) mode, much like QUIC header protection. The nonce octets are zero-padded
-to 16 octets.  AES-ECB encrypts this nonce using its key to generate a mask
-which it applies to the encrypted server id.
+The load balancer decrypts the nonce and the server ID using the following three
+pass algorithm:
 
-server_id = encrypted_server_id ^ AES-ECB(key, padded-nonce)
+* Pass 1:  The load balancer decrypts the server ID using 128-bit AES Electronic
+Codebook (ECB) mode, much like QUIC header protection. The encrypted nonce
+octets are zero-padded to 16 octets.  AES-ECB encrypts this encrypted nonce
+using its key to generate a mask which it applies to the encrypted server id.
+This provides an intermediate value of the server ID, referred to as server-id
+intermediate.
+
+server_id_intermediate = encrypted_server_id ^ AES-ECB(key, padded-encrypted-nonce)
+
+* Pass 2:  The load balancer decrypts the nonce octets using 128-bit AES
+ECB mode, using the server-id intermediate as "nonce" for this pass. The
+server-id intermediate octets are zero-padded to 16 octets.  AES-ECB encrypts
+this padded server-id intermediate using its key to generate a mask which it
+applies to the encrypted nonce. This provides the decrypted nonce value.
+
+nonce = encrypted_nonce ^ AES-ECB(key, padded-server_id_intermediate)
+
+* Pass 3:  The load balancer decrypts the server ID using 128-bit AES ECB mode.
+The nonce octets are zero-padded to 16 octets.  AES-ECB encrypts this nonce
+using its key to generate a mask which it applies to the intermediate server id.
+This provides the decrypted server ID.
+
+server_id = server_id_intermediate ^ AES-ECB(key, padded-nonce)
 
 For example, if the nonce length is 10 octets and the server ID length is 2
 octets, the connection ID can be as small as 13 octets.  The load balancer uses
-the the second through eleventh of the connection ID for the nonce, zero-pads it
-to 16 octets using the first 6 octets of the token, and uses this to decrypt the
-server ID in the twelfth and thirteenth octet.
+the the second through eleventh octets of the connection ID for the nonce,
+zero-pads it to 16 octets, uses xors the result with the twelfth and thirteenth
+octet. The result is padded with 14 octets of zeros and encrypted to obtain a
+mask that is xored with the nonce octets. Finally, the nonce octets are padded
+with six octets of zeros, encrypted, and the first two octets xored with the
+server ID octets to obtain the actual server ID.
+
+This three-pass algorithm is a simplified version of the FFX algorithm, with
+the property that each encrypted nonce value depends on all server ID bits, and
+each encrypted server ID bit depends on all nonce bits and all server ID bits.
+This mitigates attacks against stream ciphers in which attackers simply flip
+encrypted server-ID bits.
 
 The output of the decryption is the server ID that the load balancer uses for
 routing.
@@ -448,17 +444,16 @@ routing.
 
 When generating a routable connection ID, the server writes arbitrary bits into
 its nonce octets, and its provided server ID into the server ID octets. Servers
-MAY opt to have a longer connection ID beyond the nonce and server ID. The nonce
-and additional bits MAY encode additional information, but SHOULD appear
-essentially random to observers.
+MAY opt to have a longer connection ID beyond the nonce and server ID. The
+additional bits MAY encode additional information, but SHOULD appear essentially
+random to observers.
 
-The server decrypts the server ID using 128-bit AES Electronic Codebook (ECB)
-mode, much like QUIC header protection. The nonce octets are zero-padded to 16
-octets using the as many of the first octets of the token as necessary. AES-ECB
-encrypts this nonce using its key to generate a mask which it applies to the
-server id.
+If the decrypted nonce bits increase monotonically, that guarantees that nonces
+are not reused between connection IDs from the same server.
 
-encrypted_server_id = server_id ^ AES-ECB(key, padded-nonce)
+The server encrypts the server ID using exactly the algorithm as described in
+{{stream-cipher-load-balancer-actions}}, performing the three passes
+in reverse order.
 
 ## Block Cipher CID Algorithm
 
@@ -473,9 +468,7 @@ least 17 octets, increasing overhead of client-to-server packets.
 +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
 |  First octet  |       Encrypted server ID (X=8..128)          |
 +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-|             Encrypted Zero Padding (Y=0..128-X)               |
-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-|           Encrypted bits for server use (128-X-Y)             |
+|           Encrypted bits for server use (128-X)               |
 +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
 |           Unencrypted bits for server use (0..24)             |
 +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
@@ -490,11 +483,8 @@ server IDs, including potential future servers.  The server ID will start in the
 second octet of the decrypted connection ID and occupy continuous octets beyond
 that.
 
-The configuration agent selects a zero-padding length. This SHOULD be at least
-four octets to allow detection of non-compliant DCIDs. The server ID and zero-
-padding length MUST sum to no more than 16 octets. They SHOULD sum to no more
-than 12 octets, to provide servers adequate space to encode their own opaque
-data.
+They server ID length MUST be no more than 16 octets and SHOULD be no more than
+12 octets, to provide servers adequate space to encode their own opaque data.
 
 The configuration agent also selects an 16-octet AES-ECB key to use for
 connection ID decryption.
@@ -505,18 +495,17 @@ Upon receipt of a QUIC packet, the load balancer reads the first octet to
 obtain the config rotation bits. It then decrypts the subsequent 16 octets using
 AES-ECB decryption and the chosen key.
 
-The decrypted plaintext contains the server id, zero padding, and opaque server
-data in that order. The load balancer uses the server ID octets for routing.
+The decrypted plaintext contains the server id and opaque server data in that
+order. The load balancer uses the server ID octets for routing.
 
 ### Server Actions
 
 When generating a routable connection ID, the server MUST choose a connection ID
 length between 17 and 20 octets. The server writes its provided server ID into
-the server ID octets, zeroes into the zero-padding octets, and arbitrary bits
-into the remaining bits. These arbitrary bits MAY encode additional information.
-Bits in the first, eighteenth, nineteenth, and twentieth octets SHOULD appear
-essentially random to observers. The first octet is reserved as described in
-{{first-octet}}.
+the server ID octets and arbitrary bits into the remaining bits. These arbitrary
+bits MAY encode additional information. Bits in the eighteenth, nineteenth, and
+twentieth octets SHOULD appear essentially random to observers. The first octet
+is reserved as described in {{first-octet}}.
 
 The server then encrypts the second through seventeenth octets using the 128-bit
 AES-ECB cipher.
@@ -525,10 +514,10 @@ AES-ECB cipher.
 
 For protocols where 4-tuple load balancing is sufficient, it is straightforward
 to deliver ICMP packets from the network to the correct server, by reading the
-IP and transport-layer headers to obtain the 4-tuple. When routing is based on
-connection ID, further measures are required, as most QUIC packets that trigger
-ICMP responses will only contain a client-generated connection ID that contains
-no routing information.
+echoed `IP and transport-layer headers to obtain the 4-tuple. When routing is
+based on connection ID, further measures are required, as most QUIC packets that
+trigger ICMP responses will only contain a client-generated connection ID that
+contains no routing information.
 
 To solve this problem, load balancers MAY maintain a mapping of Client IP and
 port to server ID based on recently observed packets.
@@ -545,27 +534,24 @@ Destination CID.
 When a server is under load, QUICv1 allows it to defer storage of connection
 state until the client proves it can receive packets at its advertised IP
 address.  Through the use of a Retry packet, a token in subsequent client
-Initial packets, and the original_destination_connection_id transport parameter,
-servers verify address ownership and clients verify that there is no "man in the
-middle" generating Retry packets.
+Initial packets, and transport parameters, servers verify address ownership and
+clients verify that there is no on-path attacker generating Retry packets.
 
-As a trusted Retry Service is literally a "man in the middle," the service must
-communicate the original_destination_connection_id back to the server so that it
-can pass client verification. It also must either verify the address itself
-(with the server trusting this verification) or make sure there is common
-context for the server to verify the address using a service-generated token.
-
-The service must also communicate the source connection ID of the Retry packet
-to the server so that it can include it in a transport parameter for client
-verification.
+A "Retry Service" detects potential Denial of Service attacks and handles
+sending of Retry packets on behalf of the server. As it is, by definition,
+literally an on-path entity, the service must communicate some of the original
+connection IDs back to the server so that it can pass client verification. It
+also must either verify the address itself (with the server trusting this
+verification) or make sure there is common context for the server to verify the
+address using a service-generated token.
 
 There are two different mechanisms to allow offload of DoS mitigation to a
 trusted network service. One requires no shared state; the server need only be
 configured to trust a retry service, though this imposes other operational
-constraints. The other requires shared key, but has no such constraints.
+constraints. The other requires a shared key, but has no such constraints.
 
 Retry services MUST forward all QUIC packets that are not of type Initial or
-0-RTT. Other packets types might involve changed IP addresses or connection IDs,
+0-RTT. Other packet types might involve changed IP addresses or connection IDs,
 so it is not practical for Retry Services to identify such packets as valid or
 invalid.
 
@@ -663,7 +649,7 @@ with the INVALID_TOKEN error code when dropping the packet.
 
 Note that this scheme has a performance drawback. When the retry service is in
 active mode, clients with a token from a NEW_TOKEN frame will suffer a 1-RTT
-penalty even though it has proof of address with its token.
+penalty even though its token provides proof of address.
 
 In inactive mode, the service MUST forward all packets that have no token or a
 token with the first bit set to '1'. It MUST validate all tokens with the first
@@ -673,7 +659,7 @@ with the token removed. The latter requires decryption and re-encryption of the
 entire Initial packet to avoid authentication failure. Forwarding the packet
 causes the server to respond without the original_destination_connection_id
 transport parameter, which preserves the normal QUIC signal to the client that
-there is an unauthorized man in the middle.
+there is an on-path attacker.
 
 ### Server Requirements
 
@@ -681,7 +667,7 @@ A server behind a non-shared-state retry service MUST NOT send Retry packets
 for a QUIC version the retry service understands. It MAY send Retry for QUIC
 versions the Retry Service does not understand.
 
-Tokens sent in NEW_TOKEN frames MUST have the first bit be set to '1'.
+Tokens sent in NEW_TOKEN frames MUST have the first bit set to '1'.
 
 If a server receives an Initial Packet with the first bit set to '1', it could
 be from a server-generated NEW_TOKEN frame and should be processed in accordance
@@ -699,7 +685,7 @@ the Retry service, so servers MAY send Retry packets in response to Initial
 packets that don't include a valid token.
 
 Both server and service must have access to Universal time, though tight
-synchronization is not necessary.
+synchronization is unnecessary.
 
 All tokens, generated by either the server or retry service, MUST use the
 following format. This format is the cleartext version. On the wire, these
@@ -709,6 +695,14 @@ not a multiple of 16 octets, the last block is padded with zeroes.
 ~~~~~
 0                   1                   2                   3
 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+|                                                               |
++                                                               +
+|                                                               |
++                    Client IP Address (128)                    +
+|                                                               |
++                                                               +
+|                                                               |
 +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
 |    ODCIL    |      RSCIL    |
 +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
@@ -721,21 +715,7 @@ not a multiple of 16 octets, the last block is padded with zeroes.
 |                             ...                               |
 +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
 |                                                               |
-+                                                               +
-|                                                               |
-+                    Client IP Address (128)                    +
-|                                                               |
-+                                                               +
-|                                                               |
-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-|                                                               |
-+                                                               +
-|                                                               |
-+                                                               +
-|                         date-time (160)                       |
-+                                                               +
-|                                                               |
-+                                                               +
++                        Timestamp (64)                         +
 |                                                               |
 +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
 |                      Opaque Data (optional)                   |
@@ -759,46 +739,64 @@ Source Connection ID of the Retry packet.
 
 Client IP Address: The source IP address from the triggering Initial packet.
 The client IP address is 16 octets. If an IPv4 address, the last 12 octets are
-zeroes.
+zeroes. If there is a Network Address Translator (NAT) in the server
+infrastructure that changes the client IP, the Retry Service MUST either be
+positioned behind the NAT, or the NAT must have the token key to rewrite the
+Retry token accordingly.
 
-date-time: The date-time string is a total of 20 octets and encodes the time the
-token was generated. The format of date-time is described in Section 5.6 of
-{{!RFC3339}}. This ASCII field MUST use the "Z" character for time-offset.
+Timestamp: The timestamp is a 64-bit integer, in network order, that expresses
+the number of seconds in POSIX time (see Sec. 4.16 of {{TIME_T}}).
 
 Opaque Data: The server may use this field to encode additional information,
-such as congestion window, RTT, or MTU. Opaque data SHOULD also allow servers
-to distinguish between retry tokens (which trigger use of the
-original_destination_connection_id transport parameter) and NEW_TOKEN frame
-tokens.
+such as congestion window, RTT, or MTU. Opaque data MAY also allow servers to
+distinguish between retry tokens (which trigger use of certain transport
+parameters) and NEW_TOKEN frame tokens.
 
 ### Configuration Agent Actions
 
-The configuration agent generates and distributes a "token key."
+The configuration agent generates and distributes a "token key" and a list of
+QUIC versions the service supports. It must also inform the service if a NAT
+lies between the service and the servers.
 
 ### Service Requirements
 
 When in active mode, the service MUST generate Retry tokens with the format
 described above when it receives a client Initial packet with no token.
 
-In active mode, the service SHOULD decrypt incoming tokens. The service SHOULD
-drop packets with an IP address that does not match, and SHOULD forward packets
-that do, regardless of the other fields.
+In active mode, the service SHOULD decrypt the first 16 octets of incoming
+tokens. The service SHOULD drop packets with an IP address that does not match,
+and SHOULD forward packets that do, regardless of the other fields.
+
+However, the service MUST NOT decrypt or validate tokens if there is a NAT
+between it and the servers.
 
 In inactive mode, the service SHOULD forward all packets to the server so that
 the server can issue an up-to-date token to the client.
 
 ### Server Requirements
 
+When issuing Retry or NEW_TOKEN tokens, the server MUST encode the client IP
+address in the first 16 octets and encrypt that block with the token key. It
+MAY use any format or encryption for the remainder of the token. However, it
+MUST include a means of distinguishing service-generated Retry tokens,
+server-generated Retry tokens (if different), and NEW_TOKEN tokens.
+
 The server MUST validate all tokens that arrive in Initial packets, as they
-may have bypassed the Retry service. It SHOULD use the date-time field to apply
-its expiration limits for tokens. This need not be synchronized with the retry
-service. However, servers MAY allow retry tokens marked as being a few seconds
-in the future, due to possible clock synchronization issues.
+may have bypassed the Retry service.
+
+For Retry tokens that follow the format above, servers SHOULD use the timestamp
+field to apply its expiration limits for tokens. This need not be precisely
+synchronized with the retry service. However, servers MAY allow retry tokens
+marked as being a few seconds in the future, due to possible clock
+synchronization issues.
 
 After decrypting the token, the server uses the corresponding fields to
 populate the original_destination_connection_id transport parameter, with a
 length equal to ODCIL, and the retry_source_connection_id transport parameter,
 with length equal to RSCIL.
+
+For QUIC versions the service does not support, the server MAY use any token
+format.
 
 As discussed in {{QUIC-TRANSPORT}}, a server MUST NOT send a Retry packet in
 response to an Initial packet that contains a retry token.
@@ -809,25 +807,33 @@ QUIC-LB requires common configuration to synchronize understanding of encodings
 and guarantee explicit consent of the server.
 
 The load balancer and server MUST agree on a routing algorithm and the relevant
-parameters for that algorithm.
+parameters for that algorithm. Each server MUST know its server ID for each
+configuration, and the load balancer MUST have forwarding instructions for each
+server ID.
 
-For Plaintext CID Routing, this consists of the Server ID and the routing bytes.
-The Server ID is unique to each server, and the routing bytes are global.
+For all algorithms, the load balancer and servers MUST have a common
+understanding of the server ID length.
 
-For Obfuscated CID Routing, this consists of the Routing Bits, Divisor, and
-Modulus. The Modulus is unique to each server, but the others MUST be global.
+For Stream Cipher CID Routing, the servers and load balancer also MUST have a
+common understanding of the key and nonce length.
 
-For Stream Cipher CID Routing, this consists of the Server ID, Server ID Length,
-Key, and Nonce Length.  The Server ID is unique to each server, but the others
-MUST be global. The authentication token MUST be distributed out of band for
-this algorithm to operate.
+For Block Cipher CID Routing, the servers and load balancer also MUST have a
+common understanding of the key.
 
-For Block Cipher CID Routing, this consists of the Server ID, Server ID Length,
-Key, and Zero-Padding Length. The Server ID is unique to each server, but the
-others MUST be global.
+Note that server IDs are opaque bytes, not integers, so there is no notion of
+network order or host order.
 
-A full QUIC-LB configuration MUST also specify the information content of the
-first CID octet and the presence and mode of any Retry Service.
+A server configuration MUST specify if the first octet encodes the CID length.
+Note that a load balancer does not need the CID length, as the required bytes
+are present in the QUIC packet.
+
+A full QUIC-LB server configuration MUST also specify the supported QUIC
+versions of any Retry Service. If a shared-state service, the server also must
+have the token key.
+
+A non-shared-state Retry Service need only be configured with the QUIC versions
+it supports. A shared-state Retry Service also needs the token key, and to be
+aware if a NAT sits between it and the servers.
 
 The following pseudocode describes the data items necessary to store a full
 QUIC-LB configuration at the server. It is meant to describe the conceptual
@@ -841,9 +847,12 @@ packet. The comments signify the range of acceptable values where applicable.
  select (retry_service) {
      case none: null;
      case non_shared_state: uint32 list_of_quic_versions[];
-     case shared_state:     uint8 key[16];
+     case shared_state: {
+         uint32   list_of_quic_versions[];
+         uint8    token_key[16];
+     } shared_state_config;
  } retry_service_config;
- enum     { none, plaintext, obfuscated, stream_cipher, block_cipher }
+ enum     { none, plaintext, stream_cipher, block_cipher }
                    routing_algorithm;
  select (routing_algorithm) {
      case none: null;
@@ -851,11 +860,6 @@ packet. The comments signify the range of acceptable values where applicable.
          uint8 server_id_length; /* 1..19 */
          uint8 server_id[server_id_length];
      } plaintext_config;
-     case obfuscated: struct {
-         uint8  routing_bit_mask[19];
-         uint16 divisor; /* Must be odd */
-         uint16 modulus; /* 0..(divisor - 1) */
-     } obfuscated_config;
      case stream_cipher: struct {
          uint8  nonce_length; /* 8..16 */
          uint8  server_id_length; /* 1..(19 - nonce_length) */
@@ -864,7 +868,6 @@ packet. The comments signify the range of acceptable values where applicable.
      } stream_cipher_config;
      case block_cipher: struct {
          uint8  server_id_length;
-         uint8  zero_padding_length; /* 0..(16 - server_id_length) */
          uint8  server_id[server_id_length];
          uint8  key[16];
      } block_cipher_config;
@@ -880,13 +883,13 @@ by the specification above.
 
 Some network architectures may have multiple tiers of low-state load balancers,
 where a first tier of devices makes a routing decision to the next tier, and so
-on until packets reach the server. Although QUIC-LB is not explicitly designed
+on, until packets reach the server. Although QUIC-LB is not explicitly designed
 for this use case, it is possible to support it.
 
 If each load balancer is assigned a range of server IDs that is a subset of the
 range of IDs assigned to devices that are closer to the client, then the first
 devices to process an incoming packet can extract the server ID and then map it
-to the correct forwrading address. Note that this solution is extensible to
+to the correct forwarding address. Note that this solution is extensible to
 arbitrarily large numbers of load-balancing tiers, as the maximum server ID
 space is quite large.
 
@@ -905,9 +908,9 @@ map its server ID to the new server's address.
 
 # Version Invariance of QUIC-LB {#version-invariance}
 
-Retry Services are inherently dependent on the format (and existence) of Retry
-Packets in each version of QUIC, and so Retry Service configuration explicitly
-includes the supported QUIC versions.
+Non-shared-state Retry Services are inherently dependent on the format (and
+existence) of Retry Packets in each version of QUIC, and so Retry Service
+configuration explicitly includes the supported QUIC versions.
 
 The server ID encodings, and requirements for their handling, are designed to be
 QUIC version independent (see {{QUIC-INVARIANTS}}). A QUIC-LB load balancer will
@@ -965,10 +968,9 @@ aggressively simulate migration to obtain a large sample of IDs that map to the
 same server. It could then apply analytical techniques to try to obtain the
 server encoding.
 
-The Stream and Block Cipher CID algorithms provide robust entropy to making any
-sort of linkage.  The Obfuscated CID obscures the mapping and prevents trivial
-brute-force attacks to determine the routing parameters, but does not provide
-robust protection against sophisticated attacks.
+The Stream and Block Cipher CID algorithms provide robust protection against
+any sort of linkage. The Plaintext CID algorithm makes no attempt to protect
+this encoding.
 
 Were this analysis to obtain the server encoding, then on-path observers might
 apply this analysis to correlating different client IP addresses.
@@ -980,6 +982,41 @@ connection IDs to the same server.  The QUIC-LB algorithms do prevent the
 linkage of two connection IDs to the same individual connection if servers make
 reasonable selections when generating new IDs for that connection.
 
+## Multiple Configuration IDs {#multiple-configs}
+
+During the period in which there are multiple deployed configuration IDs (see
+{{config-rotation}}), there is a slight increase in linkability. The server
+space is effectively divided into segments with CIDs that have different config
+rotation bits. Entities that manage servers SHOULD strive to minimize these
+periods by quickly deploying new configurations across the server pool.
+
+## Limited configuration scope
+
+A simple deployment of QUIC-LB in a cloud provider might use the same global
+QUIC-LB configuration across all its load balancers that route to customer
+servers. An attacker could then simply become a customer, obtain the
+configuration, and then extract server IDs of other customers' connections at
+will.
+
+To avoid this, the configuration agent SHOULD issue QUIC-LB configurations to
+mutually distrustful servers that have different keys for encryption
+algorithms. The load balancers can distinguish these configurations by external
+IP address, or by assigning different values to the config rotation bits
+({{config-rotation}}). Note that either solution has a privacy impact; see
+{{multiple-configs}}.
+
+These techniques are not necessary for the plaintext algorithm, as it does not
+attempt to conceal the server ID.
+
+## Stateless Reset Oracle
+
+Section 21.9 of {{QUIC-TRANSPORT}} discusses the Stateless Reset Oracle attack.
+For a server deployment to be vulnerable, an attacking client must be able to
+cause two packets with the same Destination CID to arrive at two different
+servers that share the same cryptographic context for Stateless Reset tokens. As
+QUIC-LB requires deterministic routing of DCIDs over the life of a connection,
+it is a sufficient means of avoiding an Oracle without additional measures.
+
 # IANA Considerations
 
 There are no IANA requirements.
@@ -988,159 +1025,165 @@ There are no IANA requirements.
 
 # Load Balancer Test Vectors {#test-vectors}
 
-Because any connection ID encoding in this specification includes many bits
-for server use without affecting extraction of the connection ID, there are
-many possible connection IDs for any given set of parameters. However, every
-connection ID should result in a unique server ID. The following connection
-IDs can be used to verify that a load balancer implementation extracts the
-correct server ID.
+Each section of this draft includes multiple sets of load balancer
+configuration, each of which has five examples of server ID and server use
+bytes and how they are encoded in a CID.
 
-## Obfuscated Connection ID Algorithm
+In some cases, there are no server use bytes. Note that, for simplicity, the
+first octet bits used for neither config rotation nor length self-encoding are
+random, rather than listed in the server use field. Therefore, a server
+implementation using these parameters may generate CIDs with a slightly different
+first octet.
 
-The following section lists a set of OCID load balancer configuration, followed
-by five CIDs from which the load balancer can extract the server ID.
+This section uses the following abbreviations:
 
-cr_bits 0x0 length_self_encoding: y bitmask ddc2f17788d77e3239b4ea divisor 345
+cid      Connection ID
+cr_bits  Config Rotation Bits
+LB       Load Balancer
+sid      Server ID
+sid_len  Server ID length
+su       Server Use Bytes
 
-cid 0b72715d4745ce26cca8c750 sid b<br/>
-cid 0b63a1785b6c0b0857225e96 sid 3f<br/>
-cid 0b66474fa11329e6bb947818 sid 147<br/>
-cid 0b34bd7c0882deb0252e2a58 sid ca<br/>
-cid 0b0506ee792163bf9330dc0a sid 14d
+All values except length_self_encoding and sid_len are expressed in hexidecimal
+format.
 
-cr_bits 0x1 length_self_encoding: n bitmask 4855d35f5b88ddada153af61b6707ee646
-    divisor 301
+## Plaintext Connection ID Algorithm
 
-cid 542dc4c09e2d548e508dc825bbbca991c131 sid 8<br/>
-cid 47988071f9f03a25c322cc6fb1d57151d26f sid 93<br/>
-cid 6a13e05071f74cdb7d0dc24d72687b21e1d1 sid c0<br/>
-cid 4323c129650c7ee66f37266044ef52e74ffa sid 60<br/>
-cid 5e95f77e7e66891b57c224c5781c8c5dd8ba sid 8f
+LB configuration: cr_bits 0x0 length_self_encoding: y sid_len 1
 
-cr_bits 0x0 length_self_encoding: y bitmask 9f98bd3df66338c2d2c6 divisor 459
+cid 01be sid be su 
+cid 0221b7 sid 21 su b7
+cid 03cadfd8 sid ca su dfd8
+cid 041e0c9328 sid 1e su 0c9328
+cid 050c8f6d9129 sid 0c su 8f6d9129
 
-cid 0ad52216e7798c28340fd6 sid 125<br/>
-cid 0a78f8ecbd087083639f94 sid 4b<br/>
-cid 0ac7e70a5fe6b353b824aa sid 12<br/>
-cid 0af9612ae5ccba3ef98b81 sid d1<br/>
-cid 0a94ab209ea1d2e1e23751 sid 5d
+LB configuration: cr_bits 0x0 length_self_encoding: n sid_len 2
 
-cr_bits 0x2 length_self_encoding: n bitmask dfba93c4f98f57103f5ae331
-    divisor 461
+cid 02aab0 sid aab0 su 
+cid 3ac4b106 sid c4b1 su 06
+cid 08bd3cf4a0 sid bd3c su f4a0
+cid 3771d59502d6 sid 71d5 su 9502d6
+cid 1d57dee8b888f3 sid 57de su e8b888f3
 
-cid 8b70b8c69e40ef2f3f8937e817 sid d3<br/>
-cid b1828830ea1789dab13a043795 sid 44<br/>
-cid 90604a580baa3eb0a47812e490 sid 137<br/>
-cid a5b4bc309337ff73e143ff6deb sid 9f<br/>
-cid fce75c0a984a79d3b4af40d155 sid 127
+LB configuration: cr_bits 0x0 length_self_encoding: y sid_len 3
 
-cr_bits 0x0 length_self_encoding: y bitmask 8320fefc5309f7aa670476 divisor 379
+cid 0336c976 sid 36c976 su 
+cid 04aa291806 sid aa2918 su 06
+cid 0586897bd8b6 sid 86897b su d8b6
+cid 063625bcae4de0 sid 3625bc su ae4de0
+cid 07966fb1f3cb535f sid 966fb1 su f3cb535f
 
-cid 0bb110af53dca7295e7d4b7e sid 101<br/>
-cid 0b0d284cdff364a634a4b93b sid e3<br/>
-cid 0b82ff1555c4a95f9b198090 sid 14e<br/>
-cid 0b7a427d3e508ad71e98b797 sid 14e<br/>
-cid 0b71d1d4e3e3cd54d435b3fd sid eb
+LB configuration: cr_bits 0x0 length_self_encoding: n sid_len 4
+
+cid 185172fab8 sid 5172fab8 su 
+cid 2eb7ff2c9297 sid b7ff2c92 su 97
+cid 14f3eb3dd3edbe sid f3eb3dd3 su edbe
+cid 3feb31cece744b74 sid eb31cece su 744b74
+cid 06b9f34c353ce23bb5 sid b9f34c35 su 3ce23bb5
+
+LB configuration: cr_bits 0x0 length_self_encoding: y sid_len 5
+
+cid 05bdcd8d0b1d sid bdcd8d0b1d su 
+cid 06aee673725a63 sid aee673725a su 63
+cid 07bbf338ddbf37f4 sid bbf338ddbf su 37f4
+cid 08fbbca64c26756840 sid fbbca64c26 su 756840
+cid 09e7737c495b93894e34 sid e7737c495b su 93894e34
 
 ## Stream Cipher Connection ID Algorithm
 
-Like the previous section, the text below lists a set of load balancer
-configuration and 5 CIDs generated with that configuration.
+In each case below, the server is using a plain text nonce value of zero.
 
-cr_bits 0x0 length_self_encoding: y nonce_len 13 sid_len 1
-    key 16eff325e8bf8dfebdae003543fb845f
+LB configuration: cr_bits 0x0 length_self_encoding: y nonce_len 12 sid_len 1
+    key 4d9d0fd25a25e7f321ef464e13f9fa3d
 
-cid 0eb9eb1fc72eed820cf5658cdd7888 sid 9c<br/>
-cid 0e6f4de5beb5aa4170f44104318c5b sid c0<br/>
-cid 0e78f0325a8e34a40661f51f235906 sid 1d<br/>
-cid 0ef37923f81c32632299bceabd1d92 sid fa<br/>
-cid 0ea30788c012daa94a83865a2c7f28 sid b3
+cid 0d69fe8ab8293680395ae256e89c sid c5 su 
+cid 0e420d74ed99b985e10f5073f43027 sid d5 su 27
+cid 0f380f440c6eefd3142ee776f6c16027 sid 10 su 6027
+cid 1020607efbe82049ddbf3a7c3d9d32604d sid 3c su 32604d
+cid 11e132d12606a1bb0fa17e1caef00ec54c10 sid e3 su 0ec54c10
 
-cr_bits 0x1 length_self_encoding: n nonce_len 9 sid_len 2
-    key 906220f402ba3bd893ccc4dd9cfc04b0
+LB configuration: cr_bits 0x0 length_self_encoding: n nonce_len 12 sid_len 2
+    key 49e1cec7fd264b1f4af37413baf8ada9
 
-cid 7b33366764888138f1465352 sid b839<br/>
-cid 4329458bbe6cb9befc04bdeb sid 3b27<br/>
-cid 61e4e8235c4ebd5442d85bb0 sid bb5c<br/>
-cid 4fd790d1d0cf2b50796cad12 sid 4ecd<br/>
-cid 725325eceaca3528d8c0314b sid 54fd
+cid 3d3a5e1126414271cc8dc2ec7c8c15 sid f7fe su 
+cid 007042539e7c5f139ac2adfbf54ba748 sid eaf4 su 48
+cid 2bc125dd2aed2aafacf59855d99e029217 sid e880 su 9217
+cid 3be6728dc082802d9862c6c8e4dda3d984d8 sid 62c6 su d984d8
+cid 1afe9c6259ad350fc7bad28e0aeb2e8d4d4742 sid 8502 su 8d4d4742
 
-cr_bits 0x0 length_self_encoding: y nonce_len 8 sid_len 3
-    key 0a9b8ccdee977a65e3519693fcd55c8c
+LB configuration: cr_bits 0x0 length_self_encoding: y nonce_len 14 sid_len 3
+    key 2c70df0b399bd33a7335523dcdb884ad
 
-cid 0bfced0b5727be40af49102e sid 08d342<br/>
-cid 0b160042b34fe728a9f05376 sid 4d61e0<br/>
-cid 0b933157fc8c352ee9490ae7 sid 34a912<br/>
-cid 0b80d1d567aafedb737ed0eb sid 4f2a92<br/>
-cid 0b3133feac7ae7125b1d0702 sid 1a5db3
+cid 11d62e8670565cd30b552edff6782ff5a740 sid d794bb su 
+cid 12c70e481f49363cabd9370d1fd5012c12bca5 sid 2cbd5d su a5
+cid 133b95dfd8ad93566782f8424df82458069fc9e9 sid d126cd su c9e9
+cid 13ac6ffcd635532ab60370306c7ee572d6b6e795 sid 539e42 su e795
+cid 1383ed07a9700777ff450bb39bb9c1981266805c sid 9094dd su 805c
 
-cr_bits 0x0 length_self_encoding: n nonce_len 8 sid_len 4
-    key 66c5acdb45a40c91da8cfbbdc77c157e
+LB configuration: cr_bits 0x0 length_self_encoding: n nonce_len 12 sid_len 4
+    key 2297b8a95c776cf9c048b76d9dc27019
 
-cid 2da078bbf87c71264879c58a5a sid 20f1e37e<br/>
-cid 04577ce3800cf22ead7f9ba9a5 sid 29e462c4<br/>
-cid 1a0f6592fcd9167d0aa201e228 sid a0b0fb8a<br/>
-cid 11e4df0eb7db00363b1721e4a4 sid 31f15006<br/>
-cid 3d54b24c7bd39f081f00f44295 sid 551b8c28
+cid 32873890c3059ca62628089439c44c1f84 sid 7398d8ca su 
+cid 1ff7c7d7b9823954b178636c99a7dc93ac83 sid 9655f091 su 83
+cid 31044000a5ebb3bf2fa7629a17f2c78b077c17 sid 8b035fc6 su 7c17
+cid 1791bd28c66721e8fea0c6f34fd2d8e663a6ef70 sid 6672e0e2 su a6ef70
+cid 3df1d90ad5ccd5f8f475f040e90aeca09ec9839d sid b98b1fff su c9839d
 
-cr_bits 0x0 length_self_encoding: y nonce_len 12 sid_len 5
-    key ba4909a865c19d0234e090197d61bab9
+LB configuration: cr_bits 0x0 length_self_encoding: y nonce_len 8 sid_len 5
+    key 484b2ed942d9f4765e45035da3340423
 
-cid 11325919a7205f4f5e222c2ac94ec3309c1e sid 10f115363a<br/>
-cid 11ca85a9e5d02563ebb119acfacb3007993d sid 4108093aaf<br/>
-cid 1196ef4f0936cb6062b5db441395ef9f3831 sid 383c14e754<br/>
-cid 11ce3a6611da0e75f59dc8fe3cf4cfc6a61d sid d0da150dbf<br/>
-cid 116bd4cf085659d26b39dd5dd107ae87a694 sid b2945466df
+cid 0da995b7537db605bfd3a38881ae sid 391a7840dc su 
+cid 0ed8d02d55b91d06443540d1bf6e98 sid 10f7f7b284 su 98
+cid 0f3f74be6d46a84ccb1fd1ee92cdeaf2 sid 0606918fc0 su eaf2
+cid 1045626dbf20e03050837633cc5650f97c sid e505eea637 su 50f97c
+cid 11bb9a17f691ab446a938427febbeb593eaa sid 99343a2a96 su eb593eaa
 
 ## Block Cipher Connection ID Algorithm
 
-Like the previous section, the text below lists a set of load balancer
-configuration and 5 CIDs generated with that configuration.
+LB configuration: cr_bits 0x0 length_self_encoding: y sid_len 1
+    key 411592e4160268398386af84ea7505d4
 
-cr_bits 0x0 length_self_encoding: y sid_len 1 zp_len 11
-    key 8c24cb9b9c3289b4ee63c3f3d7f93a9a
+cid 10564f7c0df399f6d93bdddb1a03886f25 sid 23 su 05231748a80884ed58007847eb9fd0
+cid 10d5c03f9dd765d73b3d8610b244f74d02 sid 15 su 76cd6b6f0d3f0b20fc8e633e3a05f3
+cid 108ca55228ab23b92845341344a2f956f2 sid 64 su 65c0ce170a9548717498b537cb8790
+cid 10e73f3d034aef2f6f501e3a7693d6270a sid 07 su f9ad10c84cc1e89a2492221d74e707
+cid 101a6ce13d48b14a77ecfd365595ad2582 sid 6c su 76ce4689b0745b956ef71c2608045d
 
-cid:  1378e44f874642624fa69e7b4aec15a2a678b8b5 sid: 48<br/>
-cid:  13772c82fe8ce6a00813f76a211b730eb4b20363 sid: 66<br/>
-cid:  135ccf507b1c209457f80df0217b9a1df439c4b2 sid: 30<br/>
-cid:  13898459900426c073c66b1001c867f9098a7aab sid: fe<br/>
-cid:  1397a18da00bf912f20049d9f0a007444f8b6699 sid: 30
+LB configuration: cr_bits 0x0 length_self_encoding: n sid_len 2
+    key 92ce44aecd636aeeff78da691ef48f77
 
-cr_bits 0x0 length_self_encoding: n sid_len 2 zp_len 10
-    key cc7ec42794664a8428250c12a7fb16fa
+cid 20aa09bc65ed52b1ccd29feb7ef995d318 sid a52f su 99278b92a86694ff0ecd64bc2f73
+cid 30b8dbef657bd78a2f870e93f9485d5211 sid 6c49 su 7381c8657a388b4e9594297afe96
+cid 043a8137331eacd2e78383279b202b9a6d sid 4188 su 5ac4b0e0b95f4e7473b49ee2d0dd
+cid 3ba71ea2bcf0ab95719ab59d3d7fde770d sid 8ccc su 08728807605db25f2ca88be08e0f
+cid 37ef1956b4ec354f40dc68336a23d42b31 sid c89d su 5a3ccd1471caa0de221ad6c185c0
 
-cid:  0cb28bfc1f65c3de14752bc0fc734ef824ce8f78 sid: 33fa<br/>
-cid:  2345e9fc7a7be55b4ba1ff6ffa04f3f5f8c67009 sid: ee47<br/>
-cid:  0d32102be441600f608c95841fd40ce978aa7a02 sid: 0c8b<br/>
-cid:  2e6bfc53c91c275019cd809200fa8e23836565ab sid: feca<br/>
-cid:  29b87a902ed129c26f7e4e918a68703dc71a6e0a sid: 8941
+LB configuration: cr_bits 0x0 length_self_encoding: y sid_len 3
+    key 5c49cb9265efe8ae7b1d3886948b0a34
 
-cr_bits 0x1 length_self_encoding: y sid_len 3 zp_len 9
-    key 42e657946b96b7052ab8e6eeb863ee24
+cid 10efcffc161d232d113998a49b1dbc4aa0 sid 0690b3 su 958fc9f38fe61b83881b2c5780
+cid 10fc13bdbcb414ba90e391833400c19505 sid 031ac3 su 9a55e1e1904e780346fcc32c3c
+cid 10d3cc1efaf5dc52c7a0f6da2746a8c714 sid 572d3a su ff2ec9712664e7174dc03ca3f8
+cid 107edf37f6788e33c0ec7758a485215f2b sid 562c25 su 02c5a5dcbea629c3840da5f567
+cid 10bc28da122582b7312e65aa096e9724fc sid 2fa4f0 su 8ae8c666bfc0fc364ebfd06b9a
 
-cid:  53c48f7884d73fd9016f63e50453bfd9bcfc637d sid: b46b68<br/>
-cid:  53f45532f6a4f0e1757fa15c35f9a2ab0fcce621 sid: 2147b4<br/>
-cid:  5361fd4bbcee881a637210f4fffc02134772cc76 sid: e4bf4b<br/>
-cid:  53881ffde14e613ef151e50ba875769d6392809b sid: c2afee<br/>
-cid:  53ad0d60204d88343492334e6c4c4be88d4a3add sid: ae0331
+LB configuration: cr_bits 0x0 length_self_encoding: n sid_len 4
+    key e787a3a491551fb2b4901a3fa15974f3
 
-cr_bits 0x0 length_self_encoding: n sid_len 4 zp_len 8
-    key ee2dc6a3359a94b0043ca0c82715ce71
+cid 26125351da12435615e3be6b16fad35560 sid 0cb227d3 su 65b40b1ab54e05bff55db046
+cid 14de05fc84e41b611dfbe99ed5b1c9d563 sid 6a0f23ad su d73bee2f3a7e72b3ffea52d9
+cid 1306052c3f973db87de6d7904914840ff1 sid ca21402d su 5829465f7418b56ee6ada431
+cid 1d202b5811af3e1dba9ea2950d27879a92 sid b14e1307 su 4902aba8b23a5f24616df3cf
+cid 26538b78efc2d418539ad1de13ab73e477 sid a75e0148 su 0040323f1854e75aeb449b9f
 
-cid:  058b9da37f436868cca3cef40c7f98001797c611 sid: eaf846c7<br/>
-cid:  1259fc97439adaf87f61250afea059e5ddf66e44 sid: 4cc5e84a<br/>
-cid:  202f424376f234d5f014f41cebc38de2619c6c71 sid: f94ff800<br/>
-cid:  146ac3e4bbb750d3bfb617ef4b0cb51a1cae5868 sid: c2071b1b<br/>
-cid:  36dfe886538af7eb16a196935b3705c9d741479f sid: 26359dbb
+LB configuration: cr_bits 0x0 length_self_encoding: y sid_len 5
+    key d5a6d7824336fbe0f25d28487cdda57c
 
-cr_bits 0x2 length_self_encoding: y sid_len 5 zp_len 7
-    key 700837da8834840afe7720186ec610c9
-
-cid:  931ef3cc07e2eaf08d4c1902cd564d907cc3377c sid: 759b1d419a<br/>
-cid:  9398c3d0203ab15f1dfeb5aa8f81e52888c32008 sid: 77cc0d3310<br/>
-cid:  93f4ba09ab08a9ef997db4fa37a97dbf2b4c5481 sid: f7db9dce32<br/>
-cid:  93744f4bedf95e04dd6607592ecf775825403093 sid: e264d714d2<br/>
-cid:  93256308e3d349f8839dec840b0a90c7e7a1fc20 sid: 618b07791f
+cid 10a2794871aadb20ddf274a95249e57fde sid 82d3b0b1a1 su 0935471478c2edb8120e60
+cid 108122fe80a6e546a285c475a3b8613ec9 sid fbcc902c9d su 59c47946882a9a93981c15
+cid 104d227ad9dd0fef4c8cb6eb75887b6ccc sid 2808e22642 su 2a7ef40e2c7e17ae40b3fb
+cid 10b3f367d8627b36990a28d67f50b97846 sid 5e018f0197 su 2289cae06a566e5cb6cfa4
+cid 1024412bfe25f4547510204bdda6143814 sid 8a8dd3d036 su 4b12933a135e5eaaebc6fd
 
 # Acknowledgments
 
@@ -1149,9 +1192,26 @@ cid:  93256308e3d349f8839dec840b0a90c7e7a1fc20 sid: 618b07791f
 > **RFC Editor's Note:**  Please remove this section prior to
 > publication of a final version of this document.
 
+## since draft-ietf-quic-load-balancers-04
+- Rearranged the shared-state retry token to simplify token processing
+- More compact timestamp in shared-state retry token
+- Revised server requirements for shared-state retries
+- Eliminated zero padding from the test vectors
+- Added server use bytes to the test vectors
+- Additional compliant DCID criteria
+
+## since-draft-ietf-quic-load-balancers-03
+- Improved Config Rotation text
+- Added stream cipher test vectors
+- Deleted the Obfuscated CID algorithm
+
 ## since-draft-ietf-quic-load-balancers-02
+- Replaced stream cipher algorithm with three-pass version
+- Updated Retry format to encode info for required TPs
 - Added discussion of version invariance
 - Cleaned up text about config rotation
+- Added Reset Oracle and limited configuration considerations
+- Allow dropped long-header packets for known QUIC versions
 
 ## since-draft-ietf-quic-load-balancers-01
 - Test vectors for load balancer decoding
