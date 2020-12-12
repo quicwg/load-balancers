@@ -1187,6 +1187,9 @@ cid 1024412bfe25f4547510204bdda6143814 sid 8a8dd3d036 su 4b12933a135e5eaaebc6fd
 
 # Acknowledgments
 
+The authors would like to thank Christian Huitema and Martin Thomson for their
+text contributions and detailed reviews.
+
 # Change Log
 
 > **RFC Editor's Note:**  Please remove this section prior to
