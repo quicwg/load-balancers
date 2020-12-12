@@ -941,6 +941,12 @@ If these assumptions are invalid, this specification is likely to lead to loss
 of packets that contain non-compliant DCIDs, and in extreme cases connection
 failure.
 
+Some load balancers might inspect elements of the Server Name Indication (SNI)
+extension in the TLS Client Hello to make a routing decision. Note that the
+format and cryptographic protection of this information may change in future
+versions or extensions of TLS or QUIC, and therefore this functionality is
+inherently not version-invariant.
+
 # Security Considerations {#security-considerations}
 
 QUIC-LB is intended to prevent linkability.  Attacks would therefore attempt to
