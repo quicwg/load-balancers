@@ -386,7 +386,7 @@ length MUST have enough entropy to have a different code point for each server.
 ### Load Balancer Actions
 
 On each incoming packet, the load balancer extracts consecutive octets,
-beginning with the second octet. If these octets match and existing server ID,
+beginning with the second octet. If these octets match an existing server ID,
 the packets are routed to the new server ID.  If the octets are not a match
 and the packet is an Initial packet, then it is assumed to be a new flow and
 load balanced.
