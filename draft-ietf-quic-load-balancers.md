@@ -787,7 +787,7 @@ token is presented as:
 +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
 ~~~
 
-The tokens are protected using AES128-GCM as follow:
+The tokens are protected using AES128-GCM as follows:
 
 * The token key and IV are retrieved using the Key Sequence.
 
