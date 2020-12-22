@@ -317,6 +317,11 @@ There are situations where a server pool might be operating two or more routing
 algorithms or parameter sets simultaneously.  The load balancer uses the first
 two bits of the connection ID to multiplex incoming DCIDs over these schemes.
 
+Encryption in the algorithms below uses the AES-128-ECB cipher. Future standards
+may deprecate these algorithms and replace them with others that use other
+ciphers, in accordance with {{?RFC7696}}. QUIC-LB implementations SHOULD be
+extensible to support new algorithms.
+
 This section describes three participants: the configuration agent, the load
 balancer, and the server.
 
