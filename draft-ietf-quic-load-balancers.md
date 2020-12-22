@@ -65,12 +65,13 @@ normative:
 
 The QUIC protocol design is resistant to transparent packet inspection,
 injection, and modification by intermediaries. However, the server can
-explicitly cooperate with network services by agreeing to certain conventions.
-This specification provides a standardized means of solving three problems: (1)
-maintaining routability to servers via a low-state load balancer even when the
-connection IDs in use change; (2) explicit encoding of the connection ID length
-in all packets to assist hardware accelerators; and (3) injection of QUIC Retry
-packets by anti-Denial-of-Service agent on behalf of the server.
+explicitly cooperate with network services by agreeing to certain conventions
+and/or sharing state with those services. This specification provides a
+standardized means of solving three problems: (1) maintaining routability to
+servers via a low-state load balancer even when the connection IDs in use
+change; (2) explicit encoding of the connection ID length in all packets to
+assist hardware accelerators; and (3) injection of QUIC Retry packets by an
+anti-Denial-of-Service agent on behalf of the server.
 
 --- middle
 
