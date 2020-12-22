@@ -63,15 +63,15 @@ normative:
 
 --- abstract
 
-QUIC connection IDs allow continuation of connections across address/port
-4-tuple changes, and can store routing information for stateless or low-state
-load balancers.  They also can prevent linkability of connections across
-deliberate address migration through the use of protected communications between
-client and server.  This creates issues for load-balancing intermediaries.  This
-specification standardizes methods for encoding routing information given a
-small set of configuration parameters. This framework also enables offload of
-other QUIC functions to trusted intermediaries, given the explicit cooperation
-of the QUIC server.
+The QUIC protocol design is resistant to transparent packet inspection,
+injection, and modification by intermediaries. However, the server can
+explicitly cooperate with network services by agreeing to certain conventions
+and/or sharing state with those services. This specification provides a
+standardized means of solving three problems: (1) maintaining routability to
+servers via a low-state load balancer even when the connection IDs in use
+change; (2) explicit encoding of the connection ID length in all packets to
+assist hardware accelerators; and (3) injection of QUIC Retry packets by an
+anti-Denial-of-Service agent on behalf of the server.
 
 --- middle
 
