@@ -781,7 +781,7 @@ On the wire, the token is presented as:
 +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
 | AEAD Encrypted Token (variable)                               |
 +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-| AEAD Checksum (variable, function of encryption algorithm)    |                               |
+| AEAD Checksum (variable, function of encryption algorithm)    |
 +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
 ~~~~~
 {: #ss-retry-service-token-wire-image title="Wire image of shared-state retry service tokens"}
