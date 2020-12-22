@@ -712,6 +712,7 @@ The token key identifier and the corresponding AEAD key and AEAD IV are
 provisioned by the configuration agent. 
 
 The token body is encoded as follows:
+
 ~~~~~
 0                   1                   2                   3
 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
@@ -733,6 +734,7 @@ The token body is encoded as follows:
 |                      Opaque Data (optional)                   |
 +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
 ~~~~~
+{: #ss-retry-service-token-body title="Body of shared-state retry service tokens"}
 The token body has the following fields:
 
 ODCIL: The original destination connection ID length. Tokens in NEW_TOKEN frames
@@ -764,6 +766,7 @@ the Initial Packet Number as part of the opaque data.
 ### Token Protection with AEAD {#token-protection-with-aead}
 
 On the wire, the token is presented as:
+
 ~~~~~
 0                   1                   2                   3
 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
@@ -780,7 +783,8 @@ On the wire, the token is presented as:
 +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
 | AEAD Checksum (variable, function of encryption algorithm)    |                               |
 +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-~~~
+~~~~~
+{: #ss-retry-service-token-wire-image title="Wire image of shared-state retry service tokens"}
 
 The tokens are protected using AES128-GCM as follows:
 
@@ -793,6 +797,7 @@ forms the AEAD nonce.
 
 * The associated data is a formatted as a pseudo header by combining the
 cleartext part of the token with the IP address of the client.
+
 ~~~~~
 0                   1                   2                   3
 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
@@ -814,6 +819,8 @@ cleartext part of the token with the IP address of the client.
 | Key seq.(8)   |
 +-+-+-+-+-+-+-+-+
 ~~~~~
+{: #ss-retry-service-token-pseudoheader title="Psuedoheader for shared-state retry service tokens"}
+
 * The input plaintext for the AEAD is the token body. The output ciphertext of
 the AEAD is transmitted in place of the token body.
 * The AEAD Checksum is computed as part of the AEAD encryption process, and is
