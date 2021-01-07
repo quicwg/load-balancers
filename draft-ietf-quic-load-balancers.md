@@ -392,7 +392,7 @@ in consecutive octets beginning with the second. All other bits in the
 connection ID, except for the first octet, MAY be set to any other value. These
 other bits SHOULD appear random to observers.
 
-## ECMP CID Algorithm {#plaintext-cid-algorithm}
+## ECMP CID Algorithm {#lowconfig-cid-algorithm}
 
 The ECMP CID Algorithm is similar to the plaintext CID algorithm, but allows
 the L4 load balancer to decide which server to send traffic to on a per-CID
@@ -409,7 +409,7 @@ The format is depicted in the figure below.
 |                        Any (0..152-X)                         |
 +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
 ~~~~~
-{: #plaintext-cid-format title="Plaintext CID Format"}
+{: #lowconfig-cid-format title="Low-Config CID Format"}
 
 ### Configuration Agent Actions
 
