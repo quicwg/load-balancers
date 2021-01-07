@@ -407,7 +407,7 @@ Low-Config CID {
   For Server Use (0..152-len(Server ID)),
 }
 ~~~
-{: #plaintext-cid-format title="Plaintext CID Format"}
+{: #lowconfig-cid-format title="Low-Config CID Format"}
 
 ### Configuration Agent Actions
 
