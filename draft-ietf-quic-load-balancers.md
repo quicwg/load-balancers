@@ -392,6 +392,47 @@ in consecutive octets beginning with the second. All other bits in the
 connection ID, except for the first octet, MAY be set to any other value. These
 other bits SHOULD appear random to observers.
 
+## ECMP CID Algorithm {#plaintext-cid-algorithm}
+
+The ECMP CID Algorithm is similar to the plaintext CID algorithm, but allows
+the L4 load balancer to decide which server to send traffic to on a per-CID
+basis.  This still links connections to servers, but the connection is
+dynamic and slightly less linkable than the plaintext CID algorithm.
+The format is depicted in the figure below.
+
+~~~~~
+0                   1                   2                   3
+0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+|  First octet  |             Server ID (X=8..152)              |
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+|                        Any (0..152-X)                         |
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+~~~~~
+{: #plaintext-cid-format title="Plaintext CID Format"}
+
+### Configuration Agent Actions
+
+The configuration agent selects a length for the server ID encoding. This
+length MUST have enough entropy to have a different code point for each server.
+
+### Load Balancer Actions
+
+On each incoming packet, the load balancer extracts consecutive octets,
+beginning with the second octet. If these octets match an existing server ID,
+the packets are routed to the new server ID.  If the octets are not a match
+and the packet is an Initial packet, then it is assumed to be a new flow and
+load balanced.
+
+### Server Actions
+
+The server chooses a connection ID length.  This MUST be at least one byte
+longer than the routing bytes.
+
+When a server needs a new connection ID, it selects a random CID from
+another connection which is known to route identically and randomizes the
+non-routing bytes of the CID.
+
 ## Stream Cipher CID Algorithm {#stream-cipher-cid-algorithm}
 
 The Stream Cipher CID algorithm provides cryptographic protection at the cost of
