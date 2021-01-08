@@ -892,8 +892,8 @@ tokens is subtly different from Retry tokens, as described below.
 
 The service SHOULD drop a packet containing a token where the ODCIL is greater
 than zero and less than the minimum number of octets for a client-generated CID
-(8 in QUIC version 1). The service also SHOULD drop a token where the ODCIL is
-zero and RSCIL is nonzero.
+(8 in QUIC version 1). The service also SHOULD drop a packet containing a token
+where the ODCIL is zero and RSCIL is nonzero.
 
 If the Timestamp of a token points to time in the past, the token has expired;
 however, in order to allow for clock skew, it SHOULD NOT consider tokens to be
