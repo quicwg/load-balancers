@@ -55,6 +55,24 @@ normative:
         org: Mozilla
         role: editor
 
+
+  QUIC-TLS:
+    title: "Using TLS to Secure QUIC"
+    date: {DATE}
+    seriesinfo:
+      Internet-Draft: draft-ietf-quic-tls
+    author:
+      -
+        ins: M. Thomson
+        name: Martin Thomson
+        org: Mozilla
+        role: editor
+      -
+        ins: S. Turner
+        name: Sean Turner
+        org: sn3rd
+        role: editor
+
   TIME_T:
     title: "Open Group Standard: Vol. 1: Base Definitions, Issue 7"
     date: 2018
@@ -739,7 +757,7 @@ validate it. Instead, it MUST assume the address is validated and MUST extract
 the Original Destination Connection ID and Retry Source Connection ID, assuming
 the format described in {{nss-service-requirements}}.
 
-## Shared-State Retry Service
+## Shared-State Retry Service {#shared-state-retry}
 
 A shared-state retry service uses a shared key, so that the server can decode
 the service's retry tokens. It does not require that all traffic pass through
@@ -1158,6 +1176,41 @@ cause two packets with the same Destination CID to arrive at two different
 servers that share the same cryptographic context for Stateless Reset tokens. As
 QUIC-LB requires deterministic routing of DCIDs over the life of a connection,
 it is a sufficient means of avoiding an Oracle without additional measures.
+
+## Shared-State Retry Keys
+
+The Shared-State Retry Service defined in {{shared-state-retry}} describes the
+format of retry tokens or new tokens protected and encrypted using AES128-GCM.
+Each token includes a 96 bit randomly generated unique token number, and an 8 bit
+identifier of the AES-GCM encryption key. There are three important security
+considerations for these tokens:
+
+* An attacker that obtains a copy of the encryption key will be able to decrypt
+  and forge tokens.
+
+* Attackers may be able to retrieve the key if they capture a sufficently large
+  number of retry tokens encrypted with a given key. 
+
+* Confidentiality of the token data will fail if separate tokens reuse the
+  same 96 bit unique token number and the same key.
+
+To protect against disclosure of keys to attackers, service and servers MUST
+ensure that the keys are stored securely. To limit the consequences of potential
+exposures, the time to live of any given key should be limited.
+
+Section 6.6 of {{QUIC-TLS}} states that "Endpoints MUST count the number of encrypted
+packets for each set of keys. If the total number of encrypted packets with the same
+key exceeds the confidentiality limit for the selected AEAD, the endpoint MUST stop
+using those keys." It goes on with the specific limit: "For AEAD_AES_128_GCM and
+AEAD_AES_256_GCM, the confidentiality limit is 2^23 encrypted packets; see Appendix B.1."
+It is prudent to adopt the same limit here, and configure the service in such a way that
+no more than 2^23 tokens are generated with the same key.
+
+In order to protect against collisions, the 96 bit unique token numbers should be generated
+using a cryptographically secure pseudorandom number generator (CSPRNG), as specified
+in Appendix C.1 of the TLS 1.3 specification{{!RFC8446}}. With proper random numbers, if fewer than 2^40 tokens
+are generated with a single key, the risk of collisions is lower than 0.001%.
+
 
 # IANA Considerations
 
