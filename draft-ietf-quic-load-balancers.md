@@ -422,7 +422,7 @@ The configuration agent also selects an LB Timeout.
 The load balancer maintains a table of all assigned server IDs, which is
 initialized empty. On each incoming packet, the load balancer extracts
 consecutive octets, beginning with the second octet. If these octets match an
-existing server ID, the packets are routed to the new server ID. As there are no
+existing server ID, the packets are routed to the matching server ID. As there are no
 assigned server IDs at first, the first incoming packet has a non-compliant DCID
 by definition.
 
