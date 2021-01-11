@@ -1193,7 +1193,7 @@ packets for each set of keys. If the total number of encrypted packets with the 
 key exceeds the confidentiality limit for the selected AEAD, the endpoint MUST stop
 using those keys." It goes on with the specific limit: "For AEAD_AES_128_GCM and
 AEAD_AES_256_GCM, the confidentiality limit is 2^23 encrypted packets; see Appendix B.1."
-It seems prudent to adopt the same limit here, and configure the service in such a way that
+It is prudent to adopt the same limit here, and configure the service in such a way that
 no more than 2^23 tokens are generated with the same key.
 
 In order to protect against collisions, the 96 bit unique token numbers should be generated
