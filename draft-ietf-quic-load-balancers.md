@@ -412,7 +412,7 @@ Low-Config CID {
 ### Configuration Agent Actions
 
 The configuration agent selects a length for the server ID encoding that MUST
-have enough entropy to have a different code point for each server. It must be
+have at least enough entropy to have a different code point for each server. It MUST be
 no more than seven octets.
 
 The configuration agent also selects an LB Timeout.
