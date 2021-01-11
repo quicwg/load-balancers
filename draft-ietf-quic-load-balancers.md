@@ -490,7 +490,7 @@ If a server has not received a connection ID encoding a particular server ID
 within the LB timeout, it MUST retire any outstanding CIDs that use that server
 ID and cease generating any new ones.
 
-A server SHOULD have a mechanism to stop using some server IDs when the list
+A server SHOULD have a mechanism to stop using some server IDs if the list
 gets large relative to its share of the codepoint space, so that these
 allocations time out and are freed for reuse by servers that have recently
 joined the pool.
