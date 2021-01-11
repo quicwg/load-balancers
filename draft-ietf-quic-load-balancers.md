@@ -448,7 +448,8 @@ load balancers follows the procedures in {{routing-algorithms}} and adds the
 server ID and assignment the table.
 
 If the DCID references the 4-tuple routing bits or an undefined configuration,
-use the following procedure:
+use the following procedure to establish a predictable template for server ID
+extraction:
 
 * Identify the instance of Low-Config CID configuration with the largest
 config rotation codepoint. For example, if configurations 0b10, 0b01, and 0b00
