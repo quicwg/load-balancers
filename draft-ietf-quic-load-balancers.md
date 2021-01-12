@@ -1022,12 +1022,17 @@ QUIC-LB requires common configuration to synchronize understanding of encodings
 and guarantee explicit consent of the server.
 
 The load balancer and server MUST agree on a routing algorithm and the relevant
-parameters for that algorithm. Each server MUST know its server ID for each
-configuration, and the load balancer MUST have forwarding instructions for each
-server ID.
+parameters for that algorithm. 
+
+Except for the Low-config CID algorithm, each server MUST know its server ID for
+each configuration, and the load balancer MUST have forwarding instructions for
+each server ID.
 
 For all algorithms, the load balancer and servers MUST have a common
 understanding of the server ID length.
+
+For Low-Config CID Routing, the servers and load balancer also MUST have a
+common understanding of the LB timeout.
 
 For Stream Cipher CID Routing, the servers and load balancer also MUST have a
 common understanding of the key and nonce length.
