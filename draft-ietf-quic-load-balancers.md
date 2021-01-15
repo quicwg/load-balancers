@@ -652,9 +652,10 @@ order. The load balancer uses the server ID octets for routing.
 When generating a routable connection ID, the server MUST choose a connection ID
 length between 17 and 20 octets. The server writes its provided server ID into
 the server ID octets and arbitrary bits into the remaining bits. These arbitrary
-bits MAY encode additional information. Bits in the eighteenth, nineteenth, and
-twentieth octets SHOULD appear essentially random to observers. The first octet
-is reserved as described in {{first-octet}}.
+bits MAY encode additional information, and MUST differ between connection IDs.
+Bits in the eighteenth, nineteenth, and twentieth octets SHOULD appear
+essentially random to observers. The first octet is reserved as described in
+{{first-octet}}.
 
 The server then encrypts the second through seventeenth octets using the 128-bit
 AES-ECB cipher.
