@@ -705,7 +705,7 @@ Retry services MUST forward all QUIC packets that are not of type Initial or
 so it is not practical for Retry Services to identify such packets as valid or
 invalid.
 
-## Common Requirements
+## Common Requirements {#common-requirements}
 
 Regardless of mechanism, a retry service has an active mode, where it is
 generating Retry packets, and an inactive mode, where it is not, based on its
@@ -713,12 +713,44 @@ assessment of server load and the likelihood an attack is underway. The choice
 of mode MAY be made on a per-packet or per-connection basis, through a
 stochastic process or based on client address.
 
+A configuration agent MUST distribute a list of QUIC versions the Retry Service
+supports. It MAY also distribute either an "Allow-List" or a "Deny-List" of
+other QUIC versions. It MUST NOT distribute both an Allow-List and a Deny-List.
+
+The Allow-List or Deny-List MUST NOT include any versions included for Retry
+Service Support.
+
+The Configuration Agent MUST provide a means for the entity that controls the
+Retry Service to report its supported version(s) to the configuration Agent. If
+the entity has not reported this information, it MUST NOT activate the Retry
+Service and the configuration agent MUST NOT distribute configuration that
+activates it.
+
+The configuration agent MAY delete versions from the final supported version
+list if policy does not require the Retry Service to operate on those versions.
+
+The configuration Agent MUST provide a means for the entities that control
+servers behind the Retry Service to report either an Allow-List or a Deny-List.
+
+If all entities supply Allow-Lists, the consolidated list MUST be the union of
+these sets. If all entities supply Deny-Lists, the consolidated list MUST be
+the intersection of these sets.
+
+If entities provide a mixture of Allow-Lists and Deny-Lists, the consolidated
+list MUST be a Deny-List that is the intersection of all provided Deny-Lists and
+the inverses of all Allow-Lists.
+
+If no entities that control servers have reported Allow-Lists or Deny-Lists,
+the default is a Deny-List with the null set (i.e., all unsupported versions
+will be admitted). This preserves the future extensibilty of QUIC.
+
 A retry service MUST forward all packets for a QUIC version it does not
-understand. Note that if servers support versions the retry service does not,
-this may increase load on the servers. However, dropping these packets would
-introduce chokepoints to block deployment of new QUIC versions. Note that future
-versions of QUIC might not have Retry packets, require different information in
-Retry, or use different packet type indicators.
+support that are not on a Deny-List or absent from an Allow-List. Note that if
+servers support versions the retry service does not, this may increase load on
+the servers. 
+
+Note that future versions of QUIC might not have Retry packets, require
+different information in Retry, or use different packet type indicators.
 
 ## No-Shared-State Retry Service
 
@@ -730,8 +762,7 @@ NEW_TOKEN frames (codepoint '1').
 
 ### Configuration Agent Actions
 
-The configuration agent distributes a list of QUIC versions to be served by the
-Retry Service.
+See {{common-requirements}}.
 
 ### Service Requirements {#nss-service-requirements}
 
@@ -949,8 +980,7 @@ verified during decryption.
 ### Configuration Agent Actions
 
 The configuration agent generates and distributes a "token key", a "token IV",
-a key sequence, and a list of QUIC versions the service supports. It must also
-inform the service if a NAT lies between the service and the servers.
+a key sequence, and the information described in {{common-requirements}}.
 
 ### Service Requirements
 
@@ -1053,8 +1083,8 @@ versions of any Retry Service. If a shared-state service, the server also must
 have the token key.
 
 A non-shared-state Retry Service need only be configured with the QUIC versions
-it supports. A shared-state Retry Service also needs the token key, and to be
-aware if a NAT sits between it and the servers.
+it supports, and an Allow- or Deny-List. A shared-state Retry Service also needs
+the token key, and to be aware if a NAT sits between it and the servers.
 
 The following pseudocode describes the data items necessary to store a full
 QUIC-LB configuration at the server. It is meant to describe the conceptual
@@ -1067,9 +1097,19 @@ packet. The comments signify the range of acceptable values where applicable.
  enum     { none, non_shared_state, shared_state } retry_service;
  select (retry_service) {
      case none: null;
-     case non_shared_state: uint32 list_of_quic_versions[];
+     case non_shared_state: {
+         uint32 supported_versions[];
+         union {
+             uint32 allow_list[];
+             uint32 deny_list[];
+         } version_control;
+     } non_shared_state_config;
      case shared_state: {
-         uint32   list_of_quic_versions[];
+         uint32   supported_versions[];
+         union {
+             uint32 allow_list[];
+             uint32 deny_list[];
+         } version_control;
          uint8    token_key[16];
          uint8    token_iv[8];
          uint8    key_sequence_number;
