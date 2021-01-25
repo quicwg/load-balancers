@@ -412,6 +412,10 @@ other bits SHOULD appear random to observers.
 
 ## Low-Config CID Algorithm {#lowconfig-cid-algorithm}
 
+[Editor's Note: This section does not have consensus that it is a workable
+addition to the spec. We have added it to facilitate discussion pending a
+final decision on whether to include it.]
+
 The Low-Config CID Algorithm is similar to the plaintext CID algorithm, but
 allows the load balancer to assign server IDs dynamically so that configuration
 does not require bespoke server ID assignment. This also reduces linkability.
