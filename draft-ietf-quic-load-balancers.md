@@ -1205,7 +1205,7 @@ module ietf-quic-lb {
                      }
                    }
                }
-	     }
+             }
               
              choice routing-algorithm {
                case none { }
