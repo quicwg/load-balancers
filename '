@@ -1091,210 +1091,59 @@ it supports, and an Allow- or Deny-List. A shared-state Retry Service also needs
 the token key, and to be aware if a NAT sits between it and the servers.
 
 The following YANG model describes the data items necessary to store a full
-QUIC-LB configuration.
+QUIC-LB configuration at the server. It is meant to describe the conceptual
+range and not specify the presentation of such configuration in an internet
+packet. The comments signify the range of acceptable values where applicable.
 
-<CODE BEGINS> file "ietf-quiclb@2021-01-29.yang"
-
-module ietf-quic-lb {
-  yang-version "1.1";
-  namespace "urn:ietf:params:xml:ns:yang:ietf-quic";
-  prefix "quic-lb";
-
-  import ietf-yang-types {
-    prefix "yang";
-    reference
-      "RFC 6991: Common YANG Data Types.";
-  }
-
-  organization
-    "IETF QUIC Working Group";
-
-  contact
-    "WG Web:   <http://datatracker.ietf.org/wg/quic>
-     WG List:  <quic@ietf.org>
-
-     Authors: Martin Duke (martin.h.duke at gmail dot com)
-              Nick Banks (nibanks at microsoft dot com)";
-
-  description
-    "This module enables the explicit cooperation of QUIC servers with
-     trusted intermediaries without breaking important protocol features.
-
-     Copyright (c) 2021 IETF Trust and the persons identified as
-     authors of the code.  All rights reserved.
-
-     Redistribution and use in source and binary forms, with or
-     without modification, is permitted pursuant to, and subject to
-     the license terms contained in, the Simplified BSD License set
-     forth in Section 4.c of the IETF Trust's Legal Provisions
-     Relating to IETF Documents
-     (https://trustee.ietf.org/license-info).
-
-     This version of this YANG module is part of RFC XXXX
-     (https://www.rfc-editor.org/info/rfcXXXX); see the RFC itself
-     for full legal notices.
-
-     The key words 'MUST', 'MUST NOT', 'REQUIRED', 'SHALL', 'SHALL
-     NOT', 'SHOULD', 'SHOULD NOT', 'RECOMMENDED', 'NOT RECOMMENDED',
-     'MAY', and 'OPTIONAL' in this document are to be interpreted as
-     described in BCP 14 (RFC 2119) (RFC 8174) when, and only when,
-     they appear in all capitals, as shown here.";"
-
-     revision "2021-01-29" {
-       description
-         "Initial Version";
-       reference
-         "RFC XXXX, QUIC-LB: Generating Routable QUIC Connection IDs"
-     }
-
-     container quic-lb {
-       presence "The container for QUIC-LB configuration.";
-
-       description
-         "QUIC-LB container.";
-
-       container cid-configs {
-         list cid-config {
-           key "config-rotation-bits";
-
-           leaf config-rotation-bits" {
-             type uint8;
-             description
-               "Identifier for this configuration. legal values 0, 1, 2";
-           }
-
-           leaf first-octet-encodes-cid-length {
-             type bool;
-             description
-               "If true, the six least significant bits of the first CID
-                octet encode the CID length minus one."
-           }
-
-           container server-ids {
-             
-             leaf server-id-length {
-               type uint8;
-               description
-                 "Length (in octets) of a server ID";
-             }
-
-             choice sid-allocation {
-               case dynamic {
-                 leaf lb-timeout {
-                   type uint32;
-                   description
-                     "Time (in seconds) to keep a server ID allocation if
-                      no packets with that server ID arrive."
-                 }
-               }
-               
-               case static {
-                 list mappings {
-                   key "server-id";
-
-                   leaf server-id {
-                     type yang:hex-string;// of length server-id-length
-                     description
-                       "The server ID allocated to a given server";
-                   }
-
-                   leaf server-address {
-                     type inet:ip-address;
-                     description
-                       "Destination of packets to this server";
-                     }
-                   }
-               }
-	     }
-              
-             choice routing-algorithm {
-               case none { }
-
-               case plaintext { }
-
-               case stream-cipher {
-                 leaf key {
-                   type yang:hex-string;
-                   description
-                     "16-octet key"
-                 }
-
-                 leaf nonce-length {
-                   type uint8;
-                   description
-                     "Length, in octets, of the nonce"
-                 }
-               }
-
-               case block-cipher {
-                 leaf key {
-                   type yang:hex-string;
-                   description
-                     "16-octet key"
-                 }
-               }
-             } 
-           }
-         }
-       }
-       
-       container retry-service-config {
-         list supported-versions {
-           leaf version {
-             type uint32;
-             description
-               "QUIC version that the retry service supports";
-           }
-         }
-
-         choice unsupported-versions {
-           case default-deny {
-             list allow-list {
-               leaf version {
-                 type uint32;
-                 description
-                   "QUIC version that the retry service should always forward";
-               }
-             }
-           }
-
-           case default-allow:
-             list deny-list {
-               leaf version {
-                 type uint32;
-                 description
-                   "QUIC version that the retry service should always drop"'
-             }
-           }
-         }
-
-         choice retry-algorithm {
-           case none { }
-
-           case non-shared-state { }
-
-           case shared-state {
-             leaf key-sequence-number {
-               type uint8;
-               description
-                 "Identifies the key used to encrypt the token";
-             }
-
-             leaf token-key {
-               type hex-string;
-               description
-                 "16-byte key to encrypt the token";
-             }
-
-             leaf token-iv {
-               type hex-string;
-               description
-                 "8-byte IV to encrypt the token";
-             }
-         }
-       }  
-    }
-} 
+~~~
+ uint2    config_rotation_bits;
+ boolean  first_octet_encodes_cid_length;
+ enum     { none, non_shared_state, shared_state } retry_service;
+ select (retry_service) {
+     case none: null;
+     case non_shared_state: {
+         uint32 supported_versions[];
+         union {
+             uint32 allow_list[];
+             uint32 deny_list[];
+         } version_control;
+     } non_shared_state_config;
+     case shared_state: {
+         uint32   supported_versions[];
+         union {
+             uint32 allow_list[];
+             uint32 deny_list[];
+         } version_control;
+         uint8    token_key[16];
+         uint8    token_iv[8];
+         uint8    key_sequence_number;
+     } shared_state_config;
+ } retry_service_config;
+ enum     { none, plaintext, low_config, stream_cipher, block_cipher }
+                   routing_algorithm;
+ select (routing_algorithm) {
+     case none: null;
+     case plaintext: struct {
+         uint8 server_id_length; /* 1..19 */
+         uint8 server_id[server_id_length];
+     } plaintext_config;
+     case low-config: struct  {
+         uint8 server_id_length;
+         uint32 lb_timeout;
+     } low_config_config;
+     case stream_cipher: struct {
+         uint8  nonce_length; /* 8..16 */
+         uint8  server_id_length; /* 1..(19 - nonce_length) */
+         uint8  server_id[server_id_length];
+         uint8  key[16];
+     } stream_cipher_config;
+     case block_cipher: struct {
+         uint8  server_id_length;
+         uint8  server_id[server_id_length];
+         uint8  key[16];
+     } block_cipher_config;
+} routing_algorithm_config;
+~~~
 
 # Additional Use Cases
 
