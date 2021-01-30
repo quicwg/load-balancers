@@ -1288,6 +1288,9 @@ There are no IANA requirements.
 
 # QUIC-LB YANG Model {#yang-model}
 
+This YANG model conforms to {{?RFC6020}} and expresses a complete QUIC-LB
+configuration.
+
 <CODE BEGINS> file "ietf-quiclb@2021-01-29.yang"
 
 module ietf-quic-lb {
@@ -1514,6 +1517,8 @@ module ietf-quic-lb {
 }
 
 ## Tree Diagram
+
+This summary of the YANG model uses the notation in {{?RFC8340}}.
 
 module: ietf-quic-lb
   +--rw quic-lb
