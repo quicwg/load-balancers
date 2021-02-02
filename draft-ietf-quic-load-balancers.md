@@ -382,7 +382,7 @@ depicted in the figure below.
 ~~~
 Plaintext CID {
   First Octet (8),
-  Server ID (8..152),
+  Server ID (8..120),
   For Server Use (0..152-len(Server ID)),
 }
 ~~~
@@ -392,6 +392,8 @@ Plaintext CID {
 
 The configuration agent selects a length for the server ID encoding. This
 length MUST have enough entropy to have a different code point for each server.
+The length MUST be no more than 15 octets to provide sufficient entropy for
+server use.
 
 It also assigns a server ID to each server.
 
@@ -434,8 +436,8 @@ Low-Config CID {
 ### Configuration Agent Actions
 
 The configuration agent selects a length for the server ID encoding that MUST
-have at least enough entropy to have a different code point for each server. It MUST be
-no more than seven octets.
+have at least enough entropy to have a different code point for each server. It
+MUST be no more than seven octets.
 
 The configuration agent also selects an LB Timeout.
 
@@ -543,7 +545,7 @@ server IDs, including potential future servers.
 The configuration agent also selects a nonce length and an 16-octet AES-ECB key
 to use for connection ID decryption.  The nonce length MUST be at least 8 octets
 and no more than 16 octets. The nonce length and server ID length MUST sum to 19
-or fewer octets.
+or fewer octets, but SHOULD sum to 15 or fewer to allow space for server use.
 
 ### Load Balancer Actions {#stream-cipher-load-balancer-actions}
 
@@ -636,8 +638,8 @@ server IDs, including potential future servers.  The server ID will start in the
 second octet of the decrypted connection ID and occupy continuous octets beyond
 that.
 
-They server ID length MUST be no more than 16 octets and SHOULD be no more than
-12 octets, to provide servers adequate space to encode their own opaque data.
+The server ID length MUST be no more than 12 octets, to provide adequate
+entropy in the encrypted block.
 
 The configuration agent also selects an 16-octet AES-ECB key to use for
 connection ID decryption.
@@ -657,6 +659,10 @@ When generating a routable connection ID, the server MUST choose a connection ID
 length between 17 and 20 octets. The server writes its provided server ID into
 the server ID octets and arbitrary bits into the remaining bits. These arbitrary
 bits MAY encode additional information, and MUST differ between connection IDs.
+The encrypted arbitrary bits MUST be unique for each CID the server generates;
+the easiest way to do so is to start the nonce at zero and simply increment by
+one for each CID.
+
 Bits in the eighteenth, nineteenth, and twentieth octets SHOULD appear
 essentially random to observers. The first octet is reserved as described in
 {{first-octet}}.
@@ -1298,12 +1304,32 @@ servers that share the same cryptographic context for Stateless Reset tokens. As
 QUIC-LB requires deterministic routing of DCIDs over the life of a connection,
 it is a sufficient means of avoiding an Oracle without additional measures.
 
+## Connection ID Entropy
+
+The Stream Cipher and Block Cipher algorithms need to generate different cipher
+text for each generated Connection ID instance to protect the Server ID. To
+do so, at least four octets of the Block Cipher CID and at least eight octets
+of the Stream Cipher CID are reserved for a nonce that, if used only once, will
+result in unique cipher text for each Connection ID.
+
+If servers simply increment the nonce by one with each generated connection ID,
+then it is safe to use the existing keys until any server's nonce counter
+exhausts the allocated space and rolls over to zero. Whether or not it
+implements this method, the server MUST NOT reuse a nonce until it switches to a
+configuration with new keys.
+
+Configuration agents SHOULD implement an out-of-band method to discover when
+servers are in danger of exhausting their nonce space, and SHOULD respond by
+issuing a new configuration. A server that has exhausted its nonces MUST
+either switch to a different configuration, or if none exists, use the 4-tuple
+routing config rotation codepoint.
+
 ## Shared-State Retry Keys
 
 The Shared-State Retry Service defined in {{shared-state-retry}} describes the
 format of retry tokens or new tokens protected and encrypted using AES128-GCM.
-Each token includes a 96 bit randomly generated unique token number, and an 8 bit
-identifier of the AES-GCM encryption key. There are three important security
+Each token includes a 96 bit randomly generated unique token number, and an 8
+bit identifier of the AES-GCM encryption key. There are three important security
 considerations for these tokens:
 
 * An attacker that obtains a copy of the encryption key will be able to decrypt
@@ -1319,19 +1345,20 @@ To protect against disclosure of keys to attackers, service and servers MUST
 ensure that the keys are stored securely. To limit the consequences of potential
 exposures, the time to live of any given key should be limited.
 
-Section 6.6 of {{QUIC-TLS}} states that "Endpoints MUST count the number of encrypted
-packets for each set of keys. If the total number of encrypted packets with the same
-key exceeds the confidentiality limit for the selected AEAD, the endpoint MUST stop
-using those keys." It goes on with the specific limit: "For AEAD_AES_128_GCM and
-AEAD_AES_256_GCM, the confidentiality limit is 2^23 encrypted packets; see Appendix B.1."
-It is prudent to adopt the same limit here, and configure the service in such a way that
-no more than 2^23 tokens are generated with the same key.
+Section 6.6 of {{QUIC-TLS}} states that "Endpoints MUST count the number of
+encrypted packets for each set of keys. If the total number of encrypted packets
+with the same key exceeds the confidentiality limit for the selected AEAD, the
+endpoint MUST stop using those keys." It goes on with the specific limit: "For
+AEAD_AES_128_GCM and AEAD_AES_256_GCM, the confidentiality limit is 2^23
+encrypted packets; see Appendix B.1." It is prudent to adopt the same limit
+here, and configure the service in such a way that no more than 2^23 tokens are
+generated with the same key.
 
-In order to protect against collisions, the 96 bit unique token numbers should be generated
-using a cryptographically secure pseudorandom number generator (CSPRNG), as specified
-in Appendix C.1 of the TLS 1.3 specification{{!RFC8446}}. With proper random numbers, if fewer than 2^40 tokens
-are generated with a single key, the risk of collisions is lower than 0.001%.
-
+In order to protect against collisions, the 96 bit unique token numbers should
+be generated using a cryptographically secure pseudorandom number generator
+(CSPRNG), as specified in Appendix C.1 of the TLS 1.3 specification
+{{!RFC8446}}. With proper random numbers, if fewer than 2^40 tokens are
+generated with a single key, the risk of collisions is lower than 0.001%.
 
 # IANA Considerations
 
@@ -1522,6 +1549,7 @@ Vasiliev, and William Zeng Ke all provided useful input.
 ## since draft-ietf-quic-load-balancers-05
 - Added low-config CID for further discussion
 - Complete revision of shared-state Retry Token
+- Updated configuration limits to ensure CID entropy
 - Switched to notation from quic-transport
 
 ## since draft-ietf-quic-load-balancers-04
