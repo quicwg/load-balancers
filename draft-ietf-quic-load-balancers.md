@@ -1354,7 +1354,9 @@ module ietf-quic-lb {
 
        typedef quic-lb-key {
          type yang:hex-string;
-         length 16;
+         length 47;
+         description
+           "This is a 16-byte key, represented with 47 bytes"
        }
 
        list cid-configs {
@@ -1406,8 +1408,9 @@ module ietf-quic-lb {
                  key "server-id";
 
                  leaf server-id {
-                   type yang:hex-string;// of length server-id-length
+                   type yang:hex-string;
                    mandatory true;
+                   must 'string-length(.) = 3 * ../server-id-length - 1'
                    description
                      "An allocated server ID";
                  }
@@ -1504,11 +1507,11 @@ module ietf-quic-lb {
 
                leaf token-iv {
                  type yang:hex-string {
-                   length 8;
+                   length 23;
                  }
                  mandatory true;
                  description
-                   "IV to encrypt the token";
+                   "8-byte IV to encrypt the token, encoded in 23 bytes";
                }
              }
            }
