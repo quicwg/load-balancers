@@ -1291,7 +1291,8 @@ There are no IANA requirements.
 This YANG model conforms to {{?RFC6020}} and expresses a complete QUIC-LB
 configuration.
 
-<CODE BEGINS> file "ietf-quiclb@2021-01-29.yang"
+~~~
+file "ietf-quiclb@2021-01-29.yang"
 
 module ietf-quic-lb {
   yang-version "1.1";
@@ -1515,11 +1516,13 @@ module ietf-quic-lb {
        }  
     }
 }
+~~~
 
 ## Tree Diagram
 
 This summary of the YANG model uses the notation in {{?RFC8340}}.
 
+~~~
 module: ietf-quic-lb
   +--rw quic-lb
      +--rw cid-configs*
@@ -1557,6 +1560,7 @@ module: ietf-quic-lb
      |  |  |  |   +--rw key-sequence-number        uint8
      |  |  |  |   +--rw token-key                  yang:hex-string
      |  |  |  +   +--rw token-iv                   yang:hex-string
+~~~
 
 # Load Balancer Test Vectors {#test-vectors}
 
