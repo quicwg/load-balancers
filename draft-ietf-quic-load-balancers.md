@@ -1559,7 +1559,7 @@ module: ietf-quic-lb
      |  +--rw first-octet-encodes-cid-length?  boolean
      |  +--rw server-ids
      |  |  +--rw server-id-length              uint8
-     |  |  +--rw (sid-allocation)
+     |  |  +--rw (sid-allocation)?
      |  |     +--:(dynamic)
      |  |     |  +--rw lb-timeout              uint32
      |  |     +--:(static)
