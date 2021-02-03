@@ -1296,11 +1296,17 @@ file "ietf-quic-lb@2021-02-02.yang"
 
 module ietf-quic-lb {
   yang-version "1.1";
-  namespace "urn:ietf:params:xml:ns:yang:ietf-quic";
+  namespace "urn:ietf:params:xml:ns:yang:ietf-quic-lb";
   prefix "quic-lb";
 
   import ietf-yang-types {
-    prefix "yang";
+    prefix yang;
+    reference
+      "RFC 6991: Common YANG Data Types.";
+  }
+
+  import ietf-inet-types {
+    prefix inet;
     reference
       "RFC 6991: Common YANG Data Types.";
   }
@@ -1507,9 +1513,8 @@ module ietf-quic-lb {
 
          case shared-state {
            list token-keys {
-             description "list of active keys, for key rotation purposes.";
-
              key "key-sequence-number";
+             description "list of active keys, for key rotation purposes.";
 
              leaf key-sequence-number {
                type uint8;
