@@ -1337,187 +1337,187 @@ module ietf-quic-lb {
      NOT', 'SHOULD', 'SHOULD NOT', 'RECOMMENDED', 'NOT RECOMMENDED',
      'MAY', and 'OPTIONAL' in this document are to be interpreted as
      described in BCP 14 (RFC 2119) (RFC 8174) when, and only when,
-     they appear in all capitals, as shown here.";"
+     they appear in all capitals, as shown here.";
 
-     revision "2021-01-29" {
+   revision "2021-01-29" {
+     description
+       "Initial Version";
+     reference
+       "RFC XXXX, QUIC-LB: Generating Routable QUIC Connection IDs";
+   }
+
+   container quic-lb {
+     presence "The container for QUIC-LB configuration.";
+
+     description
+       "QUIC-LB container.";
+
+     typedef quic-lb-key {
+       type yang:hex-string;
+       length 47;
        description
-         "Initial Version";
-       reference
-         "RFC XXXX, QUIC-LB: Generating Routable QUIC Connection IDs"
+         "This is a 16-byte key, represented with 47 bytes";
      }
 
-     container quic-lb {
-       presence "The container for QUIC-LB configuration.";
+     list cid-configs {
+       key "config-rotation-bits";
 
-       description
-         "QUIC-LB container.";
-
-       typedef quic-lb-key {
-         type yang:hex-string;
-         length 47;
+       leaf config-rotation-bits {
+         type uint8 {
+           range "0..2";
+         }
+         mandatory true;
          description
-           "This is a 16-byte key, represented with 47 bytes"
+           "Identifier for this CID configuration.";
        }
 
-       list cid-configs {
-         key "config-rotation-bits";
-
-         leaf config-rotation-bits {
-           type uint8 {
-             range "0..2";
-           }
-           mandatory true;
-           description
-             "Identifier for this CID configuration.";
-         }
-
-         leaf first-octet-encodes-cid-length {
-           type boolean;
-           default false;
-           description
-             "If true, the six least significant bits of the first CID
-              octet encode the CID length minus one."
-         }
-
-         container server-ids {
-           mandatory true;   
-         
-           leaf server-id-length {
-             type uint8 {
-               range "1..18";
-             }
-             mandatory true; 
-             description
-               "Length (in octets) of a server ID. Further range-limited
-               by sid-allocation and routing-algorithm.";
-           }
-
-           choice sid-allocation {
-             case dynamic {
-               leaf lb-timeout {
-                 type uint32;
-                 mandatory true;
-                 description
-                   "Time (in seconds) to keep a server ID allocation if
-                    no packets with that server ID arrive."
-               }
-             }
-               
-             case static {
-               list mappings {
-                 key "server-id";
-
-                 leaf server-id {
-                   type yang:hex-string;
-                   mandatory true;
-                   must 'string-length(.) = 3 * ../server-id-length - 1'
-                   description
-                     "An allocated server ID";
-                 }
-
-                 leaf server-address {
-                   type inet:ip-address;
-                   mandatory true;
-                   description
-                     "Destination address corresponding to the server ID";
-                   }
-                 }
-             }
-           }
-              
-           choice routing-algorithm {
-             case plaintext { }
-
-             case stream-cipher {
-               leaf key {
-                 type quic-lb-key;
-                 mandatory true;
-                 description
-                   "CID key"
-               }
-
-               leaf nonce-length {
-                 type uint8 {
-                   range "8..16";
-                   default 8;
-                 }
-                 description
-                   "Length, in octets, of the nonce"
-               }
-             }
-
-             case block-cipher {
-               leaf key {
-                 type quic-lb-key;
-                 mandatory true;
-                 description
-                   "CID key"
-               }
-             }
-           } 
-         }
+       leaf first-octet-encodes-cid-length {
+         type boolean;
+         default false;
+         description
+           "If true, the six least significant bits of the first CID
+            octet encode the CID length minus one.";
        }
+
+       container server-ids {
+         mandatory true;   
        
-       container retry-service-config {
-         leaf-list supported-versions {
-           type uint32;
-           mandatory true;
-           description
-             "QUIC versions that the retry service supports. If empty, there
-              is no retry service.";
-         }
-
-         leaf unsupported-version-default {
-           type enumeration {
-             enum allow;
-             enum deny;
+         leaf server-id-length {
+           type uint8 {
+             range "1..18";
            }
-           default allow;
+           mandatory true; 
            description
-             "Are unsupported versions not in version-exceptions allowed
-              or denied?"
+             "Length (in octets) of a server ID. Further range-limited
+             by sid-allocation and routing-algorithm.";
          }
 
-         leaf-list version-exceptions {
-           type uint32;
-           description
-             "Exceptions to the default-deny or default-allow rule."
-         }
+         choice sid-allocation {
+           case dynamic {
+             leaf lb-timeout {
+               type uint32;
+               mandatory true;
+               description
+                 "Time (in seconds) to keep a server ID allocation if
+                  no packets with that server ID arrive.";
+             }
+           }
+               
+           case static {
+             list mappings {
+               key "server-id";
 
-         choice retry-algorithm {
-           case non-shared-state { }
-
-           case shared-state {
-             list token-keys {
-               key "key-sequence-number";
-
-               leaf key-sequence-number {
-                 type uint8;
+               leaf server-id {
+                 type yang:hex-string;
                  mandatory true;
+                 must 'string-length(.) = 3 * ../server-id-length - 1'
                  description
-                   "Identifies the key used to encrypt the token";
+                   "An allocated server ID";
                }
 
-               leaf token-key {
-                 type quic-lb-key;
+               leaf server-address {
+                 type inet:ip-address;
                  mandatory true;
                  description
-                   "16-byte key to encrypt the token";
-               }
-
-               leaf token-iv {
-                 type yang:hex-string {
-                   length 23;
-                 }
-                 mandatory true;
-                 description
-                   "8-byte IV to encrypt the token, encoded in 23 bytes";
+                   "Destination address corresponding to the server ID";
                }
              }
            }
+         }     
+
+         choice routing-algorithm {
+           case plaintext { }
+
+           case stream-cipher {
+             leaf key {
+               type quic-lb-key;
+               mandatory true;
+               description
+                 "CID key";
+             }
+
+             leaf nonce-length {
+               type uint8 {
+                 range "8..16";
+                 default 8;
+               }
+               description
+                 "Length, in octets, of the nonce";
+             }
+           }
+
+           case block-cipher {
+             leaf key {
+               type quic-lb-key;
+               mandatory true;
+               description
+                 "CID key";
+             }
+           }
+         } 
+       }
+     }
+       
+     container retry-service-config {
+       leaf-list supported-versions {
+         type uint32;
+         mandatory true;
+         description
+           "QUIC versions that the retry service supports. If empty, there
+            is no retry service.";
+       }
+
+       leaf unsupported-version-default {
+         type enumeration {
+           enum allow;
+           enum deny;
          }
-       }  
-    }
+         default allow;
+         description
+           "Are unsupported versions not in version-exceptions allowed
+            or denied?";
+       }
+
+       leaf-list version-exceptions {
+         type uint32;
+         description
+           "Exceptions to the default-deny or default-allow rule.";
+       }
+
+       choice retry-algorithm {
+         case non-shared-state { }
+
+         case shared-state {
+           list token-keys {
+             key "key-sequence-number";
+
+             leaf key-sequence-number {
+               type uint8;
+               mandatory true;
+               description
+                 "Identifies the key used to encrypt the token";
+             }
+
+             leaf token-key {
+               type quic-lb-key;
+               mandatory true;
+               description
+                 "16-byte key to encrypt the token";
+             }
+
+             leaf token-iv {
+               type yang:hex-string {
+                 length 23;
+               }
+               mandatory true;
+               description
+                 "8-byte IV to encrypt the token, encoded in 23 bytes";
+             }
+           }
+         }
+       }
+     }  
+  }
 }
 ~~~
 
