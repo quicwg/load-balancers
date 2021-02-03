@@ -1292,7 +1292,7 @@ This YANG model conforms to {{?RFC6020}} and expresses a complete QUIC-LB
 configuration.
 
 ~~~
-file "ietf-quiclb@2021-01-29.yang"
+file "ietf-quic-lb@2021-02-02.yang"
 
 module ietf-quic-lb {
   yang-version "1.1";
@@ -1353,14 +1353,17 @@ module ietf-quic-lb {
        "QUIC-LB container.";
 
      typedef quic-lb-key {
-       type yang:hex-string;
-       length 47;
+       type yang:hex-string {
+         length 47;
+       }
        description
          "This is a 16-byte key, represented with 47 bytes";
      }
 
      list cid-configs {
        key "config-rotation-bits";
+       description
+         "List up to three load balancer configurations";
 
        leaf config-rotation-bits {
          type uint8 {
@@ -1380,8 +1383,9 @@ module ietf-quic-lb {
        }
 
        container server-ids {
-         mandatory true;   
-       
+         description
+           "Parameters for server IDs";
+
          leaf server-id-length {
            type uint8 {
              range "1..18";
@@ -1393,6 +1397,8 @@ module ietf-quic-lb {
          }
 
          choice sid-allocation {
+           description "Server ID allocation method";
+
            case dynamic {
              leaf lb-timeout {
                type uint32;
@@ -1406,11 +1412,12 @@ module ietf-quic-lb {
            case static {
              list mappings {
                key "server-id";
+               description "Statically allocated Server IDs";
 
                leaf server-id {
                  type yang:hex-string;
+                 must 'string-length(.) = 3 * ../../server-id-length - 1';
                  mandatory true;
-                 must 'string-length(.) = 3 * ../server-id-length - 1'
                  description
                    "An allocated server ID";
                }
@@ -1426,10 +1433,12 @@ module ietf-quic-lb {
          }     
 
          choice routing-algorithm {
+           description "Chosen QUIC-LB Routing Algorithm";
+
            case plaintext { }
 
            case stream-cipher {
-             leaf key {
+             leaf stream-key {
                type quic-lb-key;
                mandatory true;
                description
@@ -1439,15 +1448,15 @@ module ietf-quic-lb {
              leaf nonce-length {
                type uint8 {
                  range "8..16";
-                 default 8;
                }
+               default 8;
                description
                  "Length, in octets, of the nonce";
              }
            }
 
            case block-cipher {
-             leaf key {
+             leaf block-key {
                type quic-lb-key;
                mandatory true;
                description
@@ -1459,9 +1468,10 @@ module ietf-quic-lb {
      }
        
      container retry-service-config {
+       description "Configuration of Retry Service";
+
        leaf-list supported-versions {
          type uint32;
-         mandatory true;
          description
            "QUIC versions that the retry service supports. If empty, there
             is no retry service.";
@@ -1469,8 +1479,12 @@ module ietf-quic-lb {
 
        leaf unsupported-version-default {
          type enumeration {
-           enum allow;
-           enum deny;
+           enum allow {
+             description "Unsupported versions admitted by default";
+           }
+           enum deny {
+             description "Unsupported versions denied by default";
+           }
          }
          default allow;
          description
@@ -1485,10 +1499,16 @@ module ietf-quic-lb {
        }
 
        choice retry-algorithm {
+         description 
+           "Coordination algorithm for Retry Services. If supported-
+            versions is an empty list, there is no functioning service.";
+
          case non-shared-state { }
 
          case shared-state {
            list token-keys {
+             description "list of active keys, for key rotation purposes.";
+
              key "key-sequence-number";
 
              leaf key-sequence-number {
@@ -1545,10 +1565,10 @@ module: ietf-quic-lb
      |  +--rw (routing-algorithm)?
      |  |  +--:(plaintext)
      |  |  +--:(stream-cipher)
-     |  |  |  +--rw key                        yang:hex-string
+     |  |  |  +--rw stream-key                 yang:hex-string
      |  |  |  +--rw nonce-length               uint8
      |  |  +--: (block-cipher)
-     |  |  |  +--rw key                        yang:hex-string
+     |  |  |  +--rw block-key                  yang:hex-string
      +--ro retry-service-config
      |  +--rw supported-versions*
      |  |  +--rw version                       uint32
