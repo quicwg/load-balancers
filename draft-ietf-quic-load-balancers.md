@@ -1582,6 +1582,7 @@ implementation using these parameters may generate CIDs with a slightly differen
 first octet.
 
 This section uses the following abbreviations:
+
 ~~~
 cid      Connection ID
 cr_bits  Config Rotation Bits
