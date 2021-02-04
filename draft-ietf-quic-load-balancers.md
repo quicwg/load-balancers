@@ -1582,13 +1582,14 @@ implementation using these parameters may generate CIDs with a slightly differen
 first octet.
 
 This section uses the following abbreviations:
-
+~~~
 cid      Connection ID
 cr_bits  Config Rotation Bits
 LB       Load Balancer
 sid      Server ID
 sid_len  Server ID length
 su       Server Use Bytes
+~~~
 
 All values except length_self_encoding and sid_len are expressed in hexidecimal
 format.
