@@ -328,7 +328,7 @@ algorithms or parameter sets simultaneously.  The load balancer uses the first
 two bits of the connection ID to multiplex incoming DCIDs over these schemes
 (see {{config-rotation}}).
 
-## Non-Compliant Connection IDS {#non-compliant}
+## Non-Compliant Connection IDs {#non-compliant}
 
 QUIC-LB servers will generate Connection IDs that are decodable to extract a
 server ID in accordance with a specified algorithm and parameters.  However,
