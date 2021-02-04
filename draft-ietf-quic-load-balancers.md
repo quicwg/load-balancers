@@ -1,7 +1,7 @@
 ---
 title: "QUIC-LB: Generating Routable QUIC Connection IDs"
 abbrev: QUIC-LB
-docname: draft-ietf-quic-load-balancers-06
+docname: draft-ietf-quic-load-balancers-07
 date: {DATE}
 category: std
 ipr: trust200902
@@ -1753,6 +1753,8 @@ useful input to this document.
 
 > **RFC Editor's Note:**  Please remove this section prior to
 > publication of a final version of this document.
+
+## since draft-ietf-quic-load-balancers-06
 
 ## since draft-ietf-quic-load-balancers-05
 - Added low-config CID for further discussion
