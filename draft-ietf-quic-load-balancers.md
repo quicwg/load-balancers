@@ -26,53 +26,6 @@ author:
 
 normative:
 
-  QUIC-TRANSPORT:
-    title: "QUIC: A UDP-Based Multiplexed and Secure Transport"
-    date: {DATE}
-    seriesinfo:
-      Internet-Draft: draft-ietf-quic-transport
-    author:
-      -
-        ins: J. Iyengar
-        name: Jana Iyengar
-        org: Fastly
-        role: editor
-      -
-        ins: M. Thomson
-        name: Martin Thomson
-        org: Mozilla
-        role: editor
-
-  QUIC-INVARIANTS:
-    title: "Version-Independent Properties of QUIC"
-    date: {DATE}
-    seriesinfo:
-      Internet-Draft: draft-ietf-quic-invariants
-    author:
-      -
-        ins: M. Thomson
-        name: Martin Thomson
-        org: Mozilla
-        role: editor
-
-
-  QUIC-TLS:
-    title: "Using TLS to Secure QUIC"
-    date: {DATE}
-    seriesinfo:
-      Internet-Draft: draft-ietf-quic-tls
-    author:
-      -
-        ins: M. Thomson
-        name: Martin Thomson
-        org: Mozilla
-        role: editor
-      -
-        ins: S. Turner
-        name: Sean Turner
-        org: sn3rd
-        role: editor
-
   TIME_T:
     title: "Open Group Standard: Vol. 1: Base Definitions, Issue 7"
     date: 2018
@@ -95,12 +48,12 @@ anti-Denial-of-Service agent on behalf of the server.
 
 # Introduction
 
-QUIC packets {{QUIC-TRANSPORT}} usually contain a connection ID to allow
-endpoints to associate packets with different address/port 4-tuples to the same
-connection context. This feature makes connections robust in the event of NAT
-rebinding.  QUIC endpoints usually designate the connection ID which peers use
-to address packets. Server-generated connection IDs create a potential need for
-out-of-band communication to support QUIC.
+QUIC packets {{!QUIC-TRANSPORT=I-D.ietf-quic-transport}} usually contain a
+connection ID to allow endpoints to associate packets with different address/
+port 4-tuples to the same connection context. This feature makes connections
+robust in the event of NAT rebinding.  QUIC endpoints usually designate the
+connection ID which peers use to address packets. Server-generated connection
+IDs create a potential need for out-of-band communication to support QUIC.
 
 QUIC allows servers (or load balancers) to designate an initial connection ID to
 encode useful routing information for load balancers.  It also encourages
@@ -380,7 +333,7 @@ an "arbitrary algorithm." It can choose any algorithm, without coordination with
 the servers, but the algorithm SHOULD be deterministic over short time scales so
 that related packets go to the same server. The design of this algorithm SHOULD
 consider the version-invariant properties of QUIC described in
-{{QUIC-INVARIANTS}} to maximize its robustness to future versions of QUIC.
+{{!QUIC-INVARIANTS=I-D.ietf-quic-invariants}} to maximize its robustness to future versions of QUIC.
 
 An arbitrary algorithmr MUST NOT make the routing behavior dependent on any bits
 in the first octet of the QUIC packet header, except the first bit, which
@@ -1325,14 +1278,14 @@ To protect against disclosure of keys to attackers, service and servers MUST
 ensure that the keys are stored securely. To limit the consequences of potential
 exposures, the time to live of any given key should be limited.
 
-Section 6.6 of {{QUIC-TLS}} states that "Endpoints MUST count the number of
-encrypted packets for each set of keys. If the total number of encrypted packets
-with the same key exceeds the confidentiality limit for the selected AEAD, the
-endpoint MUST stop using those keys." It goes on with the specific limit: "For
-AEAD_AES_128_GCM and AEAD_AES_256_GCM, the confidentiality limit is 2^23
-encrypted packets; see Appendix B.1." It is prudent to adopt the same limit
-here, and configure the service in such a way that no more than 2^23 tokens are
-generated with the same key.
+Section 6.6 of {{?QUIC-TLS=I-D.ietf-quic-tls}} states that "Endpoints MUST count
+the number of encrypted packets for each set of keys. If the total number of
+encrypted packets with the same key exceeds the confidentiality limit for the
+selected AEAD, the endpoint MUST stop using those keys." It goes on with the
+specific limit: "For AEAD_AES_128_GCM and AEAD_AES_256_GCM, the confidentiality
+limit is 2^23 encrypted packets; see Appendix B.1." It is prudent to adopt the
+same limit here, and configure the service in such a way that no more than 2^23
+tokens are generated with the same key.
 
 In order to protect against collisions, the 96 bit unique token numbers should
 be generated using a cryptographically secure pseudorandom number generator
