@@ -260,7 +260,7 @@ that frame.
 It also possible to use these bits for more long-lived distinction of different
 configurations, but this has privacy implications (see {{multiple-configs}}).
 
-## Configuration Failover {#config-failover}
+## Configuration Failover
 
 If a server has not received a valid QUIC-LB configuration, and believes that
 low-state, Connection-ID aware load balancers are in the path, it SHOULD
@@ -305,235 +305,73 @@ Config Rotation: Indicates the configuration used to interpret the CID.
 CID Len or Random Bits: Length Self-Description (if applicable), or random bits
 otherwise. Encodes the length of the Connection ID following the First Octet.
 
-# Load Balancing Preliminaries {#load-balancing}
+# Routing Algorithms {#routing-algorithms}
 
-In QUIC-LB, load balancers do not generate individual connection IDs for
-servers.  Instead, they communicate the parameters of an algorithm to generate
-routable connection IDs.
+In QUIC-LB, load balancers do not generate individual connection IDs to servers.
+Instead, they communicate the parameters of an algorithm to generate routable
+connection IDs.
 
 The algorithms differ in the complexity of configuration at both load balancer
 and server. Increasing complexity improves obfuscation of the server mapping.
 
-This section describes three participants: the configuration agent, the load
-balancer, and the server. For any given QUIC-LB configuration that enables
-connection-ID-aware load balancing, there must be a choice of (1) routing
-algorithm, (2) server ID allocation strategy, and (3) algorithm parameters.
+As clients sometimes generate the DCIDs in long headers, these might not
+conform to the expectations of the routing algorithm. These are called
+"non-compliant DCIDs":
 
-Fundamentally, servers generate connection IDs that encode their server ID.
-Load balancers decode the server ID from the CID in incoming packets to route
-to the correct server.
-
-There are situations where a server pool might be operating two or more routing
-algorithms or parameter sets simultaneously.  The load balancer uses the first
-two bits of the connection ID to multiplex incoming DCIDs over these schemes
-(see {{config-rotation}}).
-
-## Non-Compliant Connection IDS {#non-compliant}
-
-QUIC-LB servers will generate Connection IDs that are decodable to extract a
-server ID in accordance with a specified algorithm and parameters.  However,
-QUIC often uses client-generated Connection IDs prior to receiving a packet from
-the server.
-
-These client-generated CIDs might not conform to the expectations of the
-routing algorithm and therefore not be routable by the load balancer. These are
-called "non-compliant DCIDs":
-
+* The DCID might not be long enough for the routing algorithm to process.
 * The config rotation bits ({{config-rotation}}) may not correspond to an active
-configuration. Note: a packet with a DCID that indicates 5-tuple routing (see
-{{config-failover}}) is always compliant.
-* The DCID might not be long enough for the decoder to process.
+configuration.
 * The extracted server mapping might not correspond to an active server.
 
-All other DCIDs are compliant.
+Load balancers MUST forward packets with long headers and non-compliant DCIDs
+to an active server using an algorithm of its own choosing. It need not
+coordinate this algorithm with the servers. The algorithm SHOULD be
+deterministic over short time scales so that related packets go to the same
+server. The design of this algorithm SHOULD consider the version-invariant
+properties of QUIC described in {{QUIC-INVARIANTS}} to maximize its robustness
+to future versions of QUIC. For example, a non-compliant DCID might be converted
+to an integer and divided by the number of servers, with the modulus used to
+forward the packet. The number of servers is usually consistent on the time
+scale of a QUIC connection handshake. See also {{version-invariance}}.
 
-Load balancers MUST forward packets with compliant DCIDs to a server in
-accordance with the chosen routing algorithm.
+As a partial exception to the above, load balancers MAY drop packets with long
+headers and non-compliant DCIDs if and only if it knows that the encoded QUIC
+version does not allow a non-compliant DCID in a packet with that signature. For
+example, a load balancer can safely drop a QUIC version 1 Handshake packet with
+a non-compliant DCID. The prohibition against dropping packets with long
+headers remains for unknown QUIC versions.
 
 Load balancers SHOULD drop packets with non-compliant DCIDs in a short header.
-
-The routing of long headers with non-compliant DCIDs depends on the server ID
-allocation strategy, described in {{sid-allocation}}. However, the load balancer
-MUST NOT drop these packets, with one exception.
-
-Load balancers MAY drop packets with long headers and non-compliant DCIDs if
-and only if it knows that the encoded QUIC version does not allow a non-
-compliant DCID in a packet with that signature. For example, a load balancer can
-safely drop a QUIC version 1 Handshake packet with a non-compliant DCID, as a
-version 1 Handshake packet sent to a QUIC-LB compliant server will always have
-a server-generated compliant CID. The prohibition against dropping packets with
-long headers remains for unknown QUIC versions.
-
-Furthermore, while the load balancer function MUST NOT drop packets, the device
-might implement other security policies, outside the scope of this
-specification, that might force a drop.
 
 Servers that receive packets with noncompliant CIDs MUST use the available
 mechanisms to induce the client to use a compliant CID in future packets. In
 QUIC version 1, this requires using a compliant CID in the Source CID field of
 server-generated long headers.
 
-## Arbitrary Algorithms {#arbitrary-algorithm}
-
-There are conditions described below where a load balancer routes a packet using
-an "arbitrary algorithm." It can choose any algorithm, without coordination with
-the servers, but the algorithm SHOULD be deterministic over short time scales so
-that related packets go to the same server. The design of this algorithm SHOULD
-consider the version-invariant properties of QUIC described in
-{{QUIC-INVARIANTS}} to maximize its robustness to future versions of QUIC.
-
-An arbitrary algorithmr MUST NOT make the routing behavior dependent on any bits
-in the first octet of the QUIC packet header, except the first bit, which
-indicates a long header. All other bits are QUIC version-dependent and
-intermediaries should not base their design on version-specific templates.
-
-For example, one arbitrary algorithm might convert a non-compliant DCID to an
-integer and divided by the number of servers, with the modulus used to forward
-the packet. The number of servers is usually consistent on the time scale of a
-QUIC connection handshake. Another might simply hash the address/port 4-tuple.
-See also {{version-invariance}}.
-
-## Server ID Allocation {#sid-allocation}
-
-For any given configuration, the configuration agent must specify if server IDs
-will be statically or dynamically allocated. Load Balancer configurations with
-statically allocated server IDs explicitly include a mapping of server IDs to
-forwarding addresses. The corresponding server configurations contain one or
-more unique server IDs.
-
-A dynamically allocated configuration does not include any bespoke assignment,
-reducing configuration complexity. However, it places limits on the maximum
-server ID length and requires more state at the load balancer. In certain edge
-cases, it can force parts of the system to fail over to 5-tuple routing for a
-short time.
-
-In either case, the configuration agent chooses a server ID length for each
-configuration that MUST be at least one octet. For Static Allocation, the
-maximum length depends on the algorithm. For dynamic allocation, the maximum
-length is 7 octets.
-
 A QUIC-LB configuration MAY significantly over-provision the server ID space
 (i.e., provide far more codepoints than there are servers) to increase the
 probability that a randomly generated Destination Connection ID is non-
 compliant.
 
-Conceptually, each configuration has its own set of server ID allocations,
-though two static configurations with identical server ID lengths MAY use a
-common allocation between them.
+Load balancers MUST forward packets with compliant DCIDs to a server in
+accordance with the chosen routing algorithm.
 
-A server encodes one of its assigned server IDs in any CID it generates using
-the relevant configuration.
+The load balancer MUST NOT make the routing behavior dependent on any bits in
+the first octet of the QUIC packet header, except the first bit, which indicates
+a long header. All other bits are QUIC version-dependent and intermediaries
+cannot base their design on version-specific templates.
 
-### Static Allocation {#static-allocation}
-
-In the manual allocation method, the configuration agent assigns at least one
-server ID to each server.
-
-When forwarding a packet with a long header and non-compliant DCID, load
-balancers MUST forward packets with long headers and non-compliant DCIDs
-using an arbitrary algorithm as specified in {{arbitrary-algorithm}}.
-
-### Dynamic Allocation
-
-In the dynamic allocation method, the load balancer assigns server IDs
-dynamically so that configuration does not require bespoke server ID assignment.
-This also reduces linkability.  However, it requires state at the load balancer
-that roughly scales with the number of connections, until the server ID
-codespace is exhausted.
-
-#### Configuration Agent Actions
-
-The configuration agent does not assign server IDs, but does configure a server
-ID length and an "LB timeout". The server ID MUST be at least one and no more
-than seven octets.
-
-#### Load Balancer Actions
-
-The load balancer maintains a table of all assigned server IDs and
-corresponding routing information, which is initialized empty. These tables are
-independent for each operating configuration.
-
-The load balancer MUST keep track of the most recent observation of each server
-ID, in any sort of packet it forwards, in the table and delete the entries when
-the time since that observation exceeds the LB Timeout.
-
-Note that when the load balancer's table for a configuration is empty, all
-incoming DCIDs corresponding to that configuration are non-compliant by
-definition.
-
-The handling of a non-compliant long-header packet depends on the reason for
-non-compliance. The load balancer MUST applyt this logic:
-
-* If the config rotation bits do not match a known configuration, the load
-balancer routes the packet using an arbitrary algorithm (see
-{{arbitrary-algorithm}}).
-
-* If there is a matching configuration, but the CID is not long enough to apply
-the algorithm, the load balancer skips the first octet of the CID and then
-reads a server ID from the following octets, up to the server ID length. If
-this server ID matches a known server ID for that configuration, it forwards the
-packet accordingly and takes no further action. If it does not match, it routes
-using an arbitrary algorithm and adds the new server ID to that server's table
-entry.
-
-* If the sole reason for non-compliance is that the server ID is not in the load
-balancer's table, the load balancer routes the packet with an arbitrary
-algorithm. It adds the decoded server ID to table entry for the server the
-algorithm chooses and forwards the packet accordingly.
-
-#### Server actions
-
-Each server maintains a list of server IDs assigned to it, initialized empty.
-For each SID, it records the last time it received any packet with an CID that
-encoded that SID.
-
-Upon receipt of a packet with a client-generated DCID, the server MUST follow
-these steps in order:
-
-* If the config rotation bits do not correspond to a known configuration, do not
-attempt to extract a server ID.
-
-* If the DCID is not long enough to decode using the configured algorithm,
-extract a number of octets equal to the server ID length, beginning with the
-second octet. If the extracted value does not match a server ID in the server's
-list, add it to the list.
-
-* If the DCID is long enough to decode but the server ID is not in the server's
-list, add it to the list.
-
-After any possible SID is extracted, the server processes the packet normally.
-
-When a server needs a new connection ID, it uses one of the server IDs in its
-list to populate the server ID field of that CID. It SHOULD vary this selection
-to reduce linkability within a connection.
-
-After loading a new configuration or long periods of idleness, a server may not
-have any available SIDs. This is because an incoming packet may not the config
-rotation bits necessary to extract a server ID in accordance with the
-algorithm above. When required to generate a CID under these conditions, the
-server MUST generate CIDs using the 5-tuple routing codepoint (see
-{{config-failover}}. Note that these connections will not be robust to client
-address changes while they use this connection ID. For this reason, a server
-SHOULD retire these connection IDs and replace them with routable ones once
-it receives a client-generated CID that allows it to acquire a server ID. As,
-statistically, one in every four such CIDs can provide a server ID, this is
-typically a short interval.
-
-If a server has not received a connection ID encoding a particular server ID
-within the LB timeout, it MUST retire any outstanding CIDs that use that server
-ID and cease generating any new ones.
-
-A server SHOULD have a mechanism to stop using some server IDs if the list
-gets large relative to its share of the codepoint space, so that these
-allocations time out and are freed for reuse by servers that have recently
-joined the pool.
-
-# Routing Algorithms
+There are situations where a server pool might be operating two or more routing
+algorithms or parameter sets simultaneously.  The load balancer uses the first
+two bits of the connection ID to multiplex incoming DCIDs over these schemes.
 
 Encryption in the algorithms below uses the AES-128-ECB cipher. Future standards
-could add new algorithms that use other ciphers to provide cryptographic agility
-in accordance with {{?RFC7696}}. QUIC-LB implementations SHOULD be extensible to
-support new algorithms.
+could add new algorithms that use other ciphers to provide cryptographic agility in
+accordance with {{?RFC7696}}. QUIC-LB implementations SHOULD be
+extensible to support new algorithms.
+
+This section describes three participants: the configuration agent, the load
+balancer, and the server.
 
 ## Plaintext CID Algorithm {#plaintext-cid-algorithm}
 
@@ -544,16 +382,18 @@ depicted in the figure below.
 ~~~
 Plaintext CID {
   First Octet (8),
-  Server ID (8..128),
-  For Server Use (8..152-len(Server ID)),
+  Server ID (8..152),
+  For Server Use (0..152-len(Server ID)),
 }
 ~~~
 {: #plaintext-cid-format title="Plaintext CID Format"}
 
 ### Configuration Agent Actions
 
-For static SID allocation, the server ID length is limited to 16 octets. There
-are no parameters specific to this algorithm.
+The configuration agent selects a length for the server ID encoding. This
+length MUST have enough entropy to have a different code point for each server.
+
+It also assigns a server ID to each server.
 
 ### Load Balancer Actions
 
@@ -565,10 +405,118 @@ beginning with the second octet. These bytes represent the server ID.
 The server chooses how many octets to reserve for its own use, which MUST be at
 least one octet.
 
-When a server needs a new connection ID, it encodes one of its assigned server
-IDs in consecutive octets beginning with the second. All other bits in the
+When a server needs a new connection ID, it encodes its assigned server ID
+in consecutive octets beginning with the second. All other bits in the
 connection ID, except for the first octet, MAY be set to any other value. These
 other bits SHOULD appear random to observers.
+
+## Low-Config CID Algorithm {#lowconfig-cid-algorithm}
+
+[Editor's Note: This section does not have consensus that it is a workable
+addition to the spec. We have added it to facilitate discussion pending a
+final decision on whether to include it.]
+
+The Low-Config CID Algorithm is similar to the plaintext CID algorithm, but
+allows the load balancer to assign server IDs dynamically so that configuration
+does not require bespoke server ID assignment. This also reduces linkability.
+However, it requires state at the load balancer that roughly scales with the
+number of connections, until the server ID codespace is exhausted.
+
+~~~
+Low-Config CID {
+  First Octet (8),
+  Server ID (8..56),
+  For Server Use (0..152-len(Server ID)),
+}
+~~~
+{: #lowconfig-cid-format title="Low-Config CID Format"}
+
+### Configuration Agent Actions
+
+The configuration agent selects a length for the server ID encoding that MUST
+have at least enough entropy to have a different code point for each server. It MUST be
+no more than seven octets.
+
+The configuration agent also selects an LB Timeout.
+
+### Load Balancer Actions
+
+The load balancer maintains a table of all assigned server IDs, which is
+initialized empty. On each incoming packet, the load balancer extracts
+consecutive octets, beginning with the second octet. If these octets match an
+existing server ID, the packets are routed to the matching server ID. As there are no
+assigned server IDs at first, the first incoming packet has a non-compliant DCID
+by definition.
+
+The server ID table is distinct for each instance of low-config CID algorithm
+configuration, even if two configurations use the same server ID length. Thus
+a given server ID might correspond to a different server in each configuration.
+
+Note that each server will usually have many server IDs assigned to it.
+
+The load balancer MUST keep track of the most recent observation of each server
+ID in the table and delete the entries when the time since that observation
+exceeds the LB Timeout.
+
+#### Special Rules for Non-compliant DCIDs
+
+In QUIC version 1, incoming Connection IDs generated by clients should be no
+less than 8 octets, so all non-compliant DCIDs should not be due to insufficient
+length. Load balancers that are operating the Low-Config CID algorithm SHOULD
+drop incoming packets with CIDs too short to execute it unless it can be routed using another configured algorithm.
+
+If the DCID is non-compliant solely because the server ID is unassigned, the
+load balancers follows the procedures in {{routing-algorithms}} and adds the
+server ID and assignment the table.
+
+If the DCID references the 4-tuple routing bits or an undefined configuration,
+use the following procedure to establish a predictable template for server ID
+extraction:
+
+* Identify the instance of Low-Config CID configuration with the largest
+config rotation codepoint. For example, if configurations 0b10, 0b01, and 0b00
+all use the low-config CID algorithm and have server ID lengths of 3, 5, and 7
+octets, respectively, and a packet comes in with codepoint 0b11, the load
+balancer would extract 3 octets for the server ID.
+
+* Extract the appropriate number of octets.
+
+* If the server ID matches one already in the table, forward the packet to that
+server.
+
+* If not, the load balancer runs the algorithm of its choosing and adds the
+extracted server ID to the table corresponding to the highest-value Low-Config
+CID Configuration codepoint.
+
+### Server Actions
+
+The server chooses how many octets to reserve for its own use, which MUST be at
+least one octet.  It also maintains a list of server IDs it has observed and the
+last time it received a packet with that ID. This list is distinct for each
+instance of Low-Config CID Algorithm configuration.
+
+When a server receives a packet, it extracts the server ID. If the config
+rotation bits in the CID encode 4-tuple routing or an undefined configuration,
+it uses the highest-value Low-Config CID config rotation codepoint and extracts
+the server ID as if that configuration applied.
+
+If the server ID is not currently in the list, the server adds it.
+
+The server ID's entry is also updated with the most recent arrival of that
+server ID.
+
+When a server needs a new connection ID, it uses one of the server IDs in its
+list to populate the server ID field of that CID. It SHOULD vary this selection
+to reduce linkability within a connection.
+
+If a server has not received a connection ID encoding a particular server ID
+within the LB timeout, it MUST retire any outstanding CIDs that use that server
+ID and cease generating any new ones.
+
+A server SHOULD have a mechanism to stop using some server IDs if the list
+gets large relative to its share of the codepoint space, so that these
+allocations time out and are freed for reuse by servers that have recently
+joined the pool.
 
 ## Stream Cipher CID Algorithm {#stream-cipher-cid-algorithm}
 
@@ -579,8 +527,8 @@ connection ID. The CID format is depicted below.
 ~~~
 Stream Cipher CID {
   First Octet (8),
-  Nonce (64..120),
-  Encrypted Server ID (8..128-len(Nonce)),
+  Nonce (64..128),
+  Encrypted Server ID (8..152-len(Nonce)),
   For Server Use (0..152-len(Nonce)-len(Encrypted Server ID)),
 }
 ~~~
@@ -595,7 +543,7 @@ server IDs, including potential future servers.
 The configuration agent also selects a nonce length and an 16-octet AES-ECB key
 to use for connection ID decryption.  The nonce length MUST be at least 8 octets
 and no more than 16 octets. The nonce length and server ID length MUST sum to 19
-or fewer octets, but SHOULD sum to 15 or fewer to allow space for server use.
+or fewer octets.
 
 ### Load Balancer Actions {#stream-cipher-load-balancer-actions}
 
@@ -682,8 +630,14 @@ Block Cipher CID {
 
 ### Configuration Agent Actions
 
-If server IDs are statically allocated, the server ID length MUST be no more
-than 12 octets, to provide servers adequate entropy to generate unique CIDs.
+The configuration agent assigns a server ID to every server in its pool, and
+determines a server ID length (in octets) sufficiently large to encode all
+server IDs, including potential future servers.  The server ID will start in the
+second octet of the decrypted connection ID and occupy continuous octets beyond
+that.
+
+They server ID length MUST be no more than 16 octets and SHOULD be no more than
+12 octets, to provide servers adequate space to encode their own opaque data.
 
 The configuration agent also selects an 16-octet AES-ECB key to use for
 connection ID decryption.
@@ -700,11 +654,12 @@ order. The load balancer uses the server ID octets for routing.
 ### Server Actions
 
 When generating a routable connection ID, the server MUST choose a connection ID
-length between 17 and 20 octets. The server writes its server ID into the server
-ID octets and arbitrary bits into the remaining bits. These arbitrary bits MAY
-encode additional information, and MUST differ between connection IDs.  Bits in
-the eighteenth, nineteenth, and twentieth octets SHOULD appear essentially
-random to observers. The first octet is reserved as described in {{first-octet}}.
+length between 17 and 20 octets. The server writes its provided server ID into
+the server ID octets and arbitrary bits into the remaining bits. These arbitrary
+bits MAY encode additional information, and MUST differ between connection IDs.
+Bits in the eighteenth, nineteenth, and twentieth octets SHOULD appear
+essentially random to observers. The first octet is reserved as described in
+{{first-octet}}.
 
 The server then encrypts the second through seventeenth octets using the 128-bit
 AES-ECB cipher.
@@ -1101,12 +1056,18 @@ response to an Initial packet that contains a retry token.
 QUIC-LB requires common configuration to synchronize understanding of encodings
 and guarantee explicit consent of the server.
 
-The load balancer and server MUST agree on a routing algorithm, server ID
-allocation method, and the relevant parameters for that algorithm.
+The load balancer and server MUST agree on a routing algorithm and the relevant
+parameters for that algorithm. 
 
-All algorithms require a server ID length. If server IDs are statically
-allocated, the load balancer MUST receive the full table of mappings, and
-each server must receive its assigned SID(s), from the configuration agent. 
+Except for the Low-config CID algorithm, each server MUST know its server ID for
+each configuration, and the load balancer MUST have forwarding instructions for
+each server ID.
+
+For all algorithms, the load balancer and servers MUST have a common
+understanding of the server ID length.
+
+For Low-Config CID Routing, the servers and load balancer also MUST have a
+common understanding of the LB timeout.
 
 For Stream Cipher CID Routing, the servers and load balancer also MUST have a
 common understanding of the key and nonce length.
@@ -1129,7 +1090,60 @@ A non-shared-state Retry Service need only be configured with the QUIC versions
 it supports, and an Allow- or Deny-List. A shared-state Retry Service also needs
 the token key, and to be aware if a NAT sits between it and the servers.
 
-{{yang-model}} provides a YANG Model of the a full QUIC-LB configuration.
+The following YANG model describes the data items necessary to store a full
+QUIC-LB configuration at the server. It is meant to describe the conceptual
+range and not specify the presentation of such configuration in an internet
+packet. The comments signify the range of acceptable values where applicable.
+
+~~~
+ uint2    config_rotation_bits;
+ boolean  first_octet_encodes_cid_length;
+ enum     { none, non_shared_state, shared_state } retry_service;
+ select (retry_service) {
+     case none: null;
+     case non_shared_state: {
+         uint32 supported_versions[];
+         union {
+             uint32 allow_list[];
+             uint32 deny_list[];
+         } version_control;
+     } non_shared_state_config;
+     case shared_state: {
+         uint32   supported_versions[];
+         union {
+             uint32 allow_list[];
+             uint32 deny_list[];
+         } version_control;
+         uint8    token_key[16];
+         uint8    token_iv[8];
+         uint8    key_sequence_number;
+     } shared_state_config;
+ } retry_service_config;
+ enum     { none, plaintext, low_config, stream_cipher, block_cipher }
+                   routing_algorithm;
+ select (routing_algorithm) {
+     case none: null;
+     case plaintext: struct {
+         uint8 server_id_length; /* 1..19 */
+         uint8 server_id[server_id_length];
+     } plaintext_config;
+     case low-config: struct  {
+         uint8 server_id_length;
+         uint32 lb_timeout;
+     } low_config_config;
+     case stream_cipher: struct {
+         uint8  nonce_length; /* 8..16 */
+         uint8  server_id_length; /* 1..(19 - nonce_length) */
+         uint8  server_id[server_id_length];
+         uint8  key[16];
+     } stream_cipher_config;
+     case block_cipher: struct {
+         uint8  server_id_length;
+         uint8  server_id[server_id_length];
+         uint8  key[16];
+     } block_cipher_config;
+} routing_algorithm_config;
+~~~
 
 # Additional Use Cases
 
@@ -1178,7 +1192,7 @@ operation of QUIC-LB.
 The maximum Connection ID length could be below the minimum necessary for one or
 more encoding algorithms.
 
-{{non-compliant}} provides guidance about how load balancers should handle
+{{routing-algorithms}} provides guidance about how load balancers should handle
 non-compliant DCIDs. This guidance, and the implementation of an algorithm to
 handle these DCIDs, rests on some assumptions:
 
@@ -1284,32 +1298,12 @@ servers that share the same cryptographic context for Stateless Reset tokens. As
 QUIC-LB requires deterministic routing of DCIDs over the life of a connection,
 it is a sufficient means of avoiding an Oracle without additional measures.
 
-## Connection ID Entropy
-
-The Stream Cipher and Block Cipher algorithms need to generate different cipher
-text for each generated Connection ID instance to protect the Server ID. To
-do so, at least four octets of the Block Cipher CID and at least eight octets
-of the Stream Cipher CID are reserved for a nonce that, if used only once, will
-result in unique cipher text for each Connection ID.
-
-If servers simply increment the nonce by one with each generated connection ID,
-then it is safe to use the existing keys until any server's nonce counter
-exhausts the allocated space and rolls over to zero. Whether or not it
-implements this method, the server MUST NOT reuse a nonce until it switches to a
-configuration with new keys.
-
-Configuration agents SHOULD implement an out-of-band method to discover when
-servers are in danger of exhausting their nonce space, and SHOULD respond by
-issuing a new configuration. A server that has exhausted its nonces MUST
-either switch to a different configuration, or if none exists, use the 4-tuple
-routing config rotation codepoint.
-
 ## Shared-State Retry Keys
 
 The Shared-State Retry Service defined in {{shared-state-retry}} describes the
 format of retry tokens or new tokens protected and encrypted using AES128-GCM.
-Each token includes a 96 bit randomly generated unique token number, and an 8
-bit identifier of the AES-GCM encryption key. There are three important security
+Each token includes a 96 bit randomly generated unique token number, and an 8 bit
+identifier of the AES-GCM encryption key. There are three important security
 considerations for these tokens:
 
 * An attacker that obtains a copy of the encryption key will be able to decrypt
@@ -1325,296 +1319,25 @@ To protect against disclosure of keys to attackers, service and servers MUST
 ensure that the keys are stored securely. To limit the consequences of potential
 exposures, the time to live of any given key should be limited.
 
-Section 6.6 of {{QUIC-TLS}} states that "Endpoints MUST count the number of
-encrypted packets for each set of keys. If the total number of encrypted packets
-with the same key exceeds the confidentiality limit for the selected AEAD, the
-endpoint MUST stop using those keys." It goes on with the specific limit: "For
-AEAD_AES_128_GCM and AEAD_AES_256_GCM, the confidentiality limit is 2^23
-encrypted packets; see Appendix B.1." It is prudent to adopt the same limit
-here, and configure the service in such a way that no more than 2^23 tokens are
-generated with the same key.
+Section 6.6 of {{QUIC-TLS}} states that "Endpoints MUST count the number of encrypted
+packets for each set of keys. If the total number of encrypted packets with the same
+key exceeds the confidentiality limit for the selected AEAD, the endpoint MUST stop
+using those keys." It goes on with the specific limit: "For AEAD_AES_128_GCM and
+AEAD_AES_256_GCM, the confidentiality limit is 2^23 encrypted packets; see Appendix B.1."
+It is prudent to adopt the same limit here, and configure the service in such a way that
+no more than 2^23 tokens are generated with the same key.
 
-In order to protect against collisions, the 96 bit unique token numbers should
-be generated using a cryptographically secure pseudorandom number generator
-(CSPRNG), as specified in Appendix C.1 of the TLS 1.3 specification
-{{!RFC8446}}. With proper random numbers, if fewer than 2^40 tokens are
-generated with a single key, the risk of collisions is lower than 0.001%.
+In order to protect against collisions, the 96 bit unique token numbers should be generated
+using a cryptographically secure pseudorandom number generator (CSPRNG), as specified
+in Appendix C.1 of the TLS 1.3 specification{{!RFC8446}}. With proper random numbers, if fewer than 2^40 tokens
+are generated with a single key, the risk of collisions is lower than 0.001%.
+
 
 # IANA Considerations
 
 There are no IANA requirements.
 
 --- back
-
-# QUIC-LB YANG Model {#yang-model}
-
-This YANG model conforms to {{?RFC6020}} and expresses a complete QUIC-LB
-configuration.
-
-~~~
-module ietf-quic-lb {
-  yang-version "1.1";
-  namespace "urn:ietf:params:xml:ns:yang:ietf-quic-lb";
-  prefix "quic-lb";
-
-  import ietf-yang-types {
-    prefix yang;
-    reference
-      "RFC 6991: Common YANG Data Types.";
-  }
-
-  import ietf-inet-types {
-    prefix inet;
-    reference
-      "RFC 6991: Common YANG Data Types.";
-  }
-
-  organization
-    "IETF QUIC Working Group";
-
-  contact
-    "WG Web:   <http://datatracker.ietf.org/wg/quic>
-     WG List:  <quic@ietf.org>
-
-     Authors: Martin Duke (martin.h.duke at gmail dot com)
-              Nick Banks (nibanks at microsoft dot com)";
-
-  description
-    "This module enables the explicit cooperation of QUIC servers with
-     trusted intermediaries without breaking important protocol features.
-
-     Copyright (c) 2021 IETF Trust and the persons identified as
-     authors of the code.  All rights reserved.
-
-     Redistribution and use in source and binary forms, with or
-     without modification, is permitted pursuant to, and subject to
-     the license terms contained in, the Simplified BSD License set
-     forth in Section 4.c of the IETF Trust's Legal Provisions
-     Relating to IETF Documents
-     (https://trustee.ietf.org/license-info).
-
-     This version of this YANG module is part of RFC XXXX
-     (https://www.rfc-editor.org/info/rfcXXXX); see the RFC itself
-     for full legal notices.
-
-     The key words 'MUST', 'MUST NOT', 'REQUIRED', 'SHALL', 'SHALL
-     NOT', 'SHOULD', 'SHOULD NOT', 'RECOMMENDED', 'NOT RECOMMENDED',
-     'MAY', and 'OPTIONAL' in this document are to be interpreted as
-     described in BCP 14 (RFC 2119) (RFC 8174) when, and only when,
-     they appear in all capitals, as shown here.";
-
-  revision "2021-01-29" {
-    description
-      "Initial Version";
-    reference
-      "RFC XXXX, QUIC-LB: Generating Routable QUIC Connection IDs";
-  }
-
-  container quic-lb {
-    presence "The container for QUIC-LB configuration.";
-
-    description
-      "QUIC-LB container.";
-
-    typedef quic-lb-key {
-      type yang:hex-string {
-        length 47;
-      }
-      description
-        "This is a 16-byte key, represented with 47 bytes";
-    }
-
-    list cid-configs {
-      key "config-rotation-bits";
-      description
-        "List up to three load balancer configurations";
-
-      leaf config-rotation-bits {
-        type uint8 {
-          range "0..2";
-        }
-        mandatory true;
-        description
-          "Identifier for this CID configuration.";
-      }
-
-      leaf first-octet-encodes-cid-length {
-        type boolean;
-        default false;
-        description
-          "If true, the six least significant bits of the first CID
-           octet encode the CID length minus one.";
-      }
-
-      leaf cid-key {
-        type quic-lb-key;
-        description
-          "Key for encrypting the connection ID. If absent, the
-           configuration uses the Plaintext algorithm.";
-      }
-
-      leaf nonce-length {
-        type uint8 {
-          range "8..16";
-        }
-        must '(../cid-key)' {
-          error-message "nonce-length only valid if cid-key is set";
-        }
-        description
-          "Length, in octets, of the nonce. If absent when cid-key is
-           present, the configuration uses the Block Cipher Algorithm.
-           If present along with cid-key, the configurationuses the
-           Stream Cipher Algorithm.";
-      }
-
-      leaf lb-timeout {
-        type uint32;
-        description
-          "Existence means the configuration uses dynamic Server ID allocation.
-           Time (in seconds) to keep a server ID allocation if no packets with
-           that server ID arrive.";
-      }
-
-      leaf server-id-length {
-        type uint8 {
-          range "1..18";
-        }
-        must '(../lb-timeout and . <= 7) or
-               (not(../lb-timeout) and
-                (not(../cid-key) and . <= 16) or
-                ((../nonce-length) and . <= (19 - ../nonce-length)) or
-                ((../cid-key) and not(../nonce-length) and . <= 12))' {
-          error-message
-            "Server ID length too long for routing algorithm and server ID
-             allocation method";
-        }
-        mandatory true; 
-        description
-          "Length (in octets) of a server ID. Further range-limited
-           by sid-allocation, cid-key, and nonce-length.";
-      }
-
-      list server-id-mappings {
-        when "not(../lb-timeout)";
-        key "server-id";
-        description "Statically allocated Server IDs";
-
-        leaf server-id {
-          type yang:hex-string;
-          must "string-length(.) = 3 * ../../server-id-length - 1";
-          mandatory true;
-          description
-            "An allocated server ID";
-        }
-
-        leaf server-address {
-          type inet:ip-address;
-          mandatory true;
-          description
-            "Destination address corresponding to the server ID";
-        }
-      }
-    }
-       
-    container retry-service-config {
-      description
-        "Configuration of Retry Service. If supported-versions is empty, there
-         is no retry service. If token-keys is empty, it uses the non-shared-
-         state service. If present, it uses shared-state tokens.";
-
-      leaf-list supported-versions {
-        type uint32;
-        description
-          "QUIC versions that the retry service supports. If empty, there
-           is no retry service.";
-      }
-
-      leaf unsupported-version-default {
-        type enumeration {
-          enum allow {
-            description "Unsupported versions admitted by default";
-          }
-          enum deny {
-            description "Unsupported versions denied by default";
-          }
-        }
-        default allow;
-        description
-          "Are unsupported versions not in version-exceptions allowed
-           or denied?";
-      }
-
-      leaf-list version-exceptions {
-        type uint32;
-        description
-          "Exceptions to the default-deny or default-allow rule.";
-      }
-
-      list token-keys {
-        key "key-sequence-number";
-        description
-          "list of active keys, for key rotation purposes. Existence implies
-           shared-state format";
-
-        leaf key-sequence-number {
-          type uint8;
-          mandatory true;
-          description
-            "Identifies the key used to encrypt the token";
-        }
-
-        leaf token-key {
-          type quic-lb-key;
-          mandatory true;
-          description
-            "16-byte key to encrypt the token";
-        }
-
-        leaf token-iv {
-          type yang:hex-string {
-            length 23;
-          }
-          mandatory true;
-          description
-            "8-byte IV to encrypt the token, encoded in 23 bytes";
-        }
-      }
-    } 
-  }
-}
-~~~
-
-## Tree Diagram
-
-This summary of the YANG model uses the notation in {{?RFC8340}}.
-
-~~~
-module: ietf-quic-lb
-  +--rw quic-lb
-     +--rw cid-configs*
-     |       [config-rotation-bits]
-     |  +--rw config-rotation-bits             uint8
-     |  +--rw first-octet-encodes-cid-length?  boolean
-     |  +--rw cid-key?                         yang:hex-string
-     |  +--rw nonce-length?                    uint8
-     |  +--rw lb-timeout?                      uint32
-     |  +--rw server-id-length                 uint8
-     |  +--rw server-id-mappings*?
-     |  |       [server-id]
-     |  |  +--rw server-id                     yang:hex-string
-     |  |  +--rw server-address                inet:ip-address
-     +--ro retry-service-config
-     |  +--rw supported-versions*
-     |  |  +--rw version                       uint32
-     |  +--rw unsupported-version-default      enumeration {allow deny}
-     |  +--rw version-exceptions*
-     |  |  +--rw version                       uint32
-     |  +--rw token-keys*?
-     |  |       [key-sequence-number]
-     |  |  +--rw key-sequence-number           uint8
-     |  |  +--rw token-key                     yang:hex-string
-     |  |  +--rw token-iv                      yang:hex-string
-~~~
 
 # Load Balancer Test Vectors {#test-vectors}
 
@@ -1681,6 +1404,10 @@ cid 06aee673725a63 sid aee673725a su 63
 cid 07bbf338ddbf37f4 sid bbf338ddbf su 37f4
 cid 08fbbca64c26756840 sid fbbca64c26 su 756840
 cid 09e7737c495b93894e34 sid e7737c495b su 93894e34
+
+## Low-Config Connection ID Algorithm
+
+TBD
 
 ## Stream Cipher Connection ID Algorithm
 
@@ -1795,8 +1522,6 @@ Vasiliev, and William Zeng Ke all provided useful input.
 ## since draft-ietf-quic-load-balancers-05
 - Added low-config CID for further discussion
 - Complete revision of shared-state Retry Token
-- Added YANG model
-- Updated configuration limits to ensure CID entropy
 - Switched to notation from quic-transport
 
 ## since draft-ietf-quic-load-balancers-04
