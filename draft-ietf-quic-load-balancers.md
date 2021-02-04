@@ -1396,10 +1396,19 @@ module ietf-quic-lb {
            type uint8 {
              range "1..18";
            }
+           must '((sid-allocation = dynamic) and . <= 7) or
+                  ((sid-allocation = static) and
+                   (not(cid-key) and . <= 16) or
+                   (cid-key) and not(nonce-len) and . <= 12) or
+                   ((cid-key) and (nonce-len) and . <= (19 - nonce-len))))' {
+             error-message
+               "Server ID length too long for routing algorithm and server ID
+                allocation method.";
+           }
            mandatory true; 
            description
              "Length (in octets) of a server ID. Further range-limited
-             by sid-allocation and routing-algorithm.";
+             by sid-allocation, cid-key, and nonce-length.";
          }
 
          choice sid-allocation {
@@ -1438,38 +1447,26 @@ module ietf-quic-lb {
            }
          }     
 
-         choice routing-algorithm {
-           description "Chosen QUIC-LB Routing Algorithm";
+         leaf cid-key {
+           type quic-lb-key;
+           description
+             "Key for encrypting the connection ID. If absent, the
+              configuration uses the Plaintext algorithm.";
+         }
 
-           case plaintext { }
-
-           case stream-cipher {
-             leaf stream-key {
-               type quic-lb-key;
-               mandatory true;
-               description
-                 "CID key";
-             }
-
-             leaf nonce-length {
-               type uint8 {
-                 range "8..16";
-               }
-               default 8;
-               description
-                 "Length, in octets, of the nonce";
-             }
+         leaf nonce-length {
+           type uint8 {
+             range "8..16";
            }
-
-           case block-cipher {
-             leaf block-key {
-               type quic-lb-key;
-               mandatory true;
-               description
-                 "CID key";
-             }
+           must '(cid-key)' {
+             error-message "nonce-length only valid if cid-key is set";
            }
-         } 
+           description
+             "Length, in octets, of the nonce. If absent when cid-key is
+              present, the configuration uses the Block Cipher Algorithm.
+              If present along with cid-key, the configurationuses the
+              Stream Cipher Algorithm.";
+         }
        }
      }
        
@@ -1567,13 +1564,8 @@ module: ietf-quic-lb
      |  |     |  |       [server-id]
      |  |     |  |  +--rw server-id            yang:hex-string
      |  |     |  |  +--rw server-address       inet:ip-address
-     |  +--rw (routing-algorithm)?
-     |  |  +--:(plaintext)
-     |  |  +--:(stream-cipher)
-     |  |  |  +--rw stream-key                 yang:hex-string
-     |  |  |  +--rw nonce-length               uint8
-     |  |  +--: (block-cipher)
-     |  |  |  +--rw block-key                  yang:hex-string
+     |  +--rw cid-key                          yang:hex-string
+     |  +--rw nonce-length                     uint8
      +--ro retry-service-config
      |  +--rw supported-versions*
      |  |  +--rw version                       uint32
