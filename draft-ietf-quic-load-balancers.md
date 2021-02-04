@@ -1,7 +1,7 @@
 ---
 title: "QUIC-LB: Generating Routable QUIC Connection IDs"
 abbrev: QUIC-LB
-docname: draft-ietf-quic-load-balancers-05
+docname: draft-ietf-quic-load-balancers-06
 date: {DATE}
 category: std
 ipr: trust200902
@@ -1141,7 +1141,7 @@ trips in the connection.
 * While the client is using DCIDs it generated, some exposed fields (IP address,
 UDP port, client-generated destination Connection ID) remain constant for all
 packets sent on the same connection.
-* The Low-Config CID algorithm is dependent on client-generated Destination CIDs
+* Dynamic server ID allocation is dependent on client-generated Destination CIDs
 in Initial Packets being at least 8 octets in length. If they are not, the load
 balancer may not be able to extract a valid server ID to add to its table.
 Configuring a shorter server ID length can increase robustness to a change.
