@@ -1595,6 +1595,7 @@ format.
 
 ## Plaintext Connection ID Algorithm
 
+~~~
 LB configuration: cr_bits 0x0 length_self_encoding: y sid_len 1
 
 cid 01be sid be su 
@@ -1634,11 +1635,13 @@ cid 06aee673725a63 sid aee673725a su 63
 cid 07bbf338ddbf37f4 sid bbf338ddbf su 37f4
 cid 08fbbca64c26756840 sid fbbca64c26 su 756840
 cid 09e7737c495b93894e34 sid e7737c495b su 93894e34
+~~~
 
 ## Stream Cipher Connection ID Algorithm
 
 In each case below, the server is using a plain text nonce value of zero.
 
+~~~
 LB configuration: cr_bits 0x0 length_self_encoding: y nonce_len 12 sid_len 1
     key 4d9d0fd25a25e7f321ef464e13f9fa3d
 
@@ -1683,9 +1686,11 @@ cid 0ed8d02d55b91d06443540d1bf6e98 sid 10f7f7b284 su 98
 cid 0f3f74be6d46a84ccb1fd1ee92cdeaf2 sid 0606918fc0 su eaf2
 cid 1045626dbf20e03050837633cc5650f97c sid e505eea637 su 50f97c
 cid 11bb9a17f691ab446a938427febbeb593eaa sid 99343a2a96 su eb593eaa
+~~~
 
 ## Block Cipher Connection ID Algorithm
 
+~~~
 LB configuration: cr_bits 0x0 length_self_encoding: y sid_len 1
     key 411592e4160268398386af84ea7505d4
 
@@ -1730,6 +1735,7 @@ cid 108122fe80a6e546a285c475a3b8613ec9 sid fbcc902c9d su 59c47946882a9a93981c15
 cid 104d227ad9dd0fef4c8cb6eb75887b6ccc sid 2808e22642 su 2a7ef40e2c7e17ae40b3fb
 cid 10b3f367d8627b36990a28d67f50b97846 sid 5e018f0197 su 2289cae06a566e5cb6cfa4
 cid 1024412bfe25f4547510204bdda6143814 sid 8a8dd3d036 su 4b12933a135e5eaaebc6fd
+~~~
 
 # Acknowledgments
 
