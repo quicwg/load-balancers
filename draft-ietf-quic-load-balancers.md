@@ -1743,8 +1743,9 @@ The authors would like to thank Christian Huitema and Ian Swett for their major
 design contributions.
 
 Manasi Deval, Erik Fuller, Toma Gavrichenkov, Jana Iyengar, Subodh Iyengar,
-Ling Tao Nju, Kazuho Oku, Udip Pant, Martin Thomson, Dmitri Tikhonov, Victor
-Vasiliev, and William Zeng Ke all provided useful input.
+Ladislav Lhotka, Jan Lindblad, Ling Tao Nju, Kazuho Oku, Udip Pant, Martin
+Thomson, Dmitri Tikhonov, Victor Vasiliev, and William Zeng Ke all provided
+useful input to this document.
 
 # Change Log
 
