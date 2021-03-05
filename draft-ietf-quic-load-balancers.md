@@ -774,9 +774,9 @@ headers.
 
 * If a Retry Service keeps per-flow state, it can identify 4-tuples that have
 been previously approved, admit non-Initial packets from those flows, and
-drop all others. However, this rule will effectively break Address Migration
-and NAT Rebinding when in Active Mode, as post-migration packets will arrive
-with a previously unknown 4-tuple. This policy will also break connection
+drop all others. However, dropping short headers will effectively break Address
+Migration and NAT Rebinding when in Active Mode, as post-migration packets will
+arrive with a previously unknown 4-tuple. This policy will also break connection
 attempts using any new QUIC versions that begin connections with a short header.
 
 * If a Retry Service is integrated with a QUIC-LB compliant load balancer, it
