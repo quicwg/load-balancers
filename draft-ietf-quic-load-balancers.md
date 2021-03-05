@@ -757,15 +757,15 @@ Initial Packets are especially effective at consuming server resources
 because they cause the server to create connection state. Even when mitigating
 this load with Retry Packets, the act of validating an Initial Token and sending
 a Retry Packet is more expensive than the response to a non-Initial packet with
-an unknown Connection ID: simply dropping it.
+an unknown Connection ID: simply dropping it and/or sending a Stateless Reset.
 
 Nevertheless, a Retry Service in Active Mode might desire to shield servers
 from non-Initial packets that do not correspond to a previously admitted
 Initial Packet. This has a number of considerations.
 
 * If a Retry Service maintains no per-flow state whatsoever, it cannot
-distinguish between valid and invalid packets and MUST forward all non-Initial
-Packets to the server.
+distinguish between valid and invalid non_Initial packets and MUST forward all
+non-Initial Packets to the server.
 
 * For QUIC versions the Retry Service does not support and are present on the
 Allow-List (or absent from the Deny-List), the Retry Service cannot distinguish
