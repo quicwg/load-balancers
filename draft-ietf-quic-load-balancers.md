@@ -289,8 +289,9 @@ QUIC often uses client-generated Connection IDs prior to receiving a packet from
 the server.
 
 These client-generated CIDs might not conform to the expectations of the
-routing algorithm and therefore not be routable by the load balancer. These are
-called "non-compliant DCIDs":
+routing algorithm and therefore not be routable by the load balancer. Those that
+are not routable are "non-compliant DCIDs" and receive similar treatment
+regardless of why they're non-compliant:
 
 * The config rotation bits ({{config-rotation}}) may not correspond to an active
 configuration. Note: a packet with a DCID that indicates 5-tuple routing (see
@@ -303,7 +304,7 @@ All other DCIDs are compliant.
 Load balancers MUST forward packets with compliant DCIDs to a server in
 accordance with the chosen routing algorithm.
 
-Load balancers SHOULD drop packets with non-compliant DCIDs in a short header.
+Load balancers SHOULD drop short header packets with non-compliant DCIDs.
 
 The routing of long headers with non-compliant DCIDs depends on the server ID
 allocation strategy, described in {{sid-allocation}}. However, the load balancer
@@ -333,12 +334,13 @@ an "arbitrary algorithm." It can choose any algorithm, without coordination with
 the servers, but the algorithm SHOULD be deterministic over short time scales so
 that related packets go to the same server. The design of this algorithm SHOULD
 consider the version-invariant properties of QUIC described in
-{{!QUIC-INVARIANTS=I-D.ietf-quic-invariants}} to maximize its robustness to future versions of QUIC.
+{{!QUIC-INVARIANTS=I-D.ietf-quic-invariants}} to maximize its robustness to
+future versions of QUIC.
 
-An arbitrary algorithmr MUST NOT make the routing behavior dependent on any bits
+An arbitrary algorithm MUST NOT make the routing behavior dependent on any bits
 in the first octet of the QUIC packet header, except the first bit, which
 indicates a long header. All other bits are QUIC version-dependent and
-intermediaries should not base their design on version-specific templates.
+intermediaries SHOULD NOT base their design on version-specific templates.
 
 For example, one arbitrary algorithm might convert a non-compliant DCID to an
 integer and divided by the number of servers, with the modulus used to forward
@@ -354,7 +356,7 @@ statically allocated server IDs explicitly include a mapping of server IDs to
 forwarding addresses. The corresponding server configurations contain one or
 more unique server IDs.
 
-A dynamically allocated configuration does not include any bespoke assignment,
+A dynamically allocated configuration does not have a pre-defined assignment,
 reducing configuration complexity. However, it places limits on the maximum
 server ID length and requires more state at the load balancer. In certain edge
 cases, it can force parts of the system to fail over to 5-tuple routing for a
@@ -379,7 +381,7 @@ the relevant configuration.
 
 ### Static Allocation {#static-allocation}
 
-In the manual allocation method, the configuration agent assigns at least one
+In the static allocation method, the configuration agent assigns at least one
 server ID to each server.
 
 When forwarding a packet with a long header and non-compliant DCID, load
@@ -389,8 +391,8 @@ using an arbitrary algorithm as specified in {{arbitrary-algorithm}}.
 ### Dynamic Allocation
 
 In the dynamic allocation method, the load balancer assigns server IDs
-dynamically so that configuration does not require bespoke server ID assignment.
-This also reduces linkability.  However, it requires state at the load balancer
+dynamically so that configuration does not require fixed server ID assignment.
+This reduces linkability.  However, it requires state at the load balancer
 that roughly scales with the number of connections, until the server ID
 codespace is exhausted.
 
