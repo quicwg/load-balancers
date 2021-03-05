@@ -704,11 +704,6 @@ trusted network service. One requires no shared state; the server need only be
 configured to trust a retry service, though this imposes other operational
 constraints. The other requires a shared key, but has no such constraints.
 
-Retry services MUST forward all QUIC packets that are not of type Initial or
-0-RTT. Other packet types might involve changed IP addresses or connection IDs,
-so it is not practical for Retry Services to identify such packets as valid or
-invalid.
-
 ## Common Requirements {#common-requirements}
 
 Regardless of mechanism, a retry service has an active mode, where it is
@@ -755,6 +750,45 @@ the servers.
 
 Note that future versions of QUIC might not have Retry packets, require
 different information in Retry, or use different packet type indicators.
+
+### Considerations for Non-Initial Packets
+
+Initial Packets are especially effective at consuming server resources
+because they cause the server to create connection state. Even when mitigating
+this load with Retry Packets, the act of validating an Initial Token and sending
+a Retry Packet is more expensive than the response to a non-Initial packet with
+an unknown Connection ID: simply dropping it.
+
+Nevertheless, a Retry Service in Active Mode might desire to shield servers
+from non-Initial packets that do not correspond to a previously admitted
+Initial Packet. This has a number of considerations.
+
+* If a Retry Service maintains no per-flow state whatsoever, it cannot
+distinguish between valid and invalid packets and MUST forward all non-Initial
+Packets to the server.
+
+* For QUIC versions the Retry Service does not support and are present on the
+Allow-List (or absent from the Deny-List), the Retry Service cannot distinguish
+Initial Packets from other long headers and therefore MUST admit all long
+headers.
+
+* If a Retry Service keeps per-flow state, it can identify 4-tuples that have
+been previously approved, admit non-Initial packets from those flows, and
+drop all others. However, this rule will effectively break Address Migration
+and NAT Rebinding when in Active Mode, as post-migration packets will arrive
+with a previously unknown 4-tuple. This policy will also break connection
+attempts using any new QUIC versions that begin connections with a short header.
+
+* If a Retry Service is integrated with a QUIC-LB compliant load balancer, it
+can verify that the Destination Connection ID is compliant, and only admit
+non-Initial packets with compliant DCIDs. As the Connection ID encoding is
+invariant across QUIC versions, the Retry Service can do this for all short
+headers.
+
+Nothing in this section prevents Retry Services from making basic syntax
+correctness checks on packets with QUIC versions that it understands (e.g.,
+enforcing the Initial Packet datagram size minimum in version 1) and
+dropping packets that are not compliant with the QUIC specification.
 
 ## No-Shared-State Retry Service
 
