@@ -392,9 +392,15 @@ using an arbitrary algorithm as specified in {{arbitrary-algorithm}}.
 
 In the dynamic allocation method, the load balancer assigns server IDs
 dynamically so that configuration does not require fixed server ID assignment.
-This reduces linkability.  However, it requires state at the load balancer
-that roughly scales with the number of connections, until the server ID
-codespace is exhausted.
+This reduces linkability and simplifies configuration.
+
+To summarize, the load balancer forwards incoming Initial packets arbitrarily
+and both load balancer and server are sometimes able to infer a potential
+server ID allocation from the CID in the packet. The server can signal
+acceptance of that allocation by using it immediately, in which case both
+entities add it to their permanent table. Usually, however, the server will
+reject the allocation by not using it, in which case it is not added to the
+permanent assignment list.
 
 #### Configuration Agent Actions
 
