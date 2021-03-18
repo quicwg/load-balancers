@@ -1354,8 +1354,8 @@ generated with a single key, the risk of collisions is lower than 0.001%.
 
 When using Dynamic SID allocation, the load balancer's SID table can be as
 large as 2^56 entries, which is prohibitively large. To constrain the size of
-this table, servers are encouraged to accept only one ID, so that the rest can
-be purged from the load balancer's provisional table.
+this table, servers are encouraged to accept a small number of IDs, so that the
+rest can be purged from the load balancer's provisional table.
 
 One form of attack would send a large number of random CIDs in long headers to
 increase the size of the load balancer's permanent or provisional table.
@@ -1371,8 +1371,8 @@ header that encoded the same SID. The encoding CIDs in the two packets must be
 different to add the SID to the permanent table. This is non-trivial for
 encrypted CIDs, but straighforward for the Plaintext CID. As a result,
 Plaintext CID configurations are strongly encouraged to configure a small
-enough server ID to limit the size of the load balancer's table even if all
-possible codepoints are permanently assigned.
+enough server ID to limit the size of the load balancer's table to a manageable
+memory footprint even if all possible codepoints are permanently assigned.
 
 # IANA Considerations
 
