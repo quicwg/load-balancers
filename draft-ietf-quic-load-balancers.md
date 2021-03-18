@@ -1360,11 +1360,11 @@ rest can be purged from the load balancer's provisional table.
 One form of attack would send a large number of random CIDs in long headers to
 increase the size of the load balancer's permanent or provisional table.
 
-An attack on the provisional table would simply send each CID with many
-fourtuples. If no 1-RTT packet never arrives, the entry will simply persist in
-the provisional table. Load balancers are encouraged to time out entries that
-never receive a short header packet, but this timeout SHOULD be well in excess
-of the maximum conceivable duration of a QUIC handshake.
+An attack on the provisional table would simply send each CID in long headers
+with many different fourtuples. If no 1-RTT packet never arrives, the entry will
+simply persist in the provisional table. Load balancers are encouraged to time
+out entries that never receive a short header packet, but this timeout SHOULD be
+well in excess of the maximum conceivable duration of a QUIC handshake.
 
 An attack on the permanent table would follow each long header with a short
 header that encoded the same SID. The encoding CIDs in the two packets must be
@@ -1503,6 +1503,8 @@ module ietf-quic-lb {
 
       leaf dynamic-sid {
         type boolean;
+        description
+          "If true, server IDs are allocated dynamically.";
       }
 
       leaf server-id-length {
