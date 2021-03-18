@@ -1146,7 +1146,7 @@ the token key, and to be aware if a NAT sits between it and the servers.
 This section discusses considerations for some deployment scenarios not implied
 by the specification above.
 
-## Load balancer chains {#load-balancer-chains}
+## Load balancer chains
 
 Some network architectures may have multiple tiers of low-state load balancers,
 where a first tier of devices makes a routing decision to the next tier, and so
