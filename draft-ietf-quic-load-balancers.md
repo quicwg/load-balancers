@@ -863,7 +863,7 @@ the service's retry tokens. It does not require that all traffic pass through
 the Retry service, so servers MAY send Retry packets in response to Initial
 packets that don't include a valid token.
 
-Both server and service must be synchronized to one another to prevent tokens
+Both server and service must have time synchronized with respect to one another to prevent tokens
 being incorrectly marked as expired, though tight synchronization is
 unnecessary.
 
