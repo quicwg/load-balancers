@@ -399,48 +399,66 @@ codespace is exhausted.
 #### Configuration Agent Actions
 
 The configuration agent does not assign server IDs, but does configure a server
-ID length and an "LB timeout". The server ID MUST be at least one and no more
-than seven octets.
+ID length. The server ID MUST be at least one and no more than seven octets.
+See {{sid-limits}} for other considerations if also using the Plaintext CID
+algorithm.
 
 #### Load Balancer Actions
 
-The load balancer maintains a table of all assigned server IDs and
-corresponding routing information, which is initialized empty. These tables are
-independent for each operating configuration.
+The load balancer maintains two tables of assigned server IDs: one for
+permanent assignments and one for provisional ones.  Both are initialized
+empty. These tables are independent for each operating configuration.
 
-The load balancer MUST keep track of the most recent observation of each server
-ID, in any sort of packet it forwards, in the table and delete the entries when
-the time since that observation exceeds the LB Timeout.
+The permanent table maps server IDs to the routing information for that server.
+The provisional table has that information, but for provisional allocations,
+and also a list of all 4-tuples for which the provisional allocation has been
+made and the CIDs associated with each 4-tuple.
 
-Note that when the load balancer's table for a configuration is empty, all
+Note that when the load balancer's tables for a configuration are empty, all
 incoming DCIDs corresponding to that configuration are non-compliant by
 definition.
 
-The handling of a non-compliant long-header packet depends on the reason for
-non-compliance. The load balancer MUST applyt this logic:
+The load balancer processes a long header packet as follows:
 
 * If the config rotation bits do not match a known configuration, the load
 balancer routes the packet using an arbitrary algorithm (see
-{{arbitrary-algorithm}}).
+{{arbitrary-algorithm}}). It does not extract a server ID.
 
 * If there is a matching configuration, but the CID is not long enough to apply
 the algorithm, the load balancer skips the first octet of the CID and then
-reads a server ID from the following octets, up to the server ID length. If
-this server ID matches a known server ID for that configuration, it forwards the
-packet accordingly and takes no further action. If it does not match, it routes
-using an arbitrary algorithm and adds the new server ID to that server's table
-entry.
+reads a server ID from the following octets, up to the server ID length.
 
-* If the sole reason for non-compliance is that the server ID is not in the load
-balancer's table, the load balancer routes the packet with an arbitrary
-algorithm. It adds the decoded server ID to table entry for the server the
-algorithm chooses and forwards the packet accordingly.
+* Otherwise, the load balancer extracts the server ID in accordance with the
+configured algorithm and parameters.
+
+If the load balancer extracted a server ID already in the permanent or
+provisional table, it routes the packet accordingly. If the server ID is not
+in either table, it routes the packet according to an arbitrary algorithm and
+adds the server ID, the routing decision, 4-tuple, and CID to the provisional
+table.
+
+If a short header packet arrives on a 4-tuple in the provisional table, it can
+take one of three actions depending on the CID:
+
+1. If the CID does not encode the provisional server ID, the load balancer MUST
+delete the 4-tuple from the provisional table. If there are no remaining 4-tuples
+associated with the server ID, the load balancer SHOULD delete the server ID
+from the provisional table.
+
+2. If the SID is in the provisional table, but the CID for that 4-tuple is
+different, it MUST delete the provisional table entry and add the SID to the
+permanent table.
+
+3. If both the SID and CID match the 4-tuple's entry, the load balancer makes no
+changes to the table.
+
+If no short header packet ever arrives on the 4-tuple, the load-balancer SHOULD
+eliminate the provisional table entry after a timeout longer than the maximum
+conceivable length of a QUIC handshake.
 
 #### Server actions
 
 Each server maintains a list of server IDs assigned to it, initialized empty.
-For each SID, it records the last time it received any packet with an CID that
-encoded that SID.
 
 Upon receipt of a packet with a client-generated DCID, the server MUST follow
 these steps in order:
@@ -450,38 +468,34 @@ attempt to extract a server ID.
 
 * If the DCID is not long enough to decode using the configured algorithm,
 extract a number of octets equal to the server ID length, beginning with the
-second octet. If the extracted value does not match a server ID in the server's
-list, add it to the list.
+second octet.
 
-* If the DCID is long enough to decode but the server ID is not in the server's
-list, add it to the list.
+* If the DCID is long enough to decode, extract the server ID.
 
-After any possible SID is extracted, the server processes the packet normally.
+If the server ID is not already in its list, the server MUST decide whether or
+not to immediately use it to encode a CID on the new connection. If it chooses
+to use it, it adds the server ID to its list. If it does not, it MUST NOT use
+the server ID in future CIDs.
+
+The server then processes the packet normally.
 
 When a server needs a new connection ID, it uses one of the server IDs in its
-list to populate the server ID field of that CID. It SHOULD vary this selection
+list to populate the server ID field of that CID. It MAY vary this selection
 to reduce linkability within a connection.
 
-After loading a new configuration or long periods of idleness, a server may not
-have any available SIDs. This is because an incoming packet may not the config
-rotation bits necessary to extract a server ID in accordance with the
-algorithm above. When required to generate a CID under these conditions, the
-server MUST generate CIDs using the 5-tuple routing codepoint (see
-{{config-failover}}. Note that these connections will not be robust to client
-address changes while they use this connection ID. For this reason, a server
-SHOULD retire these connection IDs and replace them with routable ones once
-it receives a client-generated CID that allows it to acquire a server ID. As,
-statistically, one in every four such CIDs can provide a server ID, this is
-typically a short interval.
+To reduce state at the load balancer, the server SHOULD limit the number of SIDs
+it adds to its list.
 
-If a server has not received a connection ID encoding a particular server ID
-within the LB timeout, it MUST retire any outstanding CIDs that use that server
-ID and cease generating any new ones.
-
-A server SHOULD have a mechanism to stop using some server IDs if the list
-gets large relative to its share of the codepoint space, so that these
-allocations time out and are freed for reuse by servers that have recently
-joined the pool.
+After loading a new configuration, a server may not have any available SIDs.
+This is because an incoming packet may not contain the config rotation bits
+necessary to extract a server ID in accordance with the algorithm above. When
+required to generate a CID under these conditions, the server MUST generate
+CIDs using the 5-tuple routing codepoint (see {{config-failover}}. Note that
+these connections will not be robust to client address changes while they use
+this connection ID. For this reason, a server SHOULD retire these connection IDs
+and replace them with routable ones once it receives a client-generated CID that
+allows it to acquire a server ID. As, statistically, one in every four such CIDs
+can provide a server ID, this is typically a short interval.
 
 # Routing Algorithms
 
@@ -1126,7 +1140,7 @@ the token key, and to be aware if a NAT sits between it and the servers.
 This section discusses considerations for some deployment scenarios not implied
 by the specification above.
 
-## Load balancer chains
+## Load balancer chains {#load-balancer-chains}
 
 Some network architectures may have multiple tiers of low-state load balancers,
 where a first tier of devices makes a routing decision to the next tier, and so
@@ -1330,6 +1344,30 @@ be generated using a cryptographically secure pseudorandom number generator
 {{!RFC8446}}. With proper random numbers, if fewer than 2^40 tokens are
 generated with a single key, the risk of collisions is lower than 0.001%.
 
+## Resource Consumption of the SID table {#sid-limits}
+
+When using Dynamic SID allocation, the load balancer's SID table can be as
+large as 2^56 entries, which is prohibitively large. To constrain the size of
+this table, servers are encouraged to accept only one ID, so that the rest can
+be purged from the load balancer's provisional table.
+
+One form of attack would send a large number of random CIDs in long headers to
+increase the size of the load balancer's permanent or provisional table.
+
+An attack on the provisional table would simply send each CID with many
+fourtuples. If no 1-RTT packet never arrives, the entry will simply persist in
+the provisional table. Load balancers are encouraged to time out entries that
+never receive a short header packet, but this timeout SHOULD be well in excess
+of the maximum conceivable duration of a QUIC handshake.
+
+An attack on the permanent table would follow each long header with a short
+header that encoded the same SID. The encoding CIDs in the two packets must be
+different to add the SID to the permanent table. This is non-trivial for
+encrypted CIDs, but straighforward for the Plaintext CID. As a result,
+Plaintext CID configurations are strongly encouraged to configure a small
+enough server ID to limit the size of the load balancer's table even if all
+possible codepoints are permanently assigned.
+
 # IANA Considerations
 
 There are no IANA requirements.
@@ -1457,20 +1495,16 @@ module ietf-quic-lb {
            Stream Cipher Algorithm.";
       }
 
-      leaf lb-timeout {
-        type uint32;
-        description
-          "Existence means the configuration uses dynamic Server ID allocation.
-           Time (in seconds) to keep a server ID allocation if no packets with
-           that server ID arrive.";
+      leaf dynamic-sid {
+        type boolean;
       }
 
       leaf server-id-length {
         type uint8 {
           range "1..18";
         }
-        must '(../lb-timeout and . <= 7) or
-               (not(../lb-timeout) and
+        must '(dynamic-sid and . <= 7) or
+                (not(../dynamic-sid)) and
                 (not(../cid-key) and . <= 16) or
                 ((../nonce-length) and . <= (19 - ../nonce-length)) or
                 ((../cid-key) and not(../nonce-length) and . <= 12))' {
@@ -1485,7 +1519,7 @@ module ietf-quic-lb {
       }
 
       list server-id-mappings {
-        when "not(../lb-timeout)";
+        when "not(../dynamic-sid)";
         key "server-id";
         description "Statically allocated Server IDs";
 
@@ -1587,7 +1621,7 @@ module: ietf-quic-lb
      |  +--rw first-octet-encodes-cid-length?  boolean
      |  +--rw cid-key?                         yang:hex-string
      |  +--rw nonce-length?                    uint8
-     |  +--rw lb-timeout?                      uint32
+     |  +--rw dynamic-sid                      boolean
      |  +--rw server-id-length                 uint8
      |  +--rw server-id-mappings*?
      |  |       [server-id]
@@ -1792,6 +1826,7 @@ useful input to this document.
 > publication of a final version of this document.
 
 ## since draft-ietf-quic-load-balancers-06
+- Shrunk size of SID table
 
 ## since draft-ietf-quic-load-balancers-05
 - Added low-config CID for further discussion
