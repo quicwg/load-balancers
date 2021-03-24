@@ -1265,8 +1265,8 @@ randomly.
 
 Therefore, a DTLS 1.3 server operating behind a QUIC-LB load balancer, when
 processing a ClientHello with no connection_id extension, MUST either
-terminate the connection or downgrade to DTLS 1.2. Doing otherwise is likely to
-black hole the connection.
+terminate the connection with a missing_extension alert or downgrade to DTLS
+1.2. Doing otherwise is likely to black hole the connection.
 
 A QUIC-LB load balancer might be modified to identify DTLS 1.3 packets and
 correctly parse the fields to identify when there is no connection ID and
