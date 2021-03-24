@@ -1198,6 +1198,87 @@ format and cryptographic protection of this information may change in future
 versions or extensions of TLS or QUIC, and therefore this functionality is
 inherently not version-invariant.
 
+# Interoperability with DTLS over UDP
+
+Some environments may contain DTLS traffic as well as QUIC operating over UDP,
+which may be hard to distinguish.
+
+In most cases, the packet parsing rules above will cause a QUIC-LB load
+balancer to route DTLS traffic in an appropriate way. DTLS 1.3 implementations
+that use the connection_id extension [?I-D.ietf-tls-dtls-connection-id] might
+use the techniques in this document to generate connection IDs and achieve
+robust routability for DTLS associations if they meet a few additional
+requirements.
+
+## DTLS 1.0 and 1.2
+
+DTLS 1.0 [?RFC4347] and 1.2 [?RFC6347] use packet formats that a QUIC-LB router
+will interpret as short header packets with CIDs that request 4-tuple routing.
+As such, they will route such packets consistently as long as the 4-tuple does
+not change. Note that DTLS 1.0 has been deprecated by the IETF.
+
+The first octet of every DTLS 1.0 or 1.2 datagram contains the content type.
+A QUIC-LB load balancer will interpret any content type less than 128 as a short
+header packet, meaning that the subsequent octets should contain a connection
+ID.
+
+Existing TLS content types comfortably fit in the range below 128. Assignment of
+codepoints greater than 64 would require coordination in accordance with
+[?RFC7983], and anyway would likely create problems demultiplexing DTLS and
+version 1 of QUIC. Therefore, this document believes it is extremely unlikely
+that TLS content types of 128 or greater will be assigned. Nevertheless, such
+an assignment would cause a QUIC-LB load balancer to interpret the packet as a
+QUIC long header with an essentially random connection ID, which is likely to be
+routed irregularly.
+
+The second octet of every DTLS 1.0 or 1.2 datagram is the bitwise complement
+of the DTLS Major version (i.e. version 1.x = 0xfe). A QUIC-LB load balancer
+will interpret this as a connection ID that requires 4-tuple based load
+balancing, meaning that the routing will be consistent as long as the 4-tuple
+remains the same.
+
+[?I-D.ietf-tls-dtls-connection-id] defines an extension to add connection IDs
+to DTLS 1.2. Unfortunately, a QUIC-LB load balancer will not correctly parse
+the connection ID and will continue 4-tuple routing. An modified QUIC-LB load
+balancer that correctly identifies DTLS and parses a DTLS 1.2 datagram for
+the connection ID is outside the scope of this document.
+
+## DTLS 1.3
+
+DTLS 1.3 [?I-D.draft-ietf-tls-dtls13] changes the structure of datagram headers
+in relevant ways.
+
+Handshake packets continue to have a TLS content type in the first octet and
+0xfe in the second octet, so they will be 4-tuple routed, which should not
+present problems for likely NAT rebinding or address change events.
+
+Non-handshake packets always have zero in their most significant bit and will
+therefore always be treated as QUIC short headers. If the connection ID is
+present, it follows in the succeeding octets. Therefore, a DTLS 1.3 association
+where the server utilizes Connection IDs and the encodings in this document
+will be routed correctly in the presence of client address and port changes.
+
+However, if the client does not include the connection_id extension in its
+ClientHello, the server is unable to use connection IDs. In this case, non-
+handshake packets will appear to contain random connection IDs and be routed
+randomly.
+
+Therefore, a DTLS 1.3 server operating behind a QUIC-LB load balancer, when
+processing a ClientHello with no connection_id extension, MUST either
+terminate the connection or downgrade to DTLS 1.2. Doing otherwise is likely to
+black hole the connection.
+
+A QUIC-LB load balancer might be modified to identify DTLS 1.3 packets and
+correctly parse the fields to identify when there is no connection ID and
+revert to 4-tuple routing, removing the server requirement above. However, such
+a modification is outside the scope of this document.
+
+## Future Versions of DTLS
+
+As DTLS does not have an IETF consensus document that defines what parts of
+DTLS will be invariant in future versions, it is difficult to speculate about
+the applicability of this section to future versions of DTLS.
+
 # Security Considerations {#security-considerations}
 
 QUIC-LB is intended to prevent linkability.  Attacks would therefore attempt to
@@ -1792,6 +1873,7 @@ useful input to this document.
 > publication of a final version of this document.
 
 ## since draft-ietf-quic-load-balancers-06
+- Added interoperability with DTLS
 
 ## since draft-ietf-quic-load-balancers-05
 - Added low-config CID for further discussion
