@@ -985,7 +985,7 @@ Shared-State Retry Service Token {
   Unique Token Number (96),
   Key Sequence (8),
   Encrypted Shared-State Retry Service Token Body (80..),
-  AEAD Checksum (length depends on encryption algorithm),
+  AEAD Checksum (128),
 }
 ~~~
 {: #ss-retry-service-token-wire-image title="Wire image of shared-state retry service tokens"}
