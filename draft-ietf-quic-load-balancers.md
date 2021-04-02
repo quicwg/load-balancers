@@ -281,7 +281,7 @@ algorithms or parameter sets simultaneously.  The load balancer uses the first
 two bits of the connection ID to multiplex incoming DCIDs over these schemes
 (see {{config-rotation}}).
 
-## Non-Compliant Connection IDs {#non-compliant}
+## Unroutable Connection IDs {#unroutable}
 
 QUIC-LB servers will generate Connection IDs that are decodable to extract a
 server ID in accordance with a specified algorithm and parameters.  However,
@@ -290,59 +290,59 @@ the server.
 
 These client-generated CIDs might not conform to the expectations of the
 routing algorithm and therefore not be routable by the load balancer. Those that
-are not routable are "non-compliant DCIDs" and receive similar treatment
-regardless of why they're non-compliant:
+are not routable are "unroutable DCIDs" and receive similar treatment
+regardless of why they're unroutable:
 
 * The config rotation bits ({{config-rotation}}) may not correspond to an active
 configuration. Note: a packet with a DCID that indicates 5-tuple routing (see
-{{config-failover}}) is always compliant.
+{{config-failover}}) is always routable.
 * The DCID might not be long enough for the decoder to process.
 * The extracted server mapping might not correspond to an active server.
 
-All other DCIDs are compliant.
+All other DCIDs are routable.
 
-Load balancers MUST forward packets with compliant DCIDs to a server in
+Load balancers MUST forward packets with routable DCIDs to a server in
 accordance with the chosen routing algorithm.
 
-Load balancers SHOULD drop short header packets with non-compliant DCIDs.
+Load balancers SHOULD drop short header packets with unroutable DCIDs.
 
-The routing of long headers with non-compliant DCIDs depends on the server ID
+The routing of long headers with unroutable DCIDs depends on the server ID
 allocation strategy, described in {{sid-allocation}}. However, the load balancer
 MUST NOT drop these packets, with one exception.
 
-Load balancers MAY drop packets with long headers and non-compliant DCIDs if
-and only if it knows that the encoded QUIC version does not allow a non-
-compliant DCID in a packet with that signature. For example, a load balancer can
-safely drop a QUIC version 1 Handshake packet with a non-compliant DCID, as a
-version 1 Handshake packet sent to a QUIC-LB compliant server will always have
-a server-generated compliant CID. The prohibition against dropping packets with
+Load balancers MAY drop packets with long headers and unroutable DCIDs if
+and only if it knows that the encoded QUIC version does not allow an unroutable
+DCID in a packet with that signature. For example, a load balancer can safely
+drop a QUIC version 1 Handshake packet with an unroutable DCID, as a
+version 1 Handshake packet sent to a QUIC-LB routable server will always have
+a server-generated routable CID. The prohibition against dropping packets with
 long headers remains for unknown QUIC versions.
 
 Furthermore, while the load balancer function MUST NOT drop packets, the device
 might implement other security policies, outside the scope of this
 specification, that might force a drop.
 
-Servers that receive packets with noncompliant CIDs MUST use the available
-mechanisms to induce the client to use a compliant CID in future packets. In
-QUIC version 1, this requires using a compliant CID in the Source CID field of
+Servers that receive packets with unroutable CIDs MUST use the available
+mechanisms to induce the client to use a routable CID in future packets. In
+QUIC version 1, this requires using a routable CID in the Source CID field of
 server-generated long headers.
 
-## Arbitrary Algorithms {#arbitrary-algorithm}
+## Fallback Algorithms {#fallback-algorithm}
 
 There are conditions described below where a load balancer routes a packet using
-an "arbitrary algorithm." It can choose any algorithm, without coordination with
+a "fallback algorithm." It can choose any algorithm, without coordination with
 the servers, but the algorithm SHOULD be deterministic over short time scales so
 that related packets go to the same server. The design of this algorithm SHOULD
 consider the version-invariant properties of QUIC described in
 {{!QUIC-INVARIANTS=I-D.ietf-quic-invariants}} to maximize its robustness to
 future versions of QUIC.
 
-An arbitrary algorithm MUST NOT make the routing behavior dependent on any bits
+A fallback algorithm MUST NOT make the routing behavior dependent on any bits
 in the first octet of the QUIC packet header, except the first bit, which
 indicates a long header. All other bits are QUIC version-dependent and
 intermediaries SHOULD NOT base their design on version-specific templates.
 
-For example, one arbitrary algorithm might convert a non-compliant DCID to an
+For example, one fallback algorithm might convert a unroutable DCID to an
 integer and divided by the number of servers, with the modulus used to forward
 the packet. The number of servers is usually consistent on the time scale of a
 QUIC connection handshake. Another might simply hash the address/port 4-tuple.
@@ -369,8 +369,7 @@ length is 7 octets.
 
 A QUIC-LB configuration MAY significantly over-provision the server ID space
 (i.e., provide far more codepoints than there are servers) to increase the
-probability that a randomly generated Destination Connection ID is non-
-compliant.
+probability that a randomly generated Destination Connection ID is unroutable.
 
 Conceptually, each configuration has its own set of server ID allocations,
 though two static configurations with identical server ID lengths MAY use a
@@ -384,9 +383,9 @@ the relevant configuration.
 In the static allocation method, the configuration agent assigns at least one
 server ID to each server.
 
-When forwarding a packet with a long header and non-compliant DCID, load
-balancers MUST forward packets with long headers and non-compliant DCIDs
-using an arbitrary algorithm as specified in {{arbitrary-algorithm}}.
+When forwarding a packet with a long header and unroutable DCID, load
+balancers MUST forward packets with long headers and unroutable DCIDs
+using an fallback algorithm as specified in {{fallback-algorithm}}.
 
 ### Dynamic Allocation
 
@@ -413,26 +412,26 @@ ID, in any sort of packet it forwards, in the table and delete the entries when
 the time since that observation exceeds the LB Timeout.
 
 Note that when the load balancer's table for a configuration is empty, all
-incoming DCIDs corresponding to that configuration are non-compliant by
+incoming DCIDs corresponding to that configuration are unroutable by
 definition.
 
-The handling of a non-compliant long-header packet depends on the reason for
-non-compliance. The load balancer MUST applyt this logic:
+The handling of an unroutable long-header packet depends on the reason for
+unroutability. The load balancer MUST applyt this logic:
 
 * If the config rotation bits do not match a known configuration, the load
-balancer routes the packet using an arbitrary algorithm (see
-{{arbitrary-algorithm}}).
+balancer routes the packet using a fallback algorithm (see
+{{fallback-algorithm}}).
 
 * If there is a matching configuration, but the CID is not long enough to apply
 the algorithm, the load balancer skips the first octet of the CID and then
 reads a server ID from the following octets, up to the server ID length. If
 this server ID matches a known server ID for that configuration, it forwards the
 packet accordingly and takes no further action. If it does not match, it routes
-using an arbitrary algorithm and adds the new server ID to that server's table
+using a fallback algorithm and adds the new server ID to that server's table
 entry.
 
-* If the sole reason for non-compliance is that the server ID is not in the load
-balancer's table, the load balancer routes the packet with an arbitrary
+* If the sole reason for unroutability is that the server ID is not in the load
+balancer's table, the load balancer routes the packet with a fallback
 algorithm. It adds the decoded server ID to table entry for the server the
 algorithm chooses and forwards the packet accordingly.
 
@@ -622,7 +621,7 @@ in reverse order.
 
 The Block Cipher CID Algorithm, by using a full 16 octets of plaintext and a
 128-bit cipher, provides higher cryptographic protection and detection of
-non-compliant connection IDs. However, it also requires connection IDs of at
+unroutable connection IDs. However, it also requires connection IDs of at
 least 17 octets, increasing overhead of client-to-server packets.
 
 ~~~
@@ -779,16 +778,16 @@ Migration and NAT Rebinding when in Active Mode, as post-migration packets will
 arrive with a previously unknown 4-tuple. This policy will also break connection
 attempts using any new QUIC versions that begin connections with a short header.
 
-* If a Retry Service is integrated with a QUIC-LB compliant load balancer, it
-can verify that the Destination Connection ID is compliant, and only admit
-non-Initial packets with compliant DCIDs. As the Connection ID encoding is
+* If a Retry Service is integrated with a QUIC-LB routable load balancer, it
+can verify that the Destination Connection ID is routable, and only admit
+non-Initial packets with routable DCIDs. As the Connection ID encoding is
 invariant across QUIC versions, the Retry Service can do this for all short
 headers.
 
 Nothing in this section prevents Retry Services from making basic syntax
 correctness checks on packets with QUIC versions that it understands (e.g.,
 enforcing the Initial Packet datagram size minimum in version 1) and
-dropping packets that are not compliant with the QUIC specification.
+dropping packets that are not routable with the QUIC specification.
 
 ## No-Shared-State Retry Service
 
@@ -1168,8 +1167,8 @@ operation of QUIC-LB.
 The maximum Connection ID length could be below the minimum necessary for one or
 more encoding algorithms.
 
-{{non-compliant}} provides guidance about how load balancers should handle
-non-compliant DCIDs. This guidance, and the implementation of an algorithm to
+{{non-routable}} provides guidance about how load balancers should handle
+non-routable DCIDs. This guidance, and the implementation of an algorithm to
 handle these DCIDs, rests on some assumptions:
 
 * Incoming short headers do not contain DCIDs that are client-generated.
@@ -1189,7 +1188,7 @@ set of constants that load balancers can use with minimal risk of version-
 dependence.
 
 If these assumptions are invalid, this specification is likely to lead to loss
-of packets that contain non-compliant DCIDs, and in extreme cases connection
+of packets that contain non-routable DCIDs, and in extreme cases connection
 failure.
 
 Some load balancers might inspect elements of the Server Name Indication (SNI)
@@ -1792,6 +1791,8 @@ useful input to this document.
 > publication of a final version of this document.
 
 ## since draft-ietf-quic-load-balancers-06
+- Changed "non-compliant" to "unroutable"
+- Changed "arbitrary" algorithm to "fallback"
 
 ## since draft-ietf-quic-load-balancers-05
 - Added low-config CID for further discussion
