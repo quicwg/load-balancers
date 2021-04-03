@@ -1188,7 +1188,7 @@ set of constants that load balancers can use with minimal risk of version-
 dependence.
 
 If these assumptions are invalid, this specification is likely to lead to loss
-of packets that contain non-routable DCIDs, and in extreme cases connection
+of packets that contain unroutable DCIDs, and in extreme cases connection
 failure.
 
 Some load balancers might inspect elements of the Server Name Indication (SNI)
