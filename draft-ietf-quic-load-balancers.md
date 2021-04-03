@@ -1167,7 +1167,7 @@ operation of QUIC-LB.
 The maximum Connection ID length could be below the minimum necessary for one or
 more encoding algorithms.
 
-{{non-routable}} provides guidance about how load balancers should handle
+{{unroutable}} provides guidance about how load balancers should handle
 non-routable DCIDs. This guidance, and the implementation of an algorithm to
 handle these DCIDs, rests on some assumptions:
 
