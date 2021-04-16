@@ -991,12 +991,15 @@ Shared-State Retry Service Token {
 
 The tokens are protected using AES128-GCM as follows:
 
-* The token key and IV are retrieved using the Key Sequence.
+* Key Sequence is the 8 bit identifier to retrieve The token key and AEAD IV.
 
-* The nonce, N, is formed by combining the IV with the 96 bit unique token
-number. The 96 bits of the unique token number are left-padded with zeros to the
-size of the IV. The exclusive OR of the padded unique token number and the IV
-forms the AEAD nonce.
+* The AEAD IV, is a 96 bit sequence number maintained by configuration agent,
+and incremented by one after each key updating, its initial value can be an
+arbitrary random value.
+
+* The AEAD nonce, N, is formed by combining the AEAD IV with the 96 bit
+unique token number, the exclusive OR of the unique token number and the
+AEAD IV forms the AEAD nonce.
 
 * The associated data is a formatted as a pseudo header by combining the
 cleartext part of the token with the IP address of the client.
@@ -1298,8 +1301,8 @@ routing config rotation codepoint.
 The Shared-State Retry Service defined in {{shared-state-retry}} describes the
 format of retry tokens or new tokens protected and encrypted using AES128-GCM.
 Each token includes a 96 bit randomly generated unique token number, and an 8
-bit identifier of the AES-GCM encryption key. There are three important security
-considerations for these tokens:
+bit identifier of geting the AES-GCM encryption context. There are three important
+security considerations for these tokens:
 
 * An attacker that obtains a copy of the encryption key will be able to decrypt
   and forge tokens.
