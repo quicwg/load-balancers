@@ -1012,8 +1012,9 @@ Shared-State Retry Service Token Pseudoheader {
 
 * The input plaintext for the AEAD is the token body. The output ciphertext of
 the AEAD is transmitted in place of the token body.
-* The AEAD Integrity Check Value(ICV), defined in Section 6 of {{RFC4106}}, is computed
-as part of the AEAD encryption process, and is verified during decryption.
+* The AEAD Integrity Check Value(ICV), defined in Section 6 of {{?RFC4106}}, is
+computed as part of the AEAD encryption process, and is verified during
+ decryption.
 
 ### Configuration Agent Actions
 
