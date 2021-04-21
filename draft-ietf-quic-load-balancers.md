@@ -1256,13 +1256,34 @@ will.
 
 To avoid this, the configuration agent SHOULD issue QUIC-LB configurations to
 mutually distrustful servers that have different keys for encryption
-algorithms. The load balancers can distinguish these configurations by external
-IP address, or by assigning different values to the config rotation bits
-({{config-rotation}}). Note that either solution has a privacy impact; see
-{{multiple-configs}}.
+algorithms. In many cases, the load balancers can distinguish these
+configurations by external IP address.
 
-These techniques are not necessary for the plaintext algorithm, as it does not
-attempt to conceal the server ID.
+However, assigning multiple entities to an IP address is complimentary with
+concealing DNS requests (e.g., DoH {{?RFC8484}}) and the TLS Server Name
+Indicator (SNI) ({{?I-D.ietf-tls-esni}}) to obscure the ultimate destination
+of traffic. While the load balancer's fallback algorithm
+({{fallback-algorithm}}) can use the SNI to make a routing decision on the
+first packet, there are three ways to route subsequent packets:
+
+* all co-tenants can use the same QUIC-LB configuration, leaking the server
+mapping to each other as described above;
+
+* co-tenants can be issued one of up to three configurations distinguished by
+the config rotation bits ({{config-rotation}}), exposing information about the
+target domain to the entire network; or
+
+* tenants can use 4-tuple routing in their CIDs (in which case they SHOULD
+disable migration in their connections), which neutralizes the value of
+QUIC-LB but preserves privacy.
+
+When configuring QUIC-LB, administrators must evaluate the privacy tradeoff
+considering the relative value of each of these properties, given the trust
+model between tenants, the presence of methods to obscure the domain name, and
+value of address migration in the tenant use cases.
+
+As the plaintext algorithm makes no attempt to conceal the server mapping,
+these deployments SHOULD simply use a common configuration.
 
 ## Stateless Reset Oracle
 
@@ -1793,6 +1814,7 @@ useful input to this document.
 ## since draft-ietf-quic-load-balancers-06
 - Changed "non-compliant" to "unroutable"
 - Changed "arbitrary" algorithm to "fallback"
+- Revised security considerations for mistrustful tenants
 
 ## since draft-ietf-quic-load-balancers-05
 - Added low-config CID for further discussion
