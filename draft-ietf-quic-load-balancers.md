@@ -991,7 +991,7 @@ Shared-State Retry Service Token {
 
 The tokens are protected using AES128-GCM as follows:
 
-* Key Sequence is the 8 bit identifier to retrieve The token key and AEAD IV.
+* The Key Sequence is the 8 bit identifier to retrieve the token key and IV.
 
 * The AEAD IV, is a 96 bit sequence number maintained by configuration agent,
 and incremented by one after each key updating, its initial value can be an
@@ -1301,7 +1301,7 @@ routing config rotation codepoint.
 The Shared-State Retry Service defined in {{shared-state-retry}} describes the
 format of retry tokens or new tokens protected and encrypted using AES128-GCM.
 Each token includes a 96 bit randomly generated unique token number, and an 8
-bit identifier of geting the AES-GCM encryption context. There are three important
+bit identifier of the AES-GCM encryption context. There are three important
 security considerations for these tokens:
 
 * An attacker that obtains a copy of the encryption key will be able to decrypt
