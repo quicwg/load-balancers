@@ -993,9 +993,8 @@ The tokens are protected using AES128-GCM as follows:
 
 * The Key Sequence is the 8 bit identifier to retrieve the token key and IV.
 
-* The AEAD IV, is a 96 bit sequence number maintained by configuration agent,
-and incremented by one after each key updating, its initial value can be an
-arbitrary random value.
+* The AEAD IV, is a 96 bit data which produced by implementer's custom
+AEAD IV derivation function.
 
 * The AEAD nonce, N, is formed by combining the AEAD IV with the 96 bit
 unique token number, the exclusive OR of the unique token number and the
