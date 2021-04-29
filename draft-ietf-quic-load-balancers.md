@@ -1797,6 +1797,35 @@ cid 10b3f367d8627b36990a28d67f50b97846 sid 5e018f0197 su 2289cae06a566e5cb6cfa4
 cid 1024412bfe25f4547510204bdda6143814 sid 8a8dd3d036 su 4b12933a135e5eaaebc6fd
 ~~~
 
+## Share-state Retry Token
+In this case, shared-state retry token are is issued by retry service, so the
+opaque data of shared-state retry token body would be null({{shared-state-retry}}).
+~~~
+LB configuration:
+key_seq 0x00
+encrypt_key 0x30313233343536373839303132333435
+AEAD_IV 0x313233343536373839303132
+
+Shared-State Retry Service Token Body:
+ODCIL 0x12
+RSCIL 0x0d
+port 0x1a0a
+original_destination_connection_id 0x38c3ec485f923cb370110bd9017a5554f907
+retry_source_connection_id 0x302a1d9552b4eda29045652e32
+timestamp 0x0000000060b81b89
+
+Shared-State Retry Service Token:
+unique_token_number 0xcc9d8ecc83cfba681ec5d0ac
+key_sequence 0x00
+encrypted_shared_state_retry_service_token_body 0x20b73beca4e84ff23cc8931d5dc152
+83d712b5e5e96907cca56323936887db6ee3c0656e1254bb9930e69b
+AEAD_ICV 0x0b4a256b79ff8df4df4ef054481e2da9
+
+AEAD related parameters:
+AEAD_nonce 0xfdafbdf8b6f98d5027f5e19e
+AEAD_associated_data 0x0100007f000000000000000000000000cc9d8ecc83cfba681ec5d0ac00
+~~~
+
 # Acknowledgments
 
 The authors would like to thank Christian Huitema and Ian Swett for their major
