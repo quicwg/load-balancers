@@ -1798,7 +1798,7 @@ cid 1024412bfe25f4547510204bdda6143814 sid 8a8dd3d036 su 4b12933a135e5eaaebc6fd
 ~~~
 
 ## Share-state Retry Token
-In this case, shared-state retry token are is issued by retry service, so the
+In this case, the shared-state retry token is issued by retry service, so the
 opaque data of shared-state retry token body would be null({{shared-state-retry}}).
 ~~~
 LB configuration:
