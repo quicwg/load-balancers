@@ -1088,14 +1088,14 @@ response to an Initial packet that contains a retry token.
 
 # Stateless Reset 
 
-Due to crash or outage, an enpoint will loss state of a connection, however, the 
-peer know nothing about this and may still send date in this connection. To prevent
+Due to crash or outage, an endpoint will loss state of a connection, however, the 
+peer knows nothing about this and may still send date in this connection. To prevent
 this useless retry, QUICv1 allows the endpoint to send stateless reset packet to 
 its peer to abandon the connection immediately.
 
 Following is the stateless reset packet's wire format described in {{QUIC-TRANSPORT}} 
-which ends with encrypted and hard to guessed 16-byte token. As reset packet is stateless, 
-if the encryped key and method are shared between the load balancer and server, the quic 
+which ends with encrypted and hard to guessed 16-byte token. As the reset packet is stateless, 
+if the encrypted key and method are shared between the load balancer and server, the quic 
 lb can generate this reset packet for the server. 
 
 ~~~
@@ -1107,11 +1107,11 @@ Stateless Reset {
 ~~~
 {: #fig-stateless-reset title="Stateless Reset"}
 
-At the same time, we found quic lb sending stateless reset packet is meanful in some 
+At the same time, we found quic lb sending stateless reset packet is meaningful in some 
 case. Consider following situation, where routerable packet arrives in quic lb, but the
 corresponding server is out of service because of machine malfunction, rate limit or other 
-reasons. Without stateless reset, quic lb may drop the packet directyly to wait for the 
-client retry tiemout or randomly select an instance to generate stateless reset packet. 
+reasons. Without stateless reset, quic lb may drop the packet directly to wait for the 
+client retry timeout or randomly select an instance to generate stateless reset packet. 
 Obviously, this packet can be offloaded to quic lb.
 
 
@@ -1122,15 +1122,15 @@ for the QUIC-LB and multiple instances in the cluster.
 
 ## Load Balancer Actions
 
-Upon receipt of a QUIC packet, the load balancer check whether the CID is routerable or not
-(CID can be decrypted successfully). If the CID is routerable, but the upstream is out 
-of service, the loadbalancer genrate the stateless reset token with the static key and CID, 
-then send stateless reset packet to client directyly.
+Upon receipt of a QUIC packet, the load balancer checks whether the CID is routerable or not
+(CID can be decrypted successfully). If the CID is routerable, but the target server is out 
+of service, the load balancer generate the stateless reset token with the static key and CID, 
+then send stateless reset packet to client directly.
 
 
 ## Server Actions
 The servers in the instance use the some static key and method to generate the stateless 
-reset token when do hanshake or send NEW_CONNECTION_ID frame to client.
+reset token when do handshake or send NEW_CONNECTION_ID frame to client.
 
 
 # Configuration Requirements
