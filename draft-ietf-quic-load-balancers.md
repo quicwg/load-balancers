@@ -1797,6 +1797,36 @@ cid 10b3f367d8627b36990a28d67f50b97846 sid 5e018f0197 su 2289cae06a566e5cb6cfa4
 cid 1024412bfe25f4547510204bdda6143814 sid 8a8dd3d036 su 4b12933a135e5eaaebc6fd
 ~~~
 
+In this case, the shared-state retry token is issued by retry service, so the
+opaque data of shared-state retry token body would be null({{shared-state-retry}}).
+~~~
+LB configuration:
+key_seq 0x00
+encrypt_key 0x30313233343536373839303132333435
+AEAD_IV 0x313233343536373839303132
+
+Shared-State Retry Service Token Body:
+ODCIL 0x12
+RSCIL 0x10
+port 0x1a0a
+original_destination_connection_id 0x0c3817b544ca1c94313bba41757547eec937
+retry_source_connection_id 0x0301e770d24b3b13070dd5c2a9264307
+timestamp 0x0000000060c7bf4d
+
+Shared-State Retry Service Token:
+unique_token_number 0x59ef316b70575e793e1a8782
+key_sequence 0x00
+encrypted_shared_state_retry_service_token_body 
+0x7d38b274aa4427c7a1557c3fa666945931defc65da387a83855196a7cb73caac1e28e5346fd76868de94f8b62294
+AEAD_ICV 0xf91174fdd711543a32d5e959867f9c22
+
+AEAD related parameters:
+client_ip_addr 127.0.0.1
+client_port 6666
+AEAD_nonce 0x68dd025f45616941072ab6b0
+AEAD_associated_data 0x7f00000100000000000000000000000059ef316b70575e793e1a878200
+~~~
+
 # Interoperability with DTLS over UDP
 
 Some environments may contain DTLS traffic as well as QUIC operating over UDP,
