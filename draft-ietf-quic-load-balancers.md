@@ -1776,7 +1776,7 @@ will interpret this as a connection ID that requires 4-tuple based load
 balancing, meaning that the routing will be consistent as long as the 4-tuple
 remains the same.
 
-[?I-D.ietf-tls-dtls-connection-id] defines an extension to add connection IDs
+{{?I-D.ietf-tls-dtls-connection-id}} defines an extension to add connection IDs
 to DTLS 1.2. Unfortunately, a QUIC-LB load balancer will not correctly parse
 the connection ID and will continue 4-tuple routing. An modified QUIC-LB load
 balancer that correctly identifies DTLS and parses a DTLS 1.2 datagram for
