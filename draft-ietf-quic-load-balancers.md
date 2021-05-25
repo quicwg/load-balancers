@@ -1797,6 +1797,8 @@ cid 10b3f367d8627b36990a28d67f50b97846 sid 5e018f0197 su 2289cae06a566e5cb6cfa4
 cid 1024412bfe25f4547510204bdda6143814 sid 8a8dd3d036 su 4b12933a135e5eaaebc6fd
 ~~~
 
+## Shared State Retry Tokens
+
 In this case, the shared-state retry token is issued by retry service, so the
 opaque data of shared-state retry token body would be null({{shared-state-retry}}).
 ~~~
@@ -1834,17 +1836,17 @@ which may be hard to distinguish.
 
 In most cases, the packet parsing rules above will cause a QUIC-LB load
 balancer to route DTLS traffic in an appropriate way. DTLS 1.3 implementations
-that use the connection_id extension [?I-D.ietf-tls-dtls-connection-id] might
+that use the connection_id extension {{?I-D.ietf-tls-dtls-connection-id}} might
 use the techniques in this document to generate connection IDs and achieve
 robust routability for DTLS associations if they meet a few additional
 requirements. This non-normative appendix describes this interaction.
 
 ## DTLS 1.0 and 1.2
 
-DTLS 1.0 [?RFC4347] and 1.2 [?RFC6347] use packet formats that a QUIC-LB router
-will interpret as short header packets with CIDs that request 4-tuple routing.
-As such, they will route such packets consistently as long as the 4-tuple does
-not change. Note that DTLS 1.0 has been deprecated by the IETF.
+DTLS 1.0 {{?RFC4347}} and 1.2 {{?RFC6347}} use packet formats that a QUIC-LB
+router will interpret as short header packets with CIDs that request 4-tuple
+routing.  As such, they will route such packets consistently as long as the
+4-tuple does not change. Note that DTLS 1.0 has been deprecated by the IETF.
 
 The first octet of every DTLS 1.0 or 1.2 datagram contains the content type.
 A QUIC-LB load balancer will interpret any content type less than 128 as a short
@@ -1853,7 +1855,7 @@ ID.
 
 Existing TLS content types comfortably fit in the range below 128. Assignment of
 codepoints greater than 64 would require coordination in accordance with
-[?RFC7983], and anyway would likely create problems demultiplexing DTLS and
+{{?RFC7983}}, and anyway would likely create problems demultiplexing DTLS and
 version 1 of QUIC. Therefore, this document believes it is extremely unlikely
 that TLS content types of 128 or greater will be assigned. Nevertheless, such
 an assignment would cause a QUIC-LB load balancer to interpret the packet as a
@@ -1866,7 +1868,7 @@ will interpret this as a connection ID that requires 4-tuple based load
 balancing, meaning that the routing will be consistent as long as the 4-tuple
 remains the same.
 
-[?I-D.ietf-tls-dtls-connection-id] defines an extension to add connection IDs
+{{?I-D.ietf-tls-dtls-connection-id}} defines an extension to add connection IDs
 to DTLS 1.2. Unfortunately, a QUIC-LB load balancer will not correctly parse
 the connection ID and will continue 4-tuple routing. An modified QUIC-LB load
 balancer that correctly identifies DTLS and parses a DTLS 1.2 datagram for
@@ -1874,8 +1876,8 @@ the connection ID is outside the scope of this document.
 
 ## DTLS 1.3
 
-DTLS 1.3 [?I-D.draft-ietf-tls-dtls13] changes the structure of datagram headers
-in relevant ways.
+DTLS 1.3 {{?I-D.draft-ietf-tls-dtls13}} changes the structure of datagram
+headers in relevant ways.
 
 Handshake packets continue to have a TLS content type in the first octet and
 0xfe in the second octet, so they will be 4-tuple routed, which should not
