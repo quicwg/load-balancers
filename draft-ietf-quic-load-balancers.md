@@ -559,7 +559,7 @@ The configuration agent assigns a server ID to every server in its pool, and
 determines a server ID length (in octets) sufficiently large to encode all
 server IDs, including potential future servers.
 
-The nonce length MUST be no fewer than 8 and no more that 16 octets.
+The nonce length MUST be no fewer than 8 and no more than 16 octets.
 
 The server ID length and nonce length MUST sum to 19 or fewer octets, and
 SHOULD sum to 15 or fewer octets to allow space for server use.
