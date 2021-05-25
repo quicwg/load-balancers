@@ -482,6 +482,40 @@ gets large relative to its share of the codepoint space, so that these
 allocations time out and are freed for reuse by servers that have recently
 joined the pool.
 
+## CID format
+
+All connection IDs use the following format:
+
+~~~
+QUIC-LB Connection ID {
+    First Octet (8),
+    Server ID (..),
+    Nonce (..),
+    For Server Use (..),
+}
+~~~
+{: #plaintext-cid-format title="CID Format"}
+
+Each configuration specifies the length of the Server ID and Nonce fields, with
+limits defined for each algorithm.
+
+The server ID is assigned to each server in accordance with {{sid-allocation}}.
+Dynamically allocated SIDs are limited to seven octets or fewer. Statically
+allocated ones have different limits for each algorithm.
+
+The nonce is selected by the server when it generates a CID. As the name
+implies, a server MUST use a nonce no more than once when generating a CID for
+a given server ID and unique set of configuration parameters.
+
+The First Octet, Server ID, and Nonce comprise the minimum length Connection ID
+for any given algorithm. The load balancer need not know the full connection ID
+length to successfully process a packet, given that it is of minimum size.
+
+The For Server Use field has any value and length chosen by the server, within
+the connection ID length limits in the operative QUIC version. It SHOULD appear
+random and SHOULD NOT link two connection IDs to the same connection, or indicate
+they originate from the same server.
+
 # Routing Algorithms
 
 Encryption in the algorithms below uses the AES-128-ECB cipher. Future standards
@@ -492,22 +526,12 @@ support new algorithms.
 ## Plaintext CID Algorithm {#plaintext-cid-algorithm}
 
 The Plaintext CID Algorithm makes no attempt to obscure the mapping of
-connections to servers, significantly increasing linkability. The format is
-depicted in the figure below.
-
-~~~
-Plaintext CID {
-  First Octet (8),
-  Server ID (8..128),
-  For Server Use (8..152-len(Server ID)),
-}
-~~~
-{: #plaintext-cid-format title="Plaintext CID Format"}
+connections to servers, significantly increasing linkability.
 
 ### Configuration Agent Actions
 
-For static SID allocation, the server ID length is limited to 16 octets. There
-are no parameters specific to this algorithm.
+For static SID allocation, the server ID length is limited to 16 octets. The
+nonce length MUST be zero.
 
 ### Load Balancer Actions
 
@@ -520,9 +544,7 @@ The server chooses how many octets to reserve for its own use, which MUST be at
 least one octet.
 
 When a server needs a new connection ID, it encodes one of its assigned server
-IDs in consecutive octets beginning with the second. All other bits in the
-connection ID, except for the first octet, MAY be set to any other value. These
-other bits SHOULD appear random to observers.
+IDs in consecutive octets beginning with the second.
 
 ## Stream Cipher CID Algorithm {#stream-cipher-cid-algorithm}
 
@@ -530,26 +552,16 @@ The Stream Cipher CID algorithm provides cryptographic protection at the cost of
 additional per-packet processing at the load balancer to decrypt every incoming
 connection ID. The CID format is depicted below.
 
-~~~
-Stream Cipher CID {
-  First Octet (8),
-  Nonce (64..120),
-  Encrypted Server ID (8..128-len(Nonce)),
-  For Server Use (0..152-len(Nonce)-len(Encrypted Server ID)),
-}
-~~~
-{: #stream-cipher-cid-format title="Stream Cipher CID Format"}
-
 ### Configuration Agent Actions
 
 The configuration agent assigns a server ID to every server in its pool, and
 determines a server ID length (in octets) sufficiently large to encode all
 server IDs, including potential future servers.
 
-The configuration agent also selects a nonce length and an 16-octet AES-ECB key
-to use for connection ID decryption.  The nonce length MUST be at least 8 octets
-and no more than 16 octets. The nonce length and server ID length MUST sum to 19
-or fewer octets, but SHOULD sum to 15 or fewer to allow space for server use.
+The nonce length MUST be no fewer than 8 and no more that 16 octets.
+
+The server ID length and nonce length MUST sum to 19 or fewer octets, and
+SHOULD sum to 15 or fewer octets to allow space for server use.
 
 ### Load Balancer Actions {#stream-cipher-load-balancer-actions}
 
@@ -624,20 +636,10 @@ The Block Cipher CID Algorithm, by using a full 16 octets of plaintext and a
 unroutable connection IDs. However, it also requires connection IDs of at
 least 17 octets, increasing overhead of client-to-server packets.
 
-~~~
-Block Cipher CID {
-  First Octet (8),
-  Encrypted Server ID (8..128),
-  Encrypted Bits for Server Use (128-len(Encrypted Server ID)),
-  Unencrypted Bits for Server Use (0..24),
-}
-~~~
-{: #block-cipher-cid-format title="Block Cipher CID Format"}
-
 ### Configuration Agent Actions
 
-If server IDs are statically allocated, the server ID length MUST be no more
-than 12 octets, to provide servers adequate entropy to generate unique CIDs.
+The server ID length MUST be no more than 12 octets. The server ID length and
+nonce length MUST sum to exactly 16 octets.
 
 The configuration agent also selects an 16-octet AES-ECB key to use for
 connection ID decryption.
@@ -653,15 +655,8 @@ order. The load balancer uses the server ID octets for routing.
 
 ### Server Actions
 
-When generating a routable connection ID, the server MUST choose a connection ID
-length between 17 and 20 octets. The server writes its server ID into the server
-ID octets and arbitrary bits into the remaining bits. These arbitrary bits MAY
-encode additional information, and MUST differ between connection IDs.  Bits in
-the eighteenth, nineteenth, and twentieth octets SHOULD appear essentially
-random to observers. The first octet is reserved as described in {{first-octet}}.
-
-The server then encrypts the second through seventeenth octets using the 128-bit
-AES-ECB cipher.
+The server encrypts both its server ID and a nonce in 16-octet block with
+the configured AES-ECB key.
 
 # ICMP Processing
 
@@ -1094,15 +1089,14 @@ and guarantee explicit consent of the server.
 The load balancer and server MUST agree on a routing algorithm, server ID
 allocation method, and the relevant parameters for that algorithm.
 
-All algorithms require a server ID length. If server IDs are statically
-allocated, the load balancer MUST receive the full table of mappings, and
-each server must receive its assigned SID(s), from the configuration agent. 
+All algorithm configurations can have a server ID length, nonce length, and key.
+However, for Plaintext CID, the key is not used and the nonce length is always
+zero. For Block Cipher CID, the nonce length is directly computed from the
+server ID length.
 
-For Stream Cipher CID Routing, the servers and load balancer also MUST have a
-common understanding of the key and nonce length.
-
-For Block Cipher CID Routing, the servers and load balancer also MUST have a
-common understanding of the key.
+If server IDs are statically allocated, the load balancer MUST receive the full
+table of mappings, and each server must receive its assigned SID(s), from the
+configuration agent. 
 
 Note that server IDs are opaque bytes, not integers, so there is no notion of
 network order or host order.
@@ -1655,150 +1649,23 @@ format.
 
 ## Plaintext Connection ID Algorithm
 
-~~~
-LB configuration: cr_bits 0x0 length_self_encoding: y sid_len 1
-
-cid 01be sid be su 
-cid 0221b7 sid 21 su b7
-cid 03cadfd8 sid ca su dfd8
-cid 041e0c9328 sid 1e su 0c9328
-cid 050c8f6d9129 sid 0c su 8f6d9129
-
-LB configuration: cr_bits 0x0 length_self_encoding: n sid_len 2
-
-cid 02aab0 sid aab0 su 
-cid 3ac4b106 sid c4b1 su 06
-cid 08bd3cf4a0 sid bd3c su f4a0
-cid 3771d59502d6 sid 71d5 su 9502d6
-cid 1d57dee8b888f3 sid 57de su e8b888f3
-
-LB configuration: cr_bits 0x0 length_self_encoding: y sid_len 3
-
-cid 0336c976 sid 36c976 su 
-cid 04aa291806 sid aa2918 su 06
-cid 0586897bd8b6 sid 86897b su d8b6
-cid 063625bcae4de0 sid 3625bc su ae4de0
-cid 07966fb1f3cb535f sid 966fb1 su f3cb535f
-
-LB configuration: cr_bits 0x0 length_self_encoding: n sid_len 4
-
-cid 185172fab8 sid 5172fab8 su 
-cid 2eb7ff2c9297 sid b7ff2c92 su 97
-cid 14f3eb3dd3edbe sid f3eb3dd3 su edbe
-cid 3feb31cece744b74 sid eb31cece su 744b74
-cid 06b9f34c353ce23bb5 sid b9f34c35 su 3ce23bb5
-
-LB configuration: cr_bits 0x0 length_self_encoding: y sid_len 5
-
-cid 05bdcd8d0b1d sid bdcd8d0b1d su 
-cid 06aee673725a63 sid aee673725a su 63
-cid 07bbf338ddbf37f4 sid bbf338ddbf su 37f4
-cid 08fbbca64c26756840 sid fbbca64c26 su 756840
-cid 09e7737c495b93894e34 sid e7737c495b su 93894e34
-~~~
+TBD
 
 ## Stream Cipher Connection ID Algorithm
 
 In each case below, the server is using a plain text nonce value of zero.
 
-~~~
-LB configuration: cr_bits 0x0 length_self_encoding: y nonce_len 12 sid_len 1
-    key 4d9d0fd25a25e7f321ef464e13f9fa3d
-
-cid 0d69fe8ab8293680395ae256e89c sid c5 su 
-cid 0e420d74ed99b985e10f5073f43027 sid d5 su 27
-cid 0f380f440c6eefd3142ee776f6c16027 sid 10 su 6027
-cid 1020607efbe82049ddbf3a7c3d9d32604d sid 3c su 32604d
-cid 11e132d12606a1bb0fa17e1caef00ec54c10 sid e3 su 0ec54c10
-
-LB configuration: cr_bits 0x0 length_self_encoding: n nonce_len 12 sid_len 2
-    key 49e1cec7fd264b1f4af37413baf8ada9
-
-cid 3d3a5e1126414271cc8dc2ec7c8c15 sid f7fe su 
-cid 007042539e7c5f139ac2adfbf54ba748 sid eaf4 su 48
-cid 2bc125dd2aed2aafacf59855d99e029217 sid e880 su 9217
-cid 3be6728dc082802d9862c6c8e4dda3d984d8 sid 62c6 su d984d8
-cid 1afe9c6259ad350fc7bad28e0aeb2e8d4d4742 sid 8502 su 8d4d4742
-
-LB configuration: cr_bits 0x0 length_self_encoding: y nonce_len 14 sid_len 3
-    key 2c70df0b399bd33a7335523dcdb884ad
-
-cid 11d62e8670565cd30b552edff6782ff5a740 sid d794bb su 
-cid 12c70e481f49363cabd9370d1fd5012c12bca5 sid 2cbd5d su a5
-cid 133b95dfd8ad93566782f8424df82458069fc9e9 sid d126cd su c9e9
-cid 13ac6ffcd635532ab60370306c7ee572d6b6e795 sid 539e42 su e795
-cid 1383ed07a9700777ff450bb39bb9c1981266805c sid 9094dd su 805c
-
-LB configuration: cr_bits 0x0 length_self_encoding: n nonce_len 12 sid_len 4
-    key 2297b8a95c776cf9c048b76d9dc27019
-
-cid 32873890c3059ca62628089439c44c1f84 sid 7398d8ca su 
-cid 1ff7c7d7b9823954b178636c99a7dc93ac83 sid 9655f091 su 83
-cid 31044000a5ebb3bf2fa7629a17f2c78b077c17 sid 8b035fc6 su 7c17
-cid 1791bd28c66721e8fea0c6f34fd2d8e663a6ef70 sid 6672e0e2 su a6ef70
-cid 3df1d90ad5ccd5f8f475f040e90aeca09ec9839d sid b98b1fff su c9839d
-
-LB configuration: cr_bits 0x0 length_self_encoding: y nonce_len 8 sid_len 5
-    key 484b2ed942d9f4765e45035da3340423
-
-cid 0da995b7537db605bfd3a38881ae sid 391a7840dc su 
-cid 0ed8d02d55b91d06443540d1bf6e98 sid 10f7f7b284 su 98
-cid 0f3f74be6d46a84ccb1fd1ee92cdeaf2 sid 0606918fc0 su eaf2
-cid 1045626dbf20e03050837633cc5650f97c sid e505eea637 su 50f97c
-cid 11bb9a17f691ab446a938427febbeb593eaa sid 99343a2a96 su eb593eaa
-~~~
+TBD
 
 ## Block Cipher Connection ID Algorithm
 
-~~~
-LB configuration: cr_bits 0x0 length_self_encoding: y sid_len 1
-    key 411592e4160268398386af84ea7505d4
+TBD
 
-cid 10564f7c0df399f6d93bdddb1a03886f25 sid 23 su 05231748a80884ed58007847eb9fd0
-cid 10d5c03f9dd765d73b3d8610b244f74d02 sid 15 su 76cd6b6f0d3f0b20fc8e633e3a05f3
-cid 108ca55228ab23b92845341344a2f956f2 sid 64 su 65c0ce170a9548717498b537cb8790
-cid 10e73f3d034aef2f6f501e3a7693d6270a sid 07 su f9ad10c84cc1e89a2492221d74e707
-cid 101a6ce13d48b14a77ecfd365595ad2582 sid 6c su 76ce4689b0745b956ef71c2608045d
-
-LB configuration: cr_bits 0x0 length_self_encoding: n sid_len 2
-    key 92ce44aecd636aeeff78da691ef48f77
-
-cid 20aa09bc65ed52b1ccd29feb7ef995d318 sid a52f su 99278b92a86694ff0ecd64bc2f73
-cid 30b8dbef657bd78a2f870e93f9485d5211 sid 6c49 su 7381c8657a388b4e9594297afe96
-cid 043a8137331eacd2e78383279b202b9a6d sid 4188 su 5ac4b0e0b95f4e7473b49ee2d0dd
-cid 3ba71ea2bcf0ab95719ab59d3d7fde770d sid 8ccc su 08728807605db25f2ca88be08e0f
-cid 37ef1956b4ec354f40dc68336a23d42b31 sid c89d su 5a3ccd1471caa0de221ad6c185c0
-
-LB configuration: cr_bits 0x0 length_self_encoding: y sid_len 3
-    key 5c49cb9265efe8ae7b1d3886948b0a34
-
-cid 10efcffc161d232d113998a49b1dbc4aa0 sid 0690b3 su 958fc9f38fe61b83881b2c5780
-cid 10fc13bdbcb414ba90e391833400c19505 sid 031ac3 su 9a55e1e1904e780346fcc32c3c
-cid 10d3cc1efaf5dc52c7a0f6da2746a8c714 sid 572d3a su ff2ec9712664e7174dc03ca3f8
-cid 107edf37f6788e33c0ec7758a485215f2b sid 562c25 su 02c5a5dcbea629c3840da5f567
-cid 10bc28da122582b7312e65aa096e9724fc sid 2fa4f0 su 8ae8c666bfc0fc364ebfd06b9a
-
-LB configuration: cr_bits 0x0 length_self_encoding: n sid_len 4
-    key e787a3a491551fb2b4901a3fa15974f3
-
-cid 26125351da12435615e3be6b16fad35560 sid 0cb227d3 su 65b40b1ab54e05bff55db046
-cid 14de05fc84e41b611dfbe99ed5b1c9d563 sid 6a0f23ad su d73bee2f3a7e72b3ffea52d9
-cid 1306052c3f973db87de6d7904914840ff1 sid ca21402d su 5829465f7418b56ee6ada431
-cid 1d202b5811af3e1dba9ea2950d27879a92 sid b14e1307 su 4902aba8b23a5f24616df3cf
-cid 26538b78efc2d418539ad1de13ab73e477 sid a75e0148 su 0040323f1854e75aeb449b9f
-
-LB configuration: cr_bits 0x0 length_self_encoding: y sid_len 5
-    key d5a6d7824336fbe0f25d28487cdda57c
-
-cid 10a2794871aadb20ddf274a95249e57fde sid 82d3b0b1a1 su 0935471478c2edb8120e60
-cid 108122fe80a6e546a285c475a3b8613ec9 sid fbcc902c9d su 59c47946882a9a93981c15
-cid 104d227ad9dd0fef4c8cb6eb75887b6ccc sid 2808e22642 su 2a7ef40e2c7e17ae40b3fb
-cid 10b3f367d8627b36990a28d67f50b97846 sid 5e018f0197 su 2289cae06a566e5cb6cfa4
-cid 1024412bfe25f4547510204bdda6143814 sid 8a8dd3d036 su 4b12933a135e5eaaebc6fd
-~~~
+## Shared State Retry
 
 In this case, the shared-state retry token is issued by retry service, so the
-opaque data of shared-state retry token body would be null({{shared-state-retry}}).
+opaque data of shared-state retry token body would be null ({{shared-state-retry}}).
+
 ~~~
 LB configuration:
 key_seq 0x00
@@ -1926,6 +1793,7 @@ useful input to this document.
 - Changed "non-compliant" to "unroutable"
 - Changed "arbitrary" algorithm to "fallback"
 - Revised security considerations for mistrustful tenants
+- Simplified CID formats
 
 ## since draft-ietf-quic-load-balancers-05
 - Added low-config CID for further discussion
