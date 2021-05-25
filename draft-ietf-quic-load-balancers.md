@@ -1800,7 +1800,9 @@ cid 1024412bfe25f4547510204bdda6143814 sid 8a8dd3d036 su 4b12933a135e5eaaebc6fd
 ## Shared State Retry Tokens
 
 In this case, the shared-state retry token is issued by retry service, so the
-opaque data of shared-state retry token body would be null({{shared-state-retry}}).
+opaque data of shared-state retry token body would be null
+({{shared-state-retry}}).
+
 ~~~
 LB configuration:
 key_seq 0x00
