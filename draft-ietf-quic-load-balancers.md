@@ -505,7 +505,8 @@ allocated ones have different limits for each algorithm.
 
 The nonce is selected by the server when it generates a CID. As the name
 implies, a server MUST use a nonce no more than once when generating a CID for
-a given server ID and unique set of configuration parameters.
+a given server ID and unique set of configuration parameters. Limits on the
+length of the nonce are different for each algorithm.
 
 The First Octet, Server ID, and Nonce comprise the minimum length Connection ID
 for any given algorithm. The load balancer need not know the full connection ID
@@ -1649,7 +1650,47 @@ format.
 
 ## Plaintext Connection ID Algorithm
 
-TBD
+~~~
+LB configuration: cr_bits 0x0 length_self_encoding: y sid_len 1
+
+cid 01be sid be su 
+cid 0221b7 sid 21 su b7
+cid 03cadfd8 sid ca su dfd8
+cid 041e0c9328 sid 1e su 0c9328
+cid 050c8f6d9129 sid 0c su 8f6d9129
+
+LB configuration: cr_bits 0x0 length_self_encoding: n sid_len 2
+
+cid 02aab0 sid aab0 su 
+cid 3ac4b106 sid c4b1 su 06
+cid 08bd3cf4a0 sid bd3c su f4a0
+cid 3771d59502d6 sid 71d5 su 9502d6
+cid 1d57dee8b888f3 sid 57de su e8b888f3
+
+LB configuration: cr_bits 0x0 length_self_encoding: y sid_len 3
+
+cid 0336c976 sid 36c976 su 
+cid 04aa291806 sid aa2918 su 06
+cid 0586897bd8b6 sid 86897b su d8b6
+cid 063625bcae4de0 sid 3625bc su ae4de0
+cid 07966fb1f3cb535f sid 966fb1 su f3cb535f
+
+LB configuration: cr_bits 0x0 length_self_encoding: n sid_len 4
+
+cid 185172fab8 sid 5172fab8 su 
+cid 2eb7ff2c9297 sid b7ff2c92 su 97
+cid 14f3eb3dd3edbe sid f3eb3dd3 su edbe
+cid 3feb31cece744b74 sid eb31cece su 744b74
+cid 06b9f34c353ce23bb5 sid b9f34c35 su 3ce23bb5
+
+LB configuration: cr_bits 0x0 length_self_encoding: y sid_len 5
+
+cid 05bdcd8d0b1d sid bdcd8d0b1d su 
+cid 06aee673725a63 sid aee673725a su 63
+cid 07bbf338ddbf37f4 sid bbf338ddbf su 37f4
+cid 08fbbca64c26756840 sid fbbca64c26 su 756840
+cid 09e7737c495b93894e34 sid e7737c495b su 93894e34
+~~~
 
 ## Stream Cipher Connection ID Algorithm
 
@@ -1658,6 +1699,8 @@ In each case below, the server is using a plain text nonce value of zero.
 TBD
 
 ## Block Cipher Connection ID Algorithm
+
+In each case below, the server is using a plain text nonce value of zero.
 
 TBD
 
