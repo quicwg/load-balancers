@@ -48,12 +48,12 @@ anti-Denial-of-Service agent on behalf of the server.
 
 # Introduction
 
-QUIC packets {{!QUIC-TRANSPORT=I-D.ietf-quic-transport}} usually contain a
-connection ID to allow endpoints to associate packets with different address/
-port 4-tuples to the same connection context. This feature makes connections
-robust in the event of NAT rebinding.  QUIC endpoints usually designate the
-connection ID which peers use to address packets. Server-generated connection
-IDs create a potential need for out-of-band communication to support QUIC.
+QUIC packets {{!RFC9000}} usually contain a connection ID to allow endpoints to
+associate packets with different address/port 4-tuples to the same connection
+context. This feature makes connections robust in the event of NAT rebinding.
+QUIC endpoints usually designate the connection ID which peers use to address
+packets. Server-generated connection IDs create a potential need for out-of-band
+communication to support QUIC.
 
 QUIC allows servers (or load balancers) to designate an initial connection ID to
 encode useful routing information for load balancers.  It also encourages
@@ -118,9 +118,9 @@ For brevity, "Connection ID" will often be abbreviated as "CID".
 ## Notation
 
 All wire formats will be depicted using the notation defined in Section 1.3 of
-{{QUIC-TRANSPORT}}. There is one addition: the function len() refers to the
-length of a field which can serve as a limit on a different field, so that the
-lengths of two fields can be concisely defined as limited to a sum, for example:
+{{RFC9000}}. There is one addition: the function len() refers to the length of
+a field which can serve as a limit on a different field, so that the lengths of
+two fields can be concisely defined as limited to a sum, for example:
 
 x(A..B)
 y(C..B-len(x))
@@ -333,9 +333,8 @@ There are conditions described below where a load balancer routes a packet using
 a "fallback algorithm." It can choose any algorithm, without coordination with
 the servers, but the algorithm SHOULD be deterministic over short time scales so
 that related packets go to the same server. The design of this algorithm SHOULD
-consider the version-invariant properties of QUIC described in
-{{!QUIC-INVARIANTS=I-D.ietf-quic-invariants}} to maximize its robustness to
-future versions of QUIC.
+consider the version-invariant properties of QUIC described in {{!RFC8999}} to
+maximize its robustness to future versions of QUIC.
 
 A fallback algorithm MUST NOT make the routing behavior dependent on any bits
 in the first octet of the QUIC packet header, except the first bit, which
@@ -676,11 +675,11 @@ To solve this problem, load balancers MAY maintain a mapping of Client IP and
 port to server ID based on recently observed packets.
 
 Alternatively, servers MAY implement the technique described in Section 14.4.1
-of {{QUIC-TRANSPORT}} to increase the likelihood a Source Connection ID is
-included in ICMP responses to Path Maximum Transmission Unit (PMTU) probes. Load
-balancers MAY parse the echoed packet to extract the Source Connection ID, if
-it contains a QUIC long header, and extract the Server ID as if it were in a
-Destination CID.
+of {{RFC9000}} to increase the likelihood a Source Connection ID is included in
+ICMP responses to Path Maximum Transmission Unit (PMTU) probes.  Load balancers
+MAY parse the echoed packet to extract the Source Connection ID, if it contains
+a QUIC long header, and extract the Server ID as if it were in a Destination
+CID.
 
 # Retry Service {#retry-offload}
 
@@ -1083,8 +1082,8 @@ with length equal to RSCIL.
 For QUIC versions the service does not support, the server MAY use any token
 format.
 
-As discussed in {{QUIC-TRANSPORT}}, a server MUST NOT send a Retry packet in
-response to an Initial packet that contains a retry token.
+As discussed in {{RFC9000}}, a server MUST NOT send a Retry packet in response
+to an Initial packet that contains a retry token.
 
 # Configuration Requirements
 
@@ -1160,7 +1159,7 @@ existence) of Retry Packets in each version of QUIC, and so Retry Service
 configuration explicitly includes the supported QUIC versions.
 
 The server ID encodings, and requirements for their handling, are designed to be
-QUIC version independent (see {{QUIC-INVARIANTS}}). A QUIC-LB load balancer will
+QUIC version independent (see {{RFC8999}}). A QUIC-LB load balancer will
 generally not require changes as servers deploy new versions of QUIC. However,
 there are several unlikely future design decisions that could impact the
 operation of QUIC-LB.
@@ -1183,7 +1182,7 @@ in Initial Packets being at least 8 octets in length. If they are not, the load
 balancer may not be able to extract a valid server ID to add to its table.
 Configuring a shorter server ID length can increase robustness to a change.
 
-While this document does not update the commitments in {{QUIC-INVARIANTS}}, the
+While this document does not update the commitments in {{RFC8999}}, the
 additional assumptions are minimal and narrowly scoped, and provide a likely
 set of constants that load balancers can use with minimal risk of version-
 dependence.
@@ -1288,12 +1287,12 @@ these deployments SHOULD simply use a common configuration.
 
 ## Stateless Reset Oracle
 
-Section 21.9 of {{QUIC-TRANSPORT}} discusses the Stateless Reset Oracle attack.
-For a server deployment to be vulnerable, an attacking client must be able to
-cause two packets with the same Destination CID to arrive at two different
-servers that share the same cryptographic context for Stateless Reset tokens. As
-QUIC-LB requires deterministic routing of DCIDs over the life of a connection,
-it is a sufficient means of avoiding an Oracle without additional measures.
+Section 21.9 of {{RFC9000}} discusses the Stateless Reset Oracle attack.  For a
+server deployment to be vulnerable, an attacking client must be able to cause
+two packets with the same Destination CID to arrive at two different servers
+that share the same cryptographic context for Stateless Reset tokens. As QUIC-LB
+requires deterministic routing of DCIDs over the life of a connection, it is a
+sufficient means of avoiding an Oracle without additional measures.
 
 ## Connection ID Entropy
 
@@ -1336,14 +1335,14 @@ To protect against disclosure of keys to attackers, service and servers MUST
 ensure that the keys are stored securely. To limit the consequences of potential
 exposures, the time to live of any given key should be limited.
 
-Section 6.6 of {{?QUIC-TLS=I-D.ietf-quic-tls}} states that "Endpoints MUST count
-the number of encrypted packets for each set of keys. If the total number of
-encrypted packets with the same key exceeds the confidentiality limit for the
-selected AEAD, the endpoint MUST stop using those keys." It goes on with the
-specific limit: "For AEAD_AES_128_GCM and AEAD_AES_256_GCM, the confidentiality
-limit is 2^23 encrypted packets; see Appendix B.1." It is prudent to adopt the
-same limit here, and configure the service in such a way that no more than 2^23
-tokens are generated with the same key.
+Section 6.6 of {{?RFC9001}} states that "Endpoints MUST count the number of
+encrypted packets for each set of keys. If the total number of encrypted packets
+with the same key exceeds the confidentiality limit for the selected AEAD, the
+endpoint MUST stop using those keys." It goes on with the specific limit: "For
+AEAD_AES_128_GCM and AEAD_AES_256_GCM, the confidentiality limit is 2^23
+encrypted packets; see Appendix B.1." It is prudent to adopt the same limit
+here, and configure the service in such a way that no more than 2^23 tokens are
+generated with the same key.
 
 In order to protect against collisions, the 96 bit unique token numbers should
 be generated using a cryptographically secure pseudorandom number generator
