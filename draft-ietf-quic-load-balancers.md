@@ -995,10 +995,10 @@ The tokens are protected using AES128-GCM as follows:
 * The AEAD IV, is a 96 bit data which produced by implementer's custom
 AEAD IV derivation function.
 
-* The AEAD nonce, N, is formed by combining the AEAD IV with the 96 bit
-unique token number. The 96 bits of the unique token number are left-padded with zeros to the
-size of the IV. The exclusive OR of the padded unique token number and the
-AEAD IV forms the AEAD nonce.
+* The AEAD nonce, N, is formed by combining the AEAD IV with the 96 bit unique
+token number. The 96 bits of the unique token number are left-padded with zeros
+to the size of the IV. The exclusive OR of the padded unique token number and
+the AEAD IV forms the AEAD nonce.
 
 * The associated data is a formatted as a pseudo header by combining the
 cleartext part of the token with the IP address of the client.
@@ -1973,7 +1973,6 @@ useful input to this document.
 - Removed in-band protocol from the document
 
 ## Since draft-duke-quic-load-balancers-06
-
 - Switch to IETF WG draft.
 
 ## Since draft-duke-quic-load-balancers-05
@@ -2000,12 +1999,10 @@ useful input to this document.
 - Reformatted QUIC-LB packets
 
 ## Since draft-duke-quic-load-balancers-01
-
 - Complete rewrite
 - Supports multiple security levels
 - Lightweight messages
 
 ## Since draft-duke-quic-load-balancers-00
-
 - Converted to markdown
 - Added variable length connection IDs
