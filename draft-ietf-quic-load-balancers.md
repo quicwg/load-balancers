@@ -762,7 +762,7 @@ from non-Initial packets that do not correspond to a previously admitted
 Initial Packet. This has a number of considerations.
 
 * If a Retry Service maintains no per-flow state whatsoever, it cannot
-distinguish between valid and invalid non_Initial packets and MUST forward all
+distinguish between valid and invalid non-Initial packets and MUST forward all
 non-Initial Packets to the server.
 
 * For QUIC versions the Retry Service does not support and are present on the
@@ -1929,6 +1929,7 @@ useful input to this document.
 - Changed "non-compliant" to "unroutable"
 - Changed "arbitrary" algorithm to "fallback"
 - Revised security considerations for mistrustful tenants
+- Added retry service considerations for non-Initial packets
 
 ## since draft-ietf-quic-load-balancers-05
 - Added low-config CID for further discussion
