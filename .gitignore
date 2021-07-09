@@ -16,4 +16,5 @@ venv/
 lib
 draft-ietf-quic-load-balancers.xml
 old-stream-ciphers.md
+*.js
 
