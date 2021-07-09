@@ -1,7 +1,7 @@
 ---
 title: "QUIC-LB: Generating Routable QUIC Connection IDs"
 abbrev: QUIC-LB
-docname: draft-ietf-quic-load-balancers-07
+docname: draft-ietf-quic-load-balancers-latest
 date: {DATE}
 category: std
 ipr: trust200902
@@ -744,7 +744,7 @@ will be admitted). This preserves the future extensibilty of QUIC.
 A retry service MUST forward all packets for a QUIC version it does not
 support that are not on a Deny-List or absent from an Allow-List. Note that if
 servers support versions the retry service does not, this may increase load on
-the servers. 
+the servers.
 
 Note that future versions of QUIC might not have Retry packets, require
 different information in Retry, or use different packet type indicators.
@@ -925,7 +925,7 @@ The 96 bit unique token number is set to a random value using a
 cryptography-grade random number generator.
 
 The token key identifier and the corresponding AEAD key and AEAD IV are
-provisioned by the configuration agent. 
+provisioned by the configuration agent.
 
 The token body is encoded as follows:
 
@@ -1098,7 +1098,7 @@ allocation method, and the relevant parameters for that algorithm.
 
 All algorithms require a server ID length. If server IDs are statically
 allocated, the load balancer MUST receive the full table of mappings, and
-each server must receive its assigned SID(s), from the configuration agent. 
+each server must receive its assigned SID(s), from the configuration agent.
 
 For Stream Cipher CID Routing, the servers and load balancer also MUST have a
 common understanding of the key and nonce length.
@@ -1330,7 +1330,7 @@ security considerations for these tokens:
   and forge tokens.
 
 * Attackers may be able to retrieve the key if they capture a sufficently large
-  number of retry tokens encrypted with a given key. 
+  number of retry tokens encrypted with a given key.
 
 * Confidentiality of the token data will fail if separate tokens reuse the
   same 96 bit unique token number and the same key.
@@ -1502,7 +1502,7 @@ module ietf-quic-lb {
             "Server ID length too long for routing algorithm and server ID
              allocation method";
         }
-        mandatory true; 
+        mandatory true;
         description
           "Length (in octets) of a server ID. Further range-limited
            by sid-allocation, cid-key, and nonce-length.";
@@ -1529,7 +1529,7 @@ module ietf-quic-lb {
         }
       }
     }
-       
+
     container retry-service-config {
       description
         "Configuration of Retry Service. If supported-versions is empty, there
@@ -1593,7 +1593,7 @@ module ietf-quic-lb {
             "8-byte IV to encrypt the token, encoded in 23 bytes";
         }
       }
-    } 
+    }
   }
 }
 ~~~
@@ -1661,7 +1661,7 @@ format.
 ~~~
 LB configuration: cr_bits 0x0 length_self_encoding: y sid_len 1
 
-cid 01be sid be su 
+cid 01be sid be su
 cid 0221b7 sid 21 su b7
 cid 03cadfd8 sid ca su dfd8
 cid 041e0c9328 sid 1e su 0c9328
@@ -1669,7 +1669,7 @@ cid 050c8f6d9129 sid 0c su 8f6d9129
 
 LB configuration: cr_bits 0x0 length_self_encoding: n sid_len 2
 
-cid 02aab0 sid aab0 su 
+cid 02aab0 sid aab0 su
 cid 3ac4b106 sid c4b1 su 06
 cid 08bd3cf4a0 sid bd3c su f4a0
 cid 3771d59502d6 sid 71d5 su 9502d6
@@ -1677,7 +1677,7 @@ cid 1d57dee8b888f3 sid 57de su e8b888f3
 
 LB configuration: cr_bits 0x0 length_self_encoding: y sid_len 3
 
-cid 0336c976 sid 36c976 su 
+cid 0336c976 sid 36c976 su
 cid 04aa291806 sid aa2918 su 06
 cid 0586897bd8b6 sid 86897b su d8b6
 cid 063625bcae4de0 sid 3625bc su ae4de0
@@ -1685,7 +1685,7 @@ cid 07966fb1f3cb535f sid 966fb1 su f3cb535f
 
 LB configuration: cr_bits 0x0 length_self_encoding: n sid_len 4
 
-cid 185172fab8 sid 5172fab8 su 
+cid 185172fab8 sid 5172fab8 su
 cid 2eb7ff2c9297 sid b7ff2c92 su 97
 cid 14f3eb3dd3edbe sid f3eb3dd3 su edbe
 cid 3feb31cece744b74 sid eb31cece su 744b74
@@ -1693,7 +1693,7 @@ cid 06b9f34c353ce23bb5 sid b9f34c35 su 3ce23bb5
 
 LB configuration: cr_bits 0x0 length_self_encoding: y sid_len 5
 
-cid 05bdcd8d0b1d sid bdcd8d0b1d su 
+cid 05bdcd8d0b1d sid bdcd8d0b1d su
 cid 06aee673725a63 sid aee673725a su 63
 cid 07bbf338ddbf37f4 sid bbf338ddbf su 37f4
 cid 08fbbca64c26756840 sid fbbca64c26 su 756840
@@ -1708,7 +1708,7 @@ In each case below, the server is using a plain text nonce value of zero.
 LB configuration: cr_bits 0x0 length_self_encoding: y nonce_len 12 sid_len 1
     key 4d9d0fd25a25e7f321ef464e13f9fa3d
 
-cid 0d69fe8ab8293680395ae256e89c sid c5 su 
+cid 0d69fe8ab8293680395ae256e89c sid c5 su
 cid 0e420d74ed99b985e10f5073f43027 sid d5 su 27
 cid 0f380f440c6eefd3142ee776f6c16027 sid 10 su 6027
 cid 1020607efbe82049ddbf3a7c3d9d32604d sid 3c su 32604d
@@ -1717,7 +1717,7 @@ cid 11e132d12606a1bb0fa17e1caef00ec54c10 sid e3 su 0ec54c10
 LB configuration: cr_bits 0x0 length_self_encoding: n nonce_len 12 sid_len 2
     key 49e1cec7fd264b1f4af37413baf8ada9
 
-cid 3d3a5e1126414271cc8dc2ec7c8c15 sid f7fe su 
+cid 3d3a5e1126414271cc8dc2ec7c8c15 sid f7fe su
 cid 007042539e7c5f139ac2adfbf54ba748 sid eaf4 su 48
 cid 2bc125dd2aed2aafacf59855d99e029217 sid e880 su 9217
 cid 3be6728dc082802d9862c6c8e4dda3d984d8 sid 62c6 su d984d8
@@ -1726,7 +1726,7 @@ cid 1afe9c6259ad350fc7bad28e0aeb2e8d4d4742 sid 8502 su 8d4d4742
 LB configuration: cr_bits 0x0 length_self_encoding: y nonce_len 14 sid_len 3
     key 2c70df0b399bd33a7335523dcdb884ad
 
-cid 11d62e8670565cd30b552edff6782ff5a740 sid d794bb su 
+cid 11d62e8670565cd30b552edff6782ff5a740 sid d794bb su
 cid 12c70e481f49363cabd9370d1fd5012c12bca5 sid 2cbd5d su a5
 cid 133b95dfd8ad93566782f8424df82458069fc9e9 sid d126cd su c9e9
 cid 13ac6ffcd635532ab60370306c7ee572d6b6e795 sid 539e42 su e795
@@ -1735,7 +1735,7 @@ cid 1383ed07a9700777ff450bb39bb9c1981266805c sid 9094dd su 805c
 LB configuration: cr_bits 0x0 length_self_encoding: n nonce_len 12 sid_len 4
     key 2297b8a95c776cf9c048b76d9dc27019
 
-cid 32873890c3059ca62628089439c44c1f84 sid 7398d8ca su 
+cid 32873890c3059ca62628089439c44c1f84 sid 7398d8ca su
 cid 1ff7c7d7b9823954b178636c99a7dc93ac83 sid 9655f091 su 83
 cid 31044000a5ebb3bf2fa7629a17f2c78b077c17 sid 8b035fc6 su 7c17
 cid 1791bd28c66721e8fea0c6f34fd2d8e663a6ef70 sid 6672e0e2 su a6ef70
@@ -1744,7 +1744,7 @@ cid 3df1d90ad5ccd5f8f475f040e90aeca09ec9839d sid b98b1fff su c9839d
 LB configuration: cr_bits 0x0 length_self_encoding: y nonce_len 8 sid_len 5
     key 484b2ed942d9f4765e45035da3340423
 
-cid 0da995b7537db605bfd3a38881ae sid 391a7840dc su 
+cid 0da995b7537db605bfd3a38881ae sid 391a7840dc su
 cid 0ed8d02d55b91d06443540d1bf6e98 sid 10f7f7b284 su 98
 cid 0f3f74be6d46a84ccb1fd1ee92cdeaf2 sid 0606918fc0 su eaf2
 cid 1045626dbf20e03050837633cc5650f97c sid e505eea637 su 50f97c
@@ -1823,7 +1823,7 @@ timestamp 0x0000000060c7bf4d
 Shared-State Retry Service Token:
 unique_token_number 0x59ef316b70575e793e1a8782
 key_sequence 0x00
-encrypted_shared_state_retry_service_token_body 
+encrypted_shared_state_retry_service_token_body
 0x7d38b274aa4427c7a1557c3fa666945931defc65da387a83855196a7cb73caac1e28e5346fd76868de94f8b62294
 AEAD_ICV 0xf91174fdd711543a32d5e959867f9c22
 
