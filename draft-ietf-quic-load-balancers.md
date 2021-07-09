@@ -997,7 +997,8 @@ The tokens are protected using AES128-GCM as follows:
 AEAD IV derivation function.
 
 * The AEAD nonce, N, is formed by combining the AEAD IV with the 96 bit
-unique token number, the exclusive OR of the unique token number and the
+unique token number. The 96 bits of the unique token number are left-padded with zeros to the
+size of the IV. The exclusive OR of the padded unique token number and the
 AEAD IV forms the AEAD nonce.
 
 * The associated data is a formatted as a pseudo header by combining the
