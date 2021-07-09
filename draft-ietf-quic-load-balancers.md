@@ -1301,7 +1301,7 @@ The Shared-State Retry Service defined in {{shared-state-retry}} describes the
 format of retry tokens or new tokens protected and encrypted using AES128-GCM.
 Each token includes a 96 bit randomly generated unique token number, and an 8
 bit identifier used to get the AES-GCM encryption context. The AES-GCM encryption
-context contains a 128 bit key and a 96 bit AEAD IV. There are three important
+context contains a 128 bit key and an AEAD IV. There are three important
 security considerations for these tokens:
 
 * An attacker that obtains a copy of the encryption key will be able to decrypt
