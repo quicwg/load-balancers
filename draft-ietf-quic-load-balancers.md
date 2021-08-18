@@ -1935,6 +1935,9 @@ useful input to this document.
 > **RFC Editor's Note:**  Please remove this section prior to
 > publication of a final version of this document.
 
+## since draft-ietf-quic-load-balancers-07
+- Removed RSCID from Retry token body
+
 ## since draft-ietf-quic-load-balancers-06
 - Added interoperability with DTLS
 - Changed "non-compliant" to "unroutable"
