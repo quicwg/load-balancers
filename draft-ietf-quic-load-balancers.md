@@ -902,7 +902,7 @@ The tokens are protected using AES128-GCM AEAD, as explained in
 retry service, MUST use the following format, which includes:
 
 - A 1 bit token type identifier. 
-- An 7 bit token key identifier.
+- A 7 bit token key identifier.
 - A 96 bit unique token number transmitted in clear text, but protected as part
 of the AEAD associated data.
 - A token body, encoding the Original Destination Connection ID and the
@@ -931,30 +931,30 @@ The token body is encoded as follows:
 
 ~~~
 Shared-State Retry Service Token Body {
-   [ODCIL (8) = 8..20],
-   [Port (16)],
-   [Original Destination Connection ID (64..160)],
    Timestamp (64),
+   [ODCIL (8) = 8..20],
+   [Original Destination Connection ID (64..160)],
+   [Port (16)],
    Opaque Data (..),
 }
 ~~~
 {: #ss-retry-service-token-body title="Body of shared-state retry service tokens"}
 The token body has the following fields:
 
+Timestamp: The Timestamp is a 64-bit integer, in network order, that expresses
+the expiration time of the token as a number of seconds in POSIX time (see Sec.
+4.16 of {{TIME_T}}).
+
 ODCIL: The original destination connection ID length. Tokens in NEW_TOKEN frames
 do not have this field.
-
-Port: The Source Port of the UDP datagram that triggered the Retry packet.
-This field MUST be present if and only if the ODCIL is greater than zero. This
-field is therefore always absent in tokens in NEW_TOKEN frames.
 
 Original Destination Connection ID: The server or Retry Service copies this
 from the field in the client Initial packet. Tokens in NEW_TOKEN frames do not
 have this field.
 
-Timestamp: The Timestamp is a 64-bit integer, in network order, that expresses
-the expiration time of the token as a number of seconds in POSIX time (see Sec.
-4.16 of {{TIME_T}}).
+Port: The Source Port of the UDP datagram that triggered the Retry packet.
+This field MUST be present if and only if the ODCIL is greater than zero. This
+field is therefore always absent in tokens in NEW_TOKEN frames.
 
 Opaque Data: The server may use this field to encode additional information,
 such as congestion window, RTT, or MTU. The Retry Service MUST have zero-length
@@ -1576,7 +1576,9 @@ module ietf-quic-lb {
            shared-state format";
 
         leaf key-sequence-number {
-          type uint8;
+          type uint8 {
+            range "0..127";
+          }
           mandatory true;
           description
             "Identifies the key used to encrypt the token";
