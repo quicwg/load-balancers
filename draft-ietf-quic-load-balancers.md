@@ -1005,8 +1005,8 @@ Shared-State Retry Service Token Pseudoheader {
   Token Type (1),
   Key Sequence (7),
   Unique Token Number (96),
-  [RSCIL (8),]
-  [Retry Source Connection ID (0..20),]
+  [RSCIL (8)],
+  [Retry Source Connection ID (0..20)],
 }
 ~~~
 {: #ss-retry-service-token-pseudoheader title="Psuedoheader for shared-state retry service tokens"}
