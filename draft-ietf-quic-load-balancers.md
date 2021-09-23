@@ -426,7 +426,7 @@ The load balancer processes a long header packet as follows:
 
 * If the config rotation bits do not match a known configuration, the load
 balancer routes the packet using an arbitrary algorithm (see
-{{arbitrary-algorithm}}). It does not extract a server ID.
+{{fallback-algorithm}}). It does not extract a server ID.
 
 * If there is a matching configuration, but the CID is not long enough to apply
 the algorithm, the load balancer skips the first octet of the CID and then
