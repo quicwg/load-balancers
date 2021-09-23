@@ -498,11 +498,11 @@ QUIC-LB Connection ID {
 Each configuration specifies the length of the Server ID and Nonce fields, with
 limits defined for each algorithm.
 
-The server ID is assigned to each server in accordance with {{sid-allocation}}.
+The Server ID is assigned to each server in accordance with {{sid-allocation}}.
 Dynamically allocated SIDs are limited to seven octets or fewer. Statically
 allocated ones have different limits for each algorithm.
 
-The nonce is selected by the server when it generates a CID. As the name
+The Nonce is selected by the server when it generates a CID. As the name
 implies, a server MUST use a nonce no more than once when generating a CID for
 a given server ID and unique set of configuration parameters. Limits on the
 length of the nonce are different for each algorithm.
