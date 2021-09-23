@@ -1759,8 +1759,6 @@ In each case below, the server is using a plain text nonce value of zero.
 
 TBD
 
-## Shared State Retry
-
 ## Shared State Retry Tokens
 
 In this case, the shared-state retry token is issued by retry service, so the
