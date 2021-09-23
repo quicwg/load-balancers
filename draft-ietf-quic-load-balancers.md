@@ -1707,7 +1707,8 @@ TBD
 ## Shared State Retry
 
 In this case, the shared-state retry token is issued by retry service, so the
-opaque data of shared-state retry token body would be null ({{shared-state-retry}}).
+opaque data of shared-state retry token body would be null
+({{shared-state-retry}}).
 
 ~~~
 LB configuration:
