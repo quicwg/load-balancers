@@ -558,7 +558,7 @@ The configuration agent assigns a server ID to every server in its pool, and
 determines a server ID length (in octets) sufficiently large to encode all
 server IDs, including potential future servers.
 
-The nonce length MUST be no fewer than 8 and no more than 16 octets.
+The nonce length MUST be no fewer than 4 and no more than 16 octets.
 
 The server ID length and nonce length MUST sum to 19 or fewer octets, and
 SHOULD sum to 15 or fewer octets to allow space for server use.
@@ -1297,13 +1297,21 @@ that share the same cryptographic context for Stateless Reset tokens. As QUIC-LB
 requires deterministic routing of DCIDs over the life of a connection, it is a
 sufficient means of avoiding an Oracle without additional measures.
 
+Note also that when a server starts using a new QUIC-LB config rotation
+codepoint, new CIDs might not be unique with respect to previous configurations
+that occupied that codepoint, and therefore different clients may have observed
+the same CID and stateless reset token. A straightforward method of managing
+stateless reset keys is to maintain a separate key for each config rotation
+codepoint, and replace each key when the configuration for that codepoint
+changes. Thus, a server transitions from one config to another, it will be able
+to generate correct tokens for connections using either type of CID.
+
 ## Connection ID Entropy
 
 The Stream Cipher and Block Cipher algorithms need to generate different cipher
 text for each generated Connection ID instance to protect the Server ID. To
-do so, at least four octets of the Block Cipher CID and at least eight octets
-of the Stream Cipher CID are reserved for a nonce that, if used only once, will
-result in unique cipher text for each Connection ID.
+do so, at least four octets of the CID are reserved for a nonce that, if used
+only once, will result in unique cipher text for each Connection ID.
 
 If servers simply increment the nonce by one with each generated connection ID,
 then it is safe to use the existing keys until any server's nonce counter
@@ -1322,9 +1330,9 @@ routing config rotation codepoint.
 The Shared-State Retry Service defined in {{shared-state-retry}} describes the
 format of retry tokens or new tokens protected and encrypted using AES128-GCM.
 Each token includes a 96 bit randomly generated unique token number, and an 8
-bit identifier used to get the AES-GCM encryption context. The AES-GCM encryption
-context contains a 128 bit key and an AEAD IV. There are three important
-security considerations for these tokens:
+bit identifier used to get the AES-GCM encryption context. The AES-GCM
+encryption context contains a 128 bit key and an AEAD IV. There are three
+important security considerations for these tokens:
 
 * An attacker that obtains a copy of the encryption key will be able to decrypt
   and forge tokens.
@@ -1469,7 +1477,7 @@ module ietf-quic-lb {
 
       leaf nonce-length {
         type uint8 {
-          range "8..16";
+          range "4..16";
         }
         must '(../cid-key)' {
           error-message "nonce-length only valid if cid-key is set";
@@ -1477,7 +1485,7 @@ module ietf-quic-lb {
         description
           "Length, in octets, of the nonce. If absent when cid-key is
            present, the configuration uses the Block Cipher Algorithm.
-           If present along with cid-key, the configurationuses the
+           If present along with cid-key, the configuration uses the
            Stream Cipher Algorithm.";
       }
 
@@ -1888,6 +1896,7 @@ useful input to this document.
 > publication of a final version of this document.
 
 ## since draft-ietf-quic-load-balancers-07
+- Shortened SSCID nonce minimum length to 4 bytes
 - Removed RSCID from Retry token body
 - Simplified CID formats
 
