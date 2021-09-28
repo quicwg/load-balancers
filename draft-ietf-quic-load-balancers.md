@@ -418,7 +418,6 @@ The provisional table has that information, but for provisional allocations,
 and also a list of all 4-tuples for which the provisional allocation has been
 made and the CIDs associated with each 4-tuple.
 
-<<<<<<< HEAD
 Note that when the load balancer's tables for a configuration are empty, all
 incoming DCIDs corresponding to that configuration are unroutable by
 definition.
@@ -426,8 +425,8 @@ definition.
 The load balancer processes a long header packet as follows:
 
 * If the config rotation bits do not match a known configuration, the load
-balancer routes the packet using a fallback algorithm (see
-{{fallback-algorithm}}). It does not extract a server ID.
+balancer routes the packet using a fallback algorithm (see {{fallback-algorithm}}).
+It does not extract a server ID.
 
 * If there is a matching configuration, but the CID is not long enough to apply
 the algorithm, the load balancer skips the first octet of the CID and then
