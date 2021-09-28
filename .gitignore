@@ -1,7 +1,13 @@
+
 *~
 /*-[0-9][0-9].xml
+archive.json
+draft-ietf-quic-load-balancers.xml
 *.html
 issues.json
+*.js
+lib
+old-stream-ciphers.md
 *.pdf
 pulls.json
 *.redxml
@@ -15,5 +21,3 @@ report.xml
 venv/
 lib
 draft-ietf-quic-load-balancers.xml
-old-stream-ciphers.md
-
