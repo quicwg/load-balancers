@@ -392,7 +392,10 @@ In the dynamic allocation method, the load balancer assigns server IDs
 dynamically so that configuration does not require fixed server ID assignment.
 This reduces linkability and simplifies configuration. However, it also limits
 the length of the server ID and requires the load balancer to lie on the path
-of outbound packets.
+of outbound packets. As the server mapping is no longer part of the
+configuration, standby load balancers need an out-of-band mechanism to
+synchronize server ID allocations in the event of failures of the primary
+device.
 
 To summarize, the load balancer forwards incoming Initial packets arbitrarily
 and both load balancer and server are sometimes able to infer a potential
