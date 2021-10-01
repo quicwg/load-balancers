@@ -390,7 +390,9 @@ using an fallback algorithm as specified in {{fallback-algorithm}}.
 
 In the dynamic allocation method, the load balancer assigns server IDs
 dynamically so that configuration does not require fixed server ID assignment.
-This reduces linkability and simplifies configuration.
+This reduces linkability and simplifies configuration. However, it also limits
+the length of the server ID and requires the load balancer to lie on the path
+of outbound packets.
 
 To summarize, the load balancer forwards incoming Initial packets arbitrarily
 and both load balancer and server are sometimes able to infer a potential
@@ -409,14 +411,9 @@ algorithm.
 
 #### Load Balancer Actions
 
-The load balancer maintains two tables of assigned server IDs: one for
-permanent assignments and one for provisional ones.  Both are initialized
-empty. These tables are independent for each operating configuration.
-
-The permanent table maps server IDs to the routing information for that server.
-The provisional table has that information, but for provisional allocations,
-and also a list of all 4-tuples for which the provisional allocation has been
-made and the CIDs associated with each 4-tuple.
+The load balancer maintains a mapping of assigned server IDs to routing
+information for servers, initialized as empty. This mapping is independent for
+each operating configuration.
 
 Note that when the load balancer's tables for a configuration are empty, all
 incoming DCIDs corresponding to that configuration are unroutable by
@@ -429,36 +426,21 @@ balancer routes the packet using a fallback algorithm (see {{fallback-algorithm}
 It does not extract a server ID.
 
 * If there is a matching configuration, but the CID is not long enough to apply
-the algorithm, the load balancer skips the first octet of the CID and then
-reads a server ID from the following octets, up to the server ID length.
+the algorithm, the load balancer pads the connection ID with zeros to the
+required length.
 
 * Otherwise, the load balancer extracts the server ID in accordance with the
 configured algorithm and parameters.
 
-If the load balancer extracted a server ID already in the permanent or
-provisional table, it routes the packet accordingly. If the server ID is not
-in either table, it routes the packet according to a fallback algorithm and
-adds the server ID, the routing decision, 4-tuple, and CID to the provisional
-table.
+If the load balancer extracted a server ID already in its mapping, it routes the
+packet accordingly. If the server ID is not in the mapping, it routes the packet
+according to a fallback algorithm and awaits the first long header the server
+sends in response.
 
-If a short header packet arrives on a 4-tuple in the provisional table, it can
-take one of three actions depending on the CID:
-
-1. If the CID does not encode the provisional server ID, the load balancer MUST
-delete the 4-tuple from the provisional table. If there are no remaining
-4-tuples associated with the server ID, the load balancer SHOULD delete the
-server ID from the provisional table.
-
-2. If the SID is in the provisional table, but the CID for that 4-tuple is
-different, it MUST delete the provisional table entry and add the SID to the
-permanent table.
-
-3. If both the SID and CID match the 4-tuple's entry, the load balancer makes no
-changes to the table.
-
-If no short header packet ever arrives on the 4-tuple, the load-balancer SHOULD
-eliminate the provisional table entry after a timeout longer than the maximum
-conceivable length of a QUIC handshake.
+If the load balancer extracted an unassigned server ID and observes that the
+first long header packet the server sends has a Source Connection ID that
+encodes the same server ID, it adds that server ID to the mapping. Otherwise, it
+takes no action.
 
 #### Server actions
 
@@ -470,9 +452,8 @@ these steps in order:
 * If the config rotation bits do not correspond to a known configuration, do not
 attempt to extract a server ID.
 
-* If the DCID is not long enough to decode using the configured algorithm,
-extract a number of octets equal to the server ID length, beginning with the
-second octet.
+* If the DCID is not long enough to decode using the configured algorithm, pad
+it with zeros to the required length and extract a server ID.
 
 * If the DCID is long enough to decode, extract the server ID.
 
@@ -481,14 +462,19 @@ not to immediately use it to encode a CID on the new connection. If it chooses
 to use it, it adds the server ID to its list. If it does not, it MUST NOT use
 the server ID in future CIDs.
 
+The server SHOULD NOT use more than one CID, unless it is close to exhausting
+the nonces for an existing assignment. Note also that the load balancer may
+observe a single entity claiming multiple server IDs because that entity
+actually represents multiple servers devices or processors.
+
+The server MUST generate a new connection ID if the client-generated CID is of
+insufficient length for the configuration.
+
 The server then processes the packet normally.
 
 When a server needs a new connection ID, it uses one of the server IDs in its
 list to populate the server ID field of that CID. It MAY vary this selection
 to reduce linkability within a connection.
-
-To reduce state at the load balancer, the server SHOULD limit the number of SIDs
-it adds to its list.
 
 After loading a new configuration, a server may not have any available SIDs.
 This is because an incoming packet may not contain the config rotation bits
@@ -1386,25 +1372,8 @@ generated with a single key, the risk of collisions is lower than 0.001%.
 
 When using Dynamic SID allocation, the load balancer's SID table can be as
 large as 2^56 entries, which is prohibitively large. To constrain the size of
-this table, servers are encouraged to accept a small number of IDs, so that the
-rest can be purged from the load balancer's provisional table.
-
-One form of attack would send a large number of random CIDs in long headers to
-increase the size of the load balancer's permanent or provisional table.
-
-An attack on the provisional table would simply send each CID in long headers
-with many different fourtuples. If no 1-RTT packet never arrives, the entry will
-simply persist in the provisional table. Load balancers are encouraged to time
-out entries that never receive a short header packet, but this timeout SHOULD be
-well in excess of the maximum conceivable duration of a QUIC handshake.
-
-An attack on the permanent table would follow each long header with a short
-header that encoded the same SID. The encoding CIDs in the two packets must be
-different to add the SID to the permanent table. This is non-trivial for
-encrypted CIDs, but straighforward for the Plaintext CID. As a result,
-Plaintext CID configurations are strongly encouraged to configure a small
-enough server ID to limit the size of the load balancer's table to a manageable
-memory footprint even if all possible codepoints are permanently assigned.
+this table, servers are encouraged to accept as few SIDs as possible, so that
+the remainder do not enter the load balancer's table.
 
 # IANA Considerations
 
