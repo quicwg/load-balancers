@@ -988,8 +988,8 @@ format.
 QUIC-LB requires common configuration to synchronize understanding of encodings
 and guarantee explicit consent of the server.
 
-The load balancer and server MUST agree on a routing algorithm allocation
-method and the relevant parameters for that algorithm.
+The load balancer and server MUST agree on a routing algorithm and the relevant
+parameters for that algorithm.
 
 All algorithm configurations can have a server ID length, nonce length, and key.
 However, for Plaintext CID, the key is not used. For Block Cipher CID, the nonce
@@ -1385,8 +1385,7 @@ module ietf-quic-lb {
         type uint8 {
           range "1..18";
         }
-        must '(not(../dynamic-sid)) and
-                (not(../cid-key) and . <= 16) or
+        must '((not(../cid-key) and . <= 16) or
                 ((../nonce-length) and . <= (19 - ../nonce-length)) or
                 ((../cid-key) and not(../nonce-length) and . <= 12))' {
           error-message
