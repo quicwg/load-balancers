@@ -1927,6 +1927,7 @@ useful input to this document.
 - Removed RSCID from Retry token body
 - Simplified CID formats
 - Shrunk size of SID table
+- Eliminated server use bytes
 
 ## since draft-ietf-quic-load-balancers-06
 - Added interoperability with DTLS
