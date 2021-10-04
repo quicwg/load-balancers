@@ -1533,10 +1533,8 @@ module ietf-quic-lb {
         }
         mandatory true;
         description
-          "Length, in octets, of the nonce. If absent when cid-key is
-           present, the configuration uses the Block Cipher Algorithm.
-           If present along with cid-key, the configuration uses the
-           Stream Cipher Algorithm.";
+          "Length, in octets, of the nonce. Short nonces mean there will be
+           frequent configuration updates.";
       }
 
       leaf dynamic-sid {
@@ -1549,14 +1547,23 @@ module ietf-quic-lb {
         type uint8 {
           range "1..15";
         }
-        must '(. <= (19 - ../nonce-length)) and
-                ((. <= 7) or
-                (not(../dynamic-sid) and
-                ((../algorithm != 'block-cipher') or
-                (. <= 12))))' {
+        must '(. <= (19 - ../nonce-length))' {
           error-message
-            "Server ID length too long for routing algorithm and server ID
-             allocation method";
+            "Server ID and nonce lengths must sum to no more than 19.";
+        }
+        must '(. <= 7) or not(../dynamic-sid)' {
+          error-message
+            "With dynamic SIDs, server ID length cannot exceed 7.";
+        }
+        must '(../algorithm != 'block-cipher') or (. <= 12)) {
+          error-message
+            "block-cipher requires server ID length <= 12.";
+        }
+        must '(../algorithm != 'block-cipher') or
+                ((. + ../nonce_length) >= 16)' {
+          error-message
+            "For Block cipher, server ID length plus nonce length must be at
+             least 16";
         }
         mandatory true;
         description
