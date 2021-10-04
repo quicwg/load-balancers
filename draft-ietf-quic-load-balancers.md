@@ -1922,12 +1922,14 @@ useful input to this document.
 > **RFC Editor's Note:**  Please remove this section prior to
 > publication of a final version of this document.
 
+## since draft-ietf-quic-load-balancers-08
+- Eliminated server use bytes
+
 ## since draft-ietf-quic-load-balancers-07
 - Shortened SSCID nonce minimum length to 4 bytes
 - Removed RSCID from Retry token body
 - Simplified CID formats
 - Shrunk size of SID table
-- Eliminated server use bytes
 
 ## since draft-ietf-quic-load-balancers-06
 - Added interoperability with DTLS
