@@ -222,7 +222,8 @@ the "disable_active_migration" transport parameter in all new QUIC connections.
 It SHOULD NOT send NEW_CONNECTION_ID frames with new values.
 
 A load balancer that sees a connection ID with config rotation bits set to
-'11' MUST revert to 5-tuple routing.
+'11' MUST revert to 5-tuple routing. These connection IDs may be of any length;
+however, see {{cid-entropy}} for limits on this length.
 
 ## Length Self-Description
 
@@ -490,7 +491,7 @@ and replace them with routable ones once it receives a client-generated CID that
 allows it to acquire a server ID. As, statistically, one in every four such CIDs
 can provide a server ID, this is typically a short interval.
 
-## CID format
+## CID format {#cid-format}
 
 All connection IDs use the following format:
 
@@ -499,31 +500,32 @@ QUIC-LB Connection ID {
     First Octet (8),
     Server ID (..),
     Nonce (..),
-    For Server Use (..),
 }
 ~~~
 {: #plaintext-cid-format title="CID Format"}
 
 Each configuration specifies the length of the Server ID and Nonce fields, with
-limits defined for each algorithm.
+limits defined for each algorithm. When using a given configuration, the server
+MUST generate CIDs of length equal to the lengths of these three fields.
 
 The Server ID is assigned to each server in accordance with {{sid-allocation}}.
 Dynamically allocated SIDs are limited to seven octets or fewer. Statically
 allocated ones have different limits for each algorithm.
 
+The configuration agent assigns a server ID to every server in its pool, and
+determines a server ID length (in octets) sufficiently large to encode all
+server IDs, including potential future servers.
+
 The Nonce is selected by the server when it generates a CID. As the name
 implies, a server MUST use a nonce no more than once when generating a CID for
-a given server ID and unique set of configuration parameters. Limits on the
-length of the nonce are different for each algorithm.
+a given server ID and unique set of configuration parameters.
 
-The First Octet, Server ID, and Nonce comprise the minimum length Connection ID
-for any given algorithm. The load balancer need not know the full connection ID
-length to successfully process a packet, given that it is of minimum size.
+The nonce length MUST be at least 4 octets. Additional limits on its length are
+different for each algorithm. See {{cid-entropy}} for limits on nonce
+generation.
 
-The For Server Use field has any value and length chosen by the server, within
-the connection ID length limits in the operative QUIC version. It SHOULD appear
-random and SHOULD NOT link two connection IDs to the same connection, or indicate
-they originate from the same server.
+As QUIC version 1 limits connection IDs to 20 octets, the server ID and nonce
+lengths MUST sum to 19 octets or less.
 
 # Routing Algorithms
 
@@ -539,21 +541,19 @@ connections to servers, significantly increasing linkability.
 
 ### Configuration Agent Actions
 
-For static SID allocation, the server ID length is limited to 16 octets. The
-nonce length MUST be zero.
+See {{cid-format}}.
 
 ### Load Balancer Actions
 
 On each incoming packet, the load balancer extracts consecutive octets,
-beginning with the second octet. These bytes represent the server ID.
+beginning with the second octet. These bytes represent the server ID. It
+ignores the nonce.
 
 ### Server Actions
 
-The server chooses how many octets to reserve for its own use, which MUST be at
-least one octet.
-
 When a server needs a new connection ID, it encodes one of its assigned server
-IDs in consecutive octets beginning with the second.
+IDs in consecutive octets beginning with the second and chooses a nonce. This
+nonce MUST appear to be random (see {{cid-entropy}}).
 
 ## Stream Cipher CID Algorithm {#stream-cipher-cid-algorithm}
 
@@ -563,20 +563,16 @@ connection ID. The CID format is depicted below.
 
 ### Configuration Agent Actions
 
-The configuration agent assigns a server ID to every server in its pool, and
-determines a server ID length (in octets) sufficiently large to encode all
-server IDs, including potential future servers.
+The nonce length MUST be no fewer than 4 octets.
 
-The nonce length MUST be no fewer than 4 and no more than 16 octets.
-
-The server ID length and nonce length MUST sum to 19 or fewer octets, and
-SHOULD sum to 15 or fewer octets to allow space for server use.
+The configuration agent also selects an 16-octet AES-ECB key to use for
+connection ID decryption.
 
 ### Load Balancer Actions {#stream-cipher-load-balancer-actions}
 
 Upon receipt of a QUIC packet, the load balancer extracts as many of the
 earliest octets from the destination connection ID as necessary to match the
-nonce length. The server ID immediately follows.
+server ID. The nonce immediately follows.
 
 The load balancer decrypts the nonce and the server ID using the following three
 pass algorithm:
@@ -626,13 +622,8 @@ routing.
 ### Server Actions
 
 When generating a routable connection ID, the server writes arbitrary bits into
-its nonce octets, and its provided server ID into the server ID octets. Servers
-MAY opt to have a longer connection ID beyond the nonce and server ID. The
-additional bits MAY encode additional information, but SHOULD appear essentially
-random to observers.
-
-If the decrypted nonce bits increase monotonically, that guarantees that nonces
-are not reused between connection IDs from the same server.
+its nonce octets, and its provided server ID into the server ID octets. See
+{{cid-entropy}} for nonce generation considerations.
 
 The server encrypts the server ID using exactly the algorithm as described in
 {{stream-cipher-load-balancer-actions}}, performing the three passes
@@ -647,8 +638,8 @@ least 17 octets, increasing overhead of client-to-server packets.
 
 ### Configuration Agent Actions
 
-The server ID length MUST be no more than 12 octets. The server ID length and
-nonce length MUST sum to exactly 16 octets.
+The server ID length MUST be no more than 12 octets. The nonce and server ID
+MUST sum to at least 16 octets.
 
 The configuration agent also selects an 16-octet AES-ECB key to use for
 connection ID decryption.
@@ -659,13 +650,14 @@ Upon receipt of a QUIC packet, the load balancer reads the first octet to
 obtain the config rotation bits. It then decrypts the subsequent 16 octets using
 AES-ECB decryption and the chosen key.
 
-The decrypted plaintext contains the server id and opaque server data in that
-order. The load balancer uses the server ID octets for routing.
+The first octets of the plaintext contains the server id.
 
 ### Server Actions
 
-The server encrypts both its server ID and a nonce in 16-octet block with
-the configured AES-ECB key.
+The server encrypts both its server ID and enough octets in a nonce to form a
+16-octet block using the configured AES-ECB key. Note that any remaining octets
+in the nonce are transmitted as plaintext, and should consider the constraints
+in {{cid-entropy}}.
 
 # ICMP Processing
 
@@ -1112,9 +1104,7 @@ The load balancer and server MUST agree on a routing algorithm, server ID
 allocation method, and the relevant parameters for that algorithm.
 
 All algorithm configurations can have a server ID length, nonce length, and key.
-However, for Plaintext CID, the key is not used and the nonce length is always
-zero. For Block Cipher CID, the nonce length is directly computed from the
-server ID length.
+However, for Plaintext CID, there is no key.
 
 If server IDs are statically allocated, the load balancer MUST receive the full
 table of mappings, and each server must receive its assigned SID(s), from the
@@ -1320,7 +1310,14 @@ codepoint, and replace each key when the configuration for that codepoint
 changes. Thus, a server transitions from one config to another, it will be able
 to generate correct tokens for connections using either type of CID.
 
-## Connection ID Entropy
+## Connection ID Entropy {#cid-entropy}
+
+If a server ever reuses a nonce in generating a CID for a given configuration,
+it risks exposing sensitive information. Given the same server ID, the CID will
+be identical (aside from a possible difference in the first octet).  This can
+risk exposure of the QUIC-LB key. If two clients receive the same connection ID,
+they also have each other's stateless reset token unless that key has changed in
+the interim.
 
 The Stream Cipher and Block Cipher algorithms need to generate different cipher
 text for each generated Connection ID instance to protect the Server ID. To
@@ -1333,11 +1330,22 @@ exhausts the allocated space and rolls over to zero. Whether or not it
 implements this method, the server MUST NOT reuse a nonce until it switches to a
 configuration with new keys.
 
-Configuration agents SHOULD implement an out-of-band method to discover when
-servers are in danger of exhausting their nonce space, and SHOULD respond by
-issuing a new configuration. A server that has exhausted its nonces MUST
-either switch to a different configuration, or if none exists, use the 4-tuple
-routing config rotation codepoint.
+Both the Plaintext CID and Block Cipher CID algorithms send parts of their nonce
+in plaintext. Servers MUST generate nonces so that the plaintext portion appears
+to be random. Observable correlations between plaintext nonces would provide
+trivial linkability between individual connections, rather than just to a common
+server.
+
+For any algorithm, configuration agents SHOULD implement an out-of-band method
+to discover when servers are in danger of exhausting their nonce space, and
+SHOULD respond by issuing a new configuration. A server that has exhausted its
+nonces MUST either switch to a different configuration, or if none exists, use
+the 4-tuple routing config rotation codepoint.
+
+When sizing a nonce that is to be randomly generated, the configuration agent
+SHOULD consider that a server generating a N-bit nonce will create a duplicate
+about every 2^(N/2) attempts, and therefore compare the expected rate at which
+servers will generate CIDs with the lifetime of a configuration.
 
 ## Shared-State Retry Keys
 
