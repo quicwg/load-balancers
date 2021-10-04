@@ -576,7 +576,7 @@ SHOULD sum to 15 or fewer octets to allow space for server use.
 
 Upon receipt of a QUIC packet, the load balancer extracts as many of the
 earliest octets from the destination connection ID as necessary to match the
-nonce length. The server ID immediately follows.
+server ID. The nonce immediately follows.
 
 The load balancer decrypts the nonce and the server ID using the following three
 pass algorithm:
