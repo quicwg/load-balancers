@@ -1504,13 +1504,34 @@ module ietf-quic-lb {
            configuration uses the Plaintext algorithm.";
       }
 
+      leaf algorithm {
+        type enumeration {
+          enum plaintext {
+            description "Plaintext CID Algorithm";
+          }
+          enum stream-cipher {
+            must '(../cid-key)' {
+                error-message "stream-cipher requires cid-key"
+            }
+            description "Stream Cipher CID Algorithm";
+          }
+          enum block-cipher {
+            must '(../cid-key)' {
+                error-message "block-cipher requires cid-key"
+            }
+            description "Block Cipher CID Algorithm";
+          }
+        }
+        mandatory true;
+        description
+          "The algorithm that encodes the server ID";
+      }
+
       leaf nonce-length {
         type uint8 {
-          range "4..16";
+          range "4..18";
         }
-        must '(../cid-key)' {
-          error-message "nonce-length only valid if cid-key is set";
-        }
+        mandatory true;
         description
           "Length, in octets, of the nonce. If absent when cid-key is
            present, the configuration uses the Block Cipher Algorithm.
@@ -1526,13 +1547,13 @@ module ietf-quic-lb {
 
       leaf server-id-length {
         type uint8 {
-          range "1..18";
+          range "1..15";
         }
-        must '(dynamic-sid and . <= 7) or
-                (not(../dynamic-sid)) and
-                (not(../cid-key) and . <= 16) or
-                ((../nonce-length) and . <= (19 - ../nonce-length)) or
-                ((../cid-key) and not(../nonce-length) and . <= 12))' {
+        must '(. <= (19 - ../nonce-length)) and
+                ((. <= 7) or
+                (not(../dynamic-sid) and
+                ((../algorithm != 'block-cipher') or
+                (. <= 12))))' {
           error-message
             "Server ID length too long for routing algorithm and server ID
              allocation method";
@@ -1647,7 +1668,7 @@ module: ietf-quic-lb
      |  +--rw config-rotation-bits             uint8
      |  +--rw first-octet-encodes-cid-length?  boolean
      |  +--rw cid-key?                         yang:hex-string
-     |  +--rw nonce-length?                    uint8
+     |  +--rw nonce-length                     uint8
      |  +--rw dynamic-sid                      boolean
      |  +--rw server-id-length                 uint8
      |  +--rw server-id-mappings*?
