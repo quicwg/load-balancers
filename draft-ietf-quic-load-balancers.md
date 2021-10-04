@@ -1475,6 +1475,20 @@ module ietf-quic-lb {
         "This is a 16-byte key, represented with 47 bytes";
     }
 
+    typedef algorithm-type {
+      type enumeration {
+        enum plaintext {
+          description "Plaintext CID Algorithm";
+        }
+        enum stream-cipher {
+           description "Stream Cipher CID Algorithm";
+        }
+        enum block-cipher {
+          description "Block Cipher CID Algorithm";
+        }
+      }
+    }
+
     list cid-configs {
       key "config-rotation-bits";
       description
@@ -1505,26 +1519,14 @@ module ietf-quic-lb {
       }
 
       leaf algorithm {
-        type enumeration {
-          enum plaintext {
-            description "Plaintext CID Algorithm";
-          }
-          enum stream-cipher {
-            must '(../cid-key)' {
-                error-message "stream-cipher requires cid-key"
-            }
-            description "Stream Cipher CID Algorithm";
-          }
-          enum block-cipher {
-            must '(../cid-key)' {
-                error-message "block-cipher requires cid-key"
-            }
-            description "Block Cipher CID Algorithm";
-          }
-        }
+        type algorithm-type;
         mandatory true;
         description
           "The algorithm that encodes the server ID";
+      }
+
+      must 'cid-key or (algorithm = "plaintext")' {
+        error-message "Encrypted algorithm requires key";
       }
 
       leaf nonce-length {
@@ -1547,7 +1549,7 @@ module ietf-quic-lb {
         type uint8 {
           range "1..15";
         }
-        must '(. <= (19 - ../nonce-length))' {
+        must '. <= (19 - ../nonce-length)' {
           error-message
             "Server ID and nonce lengths must sum to no more than 19.";
         }
@@ -1555,12 +1557,12 @@ module ietf-quic-lb {
           error-message
             "With dynamic SIDs, server ID length cannot exceed 7.";
         }
-        must '(../algorithm != 'block-cipher') or (. <= 12)) {
+        must '(../algorithm != "block-cipher") or (. <= 12)' {
           error-message
             "block-cipher requires server ID length <= 12.";
         }
-        must '(../algorithm != 'block-cipher') or
-                ((. + ../nonce_length) >= 16)' {
+        must '../algorithm != "block-cipher or
+                ((. + ../nonce-length) >= 16)' {
           error-message
             "For Block cipher, server ID length plus nonce length must be at
              least 16";
@@ -1670,28 +1672,24 @@ This summary of the YANG model uses the notation in {{?RFC8340}}.
 ~~~
 module: ietf-quic-lb
   +--rw quic-lb
-     +--rw cid-configs*
-     |       [config-rotation-bits]
+     +--rw cid-configs* [config-rotation-bits]
      |  +--rw config-rotation-bits             uint8
      |  +--rw first-octet-encodes-cid-length?  boolean
-     |  +--rw cid-key?                         yang:hex-string
+     |  +--rw cid-key?                         quic-lb-key
+     |  +--rw algorithm                        algorithm-tyype
      |  +--rw nonce-length                     uint8
-     |  +--rw dynamic-sid                      boolean
+     |  +--rw dynamic-sid?                     boolean
      |  +--rw server-id-length                 uint8
-     |  +--rw server-id-mappings*?
-     |  |       [server-id]
+     |  +--rw server-id-mappings* [server-id]
      |  |  +--rw server-id                     yang:hex-string
      |  |  +--rw server-address                inet:ip-address
      +--ro retry-service-config
-     |  +--rw supported-versions*
-     |  |  +--rw version                       uint32
-     |  +--rw unsupported-version-default      enumeration {allow deny}
-     |  +--rw version-exceptions*
-     |  |  +--rw version                       uint32
-     |  +--rw token-keys*?
-     |  |       [key-sequence-number]
+     |  +--rw supported-versions*              uint32
+     |  +--rw unsupported-version-default?     enumeration {allow deny}
+     |  +--rw version-exceptions*              uint32
+     |  +--rw token-keys*? [key-sequence-number]
      |  |  +--rw key-sequence-number           uint8
-     |  |  +--rw token-key                     yang:hex-string
+     |  |  +--rw token-key                     quic-lb-key
      |  |  +--rw token-iv                      yang:hex-string
 ~~~
 
