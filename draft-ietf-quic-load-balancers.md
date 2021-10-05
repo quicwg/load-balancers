@@ -1423,7 +1423,7 @@ module ietf-quic-lb {
           error-message
             "block-cipher requires server ID length <= 12.";
         }
-        must '../algorithm != "block-cipher or
+        must '(../algorithm != "block-cipher") or
                 ((. + ../nonce-length) >= 16)' {
           error-message
             "For Block cipher, server ID length plus nonce length must be at
@@ -1536,7 +1536,7 @@ module: ietf-quic-lb
      +--rw cid-configs* [config-rotation-bits]
      |  +--rw config-rotation-bits             uint8
      |  +--rw first-octet-encodes-cid-length?  boolean
-     |  +--rw cid-key?                         yang:hex-string
+     |  +--rw cid-key?                         quic-lb-key
      |  +--rw algorithm                        algorithm-tyype
      |  +--rw nonce-length                     uint8
      |  +--rw server-id-length                 uint8
@@ -1545,7 +1545,7 @@ module: ietf-quic-lb
      |  |  +--rw server-address                inet:ip-address
      +--ro retry-service-config
      |  +--rw supported-versions*              uint32
-     |  +--rw unsupported-version-default?     enumeration {allow deny}
+     |  +--rw unsupported-version-default?     enumeration
      |  +--rw version-exceptions*              uint32
      |  +--rw token-keys*? [key-sequence-number]
      |  |  +--rw key-sequence-number           uint8
