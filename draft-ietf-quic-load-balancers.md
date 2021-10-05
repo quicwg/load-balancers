@@ -307,9 +307,8 @@ accordance with the chosen routing algorithm.
 
 Load balancers SHOULD drop short header packets with unroutable DCIDs.
 
-The routing of long headers with unroutable DCIDs depends on the server ID
-allocation strategy, described in {{sid-allocation}}. However, the load balancer
-MUST NOT drop these packets, with one exception.
+When forwarding a packet with a long header and unroutable DCID, load
+balancers MUST use a fallback algorithm as specified in {{fallback-algorithm}}.
 
 Load balancers MAY drop packets with long headers and unroutable DCIDs if
 and only if it knows that the encoded QUIC version does not allow an unroutable
@@ -350,26 +349,20 @@ See also {{version-invariance}}.
 
 ## Server ID Allocation {#sid-allocation}
 
-For any given configuration, the configuration agent must specify if server IDs
-will be statically or dynamically allocated. Load Balancer configurations with
-statically allocated server IDs explicitly include a mapping of server IDs to
-forwarding addresses. The corresponding server configurations contain one or
+Load Balancer configurations include a mapping of server IDs to forwarding
+addresses. The corresponding server configurations contain one or
 more unique server IDs.
 
-A dynamically allocated configuration does not have a pre-defined assignment,
-reducing configuration complexity. However, it places limits on the maximum
-server ID length and requires more state at the load balancer. In certain edge
-cases, it can force parts of the system to fail over to 5-tuple routing for a
-short time.
-
-In either case, the configuration agent chooses a server ID length for each
-configuration that MUST be at least one octet. For Static Allocation, the
-maximum length depends on the algorithm. For dynamic allocation, the maximum
-length is 7 octets.
+The configuration agent chooses a server ID length for each configuration that
+MUST be at least one octet. 
 
 A QUIC-LB configuration MAY significantly over-provision the server ID space
 (i.e., provide far more codepoints than there are servers) to increase the
 probability that a randomly generated Destination Connection ID is unroutable.
+
+The configuration agent SHOULD provide a means for servers to express the
+number of server IDs it can usefully employ, because a single routing address
+actually corresponds to multiple server entities (see {{lb-chains}}).
 
 Conceptually, each configuration has its own set of server ID allocations,
 though two static configurations with identical server ID lengths MAY use a
@@ -378,120 +371,7 @@ common allocation between them.
 A server encodes one of its assigned server IDs in any CID it generates using
 the relevant configuration.
 
-### Static Allocation {#static-allocation}
-
-In the static allocation method, the configuration agent assigns at least one
-server ID to each server.
-
-When forwarding a packet with a long header and unroutable DCID, load
-balancers MUST forward packets with long headers and unroutable DCIDs
-using an fallback algorithm as specified in {{fallback-algorithm}}.
-
-### Dynamic Allocation
-
-In the dynamic allocation method, the load balancer assigns server IDs
-dynamically so that configuration does not require fixed server ID assignment.
-This reduces linkability and simplifies configuration. However, it also limits
-the length of the server ID and requires the load balancer to lie on the path
-of outbound packets. As the server mapping is no longer part of the
-configuration, standby load balancers need an out-of-band mechanism to
-synchronize server ID allocations in the event of failures of the primary
-device.
-
-To summarize, the load balancer forwards incoming Initial packets arbitrarily
-and both load balancer and server are sometimes able to infer a potential
-server ID allocation from the CID in the packet. The server can signal
-acceptance of that allocation by using it immediately, in which case both
-entities add it to their permanent table. Usually, however, the server will
-reject the allocation by not using it, in which case it is not added to the
-permanent assignment list.
-
-#### Configuration Agent Actions
-
-The configuration agent does not assign server IDs, but does configure a server
-ID length. The server ID MUST be at least one and no more than seven octets.
-See {{sid-limits}} for other considerations if also using the Plaintext CID
-algorithm.
-
-#### Load Balancer Actions
-
-The load balancer maintains a mapping of assigned server IDs to routing
-information for servers, initialized as empty. This mapping is independent for
-each operating configuration.
-
-Note that when the load balancer's tables for a configuration are empty, all
-incoming DCIDs corresponding to that configuration are unroutable by
-definition.
-
-The load balancer processes a long header packet as follows:
-
-* If the config rotation bits do not match a known configuration, the load
-balancer routes the packet using a fallback algorithm (see {{fallback-algorithm}}).
-It does not extract a server ID.
-
-* If there is a matching configuration, but the CID is not long enough to apply
-the algorithm, the load balancer pads the connection ID with zeros to the
-required length.
-
-* Otherwise, the load balancer extracts the server ID in accordance with the
-configured algorithm and parameters.
-
-If the load balancer extracted a server ID already in its mapping, it routes the
-packet accordingly. If the server ID is not in the mapping, it routes the packet
-according to a fallback algorithm and awaits the first long header the server
-sends in response.
-
-If the load balancer extracted an unassigned server ID and observes that the
-first long header packet the server sends has a Source Connection ID that
-encodes the same server ID, it adds that server ID to the mapping. Otherwise, it
-takes no action.
-
-#### Server actions
-
-Each server maintains a list of server IDs assigned to it, initialized empty.
-
-Upon receipt of a packet with a client-generated DCID, the server MUST follow
-these steps in order:
-
-* If the config rotation bits do not correspond to a known configuration, do not
-attempt to extract a server ID.
-
-* If the DCID is not long enough to decode using the configured algorithm, pad
-it with zeros to the required length and extract a server ID.
-
-* If the DCID is long enough to decode, extract the server ID.
-
-If the server ID is not already in its list, the server MUST decide whether or
-not to immediately use it to encode a CID on the new connection. If it chooses
-to use it, it adds the server ID to its list. If it does not, it MUST NOT use
-the server ID in future CIDs.
-
-The server SHOULD NOT use more than one CID, unless it is close to exhausting
-the nonces for an existing assignment. Note also that the load balancer may
-observe a single entity claiming multiple server IDs because that entity
-actually represents multiple servers devices or processors.
-
-The server MUST generate a new connection ID if the client-generated CID is of
-insufficient length for the configuration.
-
-The server then processes the packet normally.
-
-When a server needs a new connection ID, it uses one of the server IDs in its
-list to populate the server ID field of that CID. It MAY vary this selection
-to reduce linkability within a connection.
-
-After loading a new configuration, a server may not have any available SIDs.
-This is because an incoming packet may not contain the config rotation bits
-necessary to extract a server ID in accordance with the algorithm above. When
-required to generate a CID under these conditions, the server MUST generate
-CIDs using the 5-tuple routing codepoint (see {{config-failover}}. Note that
-these connections will not be robust to client address changes while they use
-this connection ID. For this reason, a server SHOULD retire these connection IDs
-and replace them with routable ones once it receives a client-generated CID that
-allows it to acquire a server ID. As, statistically, one in every four such CIDs
-can provide a server ID, this is typically a short interval.
-
-## CID format {#cid-format}
+## CID format
 
 All connection IDs use the following format:
 
@@ -1100,15 +980,14 @@ format.
 QUIC-LB requires common configuration to synchronize understanding of encodings
 and guarantee explicit consent of the server.
 
-The load balancer and server MUST agree on a routing algorithm, server ID
-allocation method, and the relevant parameters for that algorithm.
+The load balancer and server MUST agree on a routing algorithm and the relevant
+parameters for that algorithm.
 
 All algorithm configurations can have a server ID length, nonce length, and key.
 However, for Plaintext CID, there is no key.
 
-If server IDs are statically allocated, the load balancer MUST receive the full
-table of mappings, and each server must receive its assigned SID(s), from the
-configuration agent. 
+The load balancer MUST receive the full table of mappings, and each server must
+receive its assigned SID(s), from the configuration agent. 
 
 Note that server IDs are opaque bytes, not integers, so there is no notion of
 network order or host order.
@@ -1132,7 +1011,7 @@ the token key, and to be aware if a NAT sits between it and the servers.
 This section discusses considerations for some deployment scenarios not implied
 by the specification above.
 
-## Load balancer chains
+## Load balancer chains {#lb-chains}
 
 Some network architectures may have multiple tiers of low-state load balancers,
 where a first tier of devices makes a routing decision to the next tier, and so
@@ -1384,13 +1263,6 @@ be generated using a cryptographically secure pseudorandom number generator
 {{!RFC8446}}. With proper random numbers, if fewer than 2^40 tokens are
 generated with a single key, the risk of collisions is lower than 0.001%.
 
-## Resource Consumption of the SID table {#sid-limits}
-
-When using Dynamic SID allocation, the load balancer's SID table can be as
-large as 2^56 entries, which is prohibitively large. To constrain the size of
-this table, servers are encouraged to accept as few SIDs as possible, so that
-the remainder do not enter the load balancer's table.
-
 # IANA Considerations
 
 There are no IANA requirements.
@@ -1539,12 +1411,6 @@ module ietf-quic-lb {
            frequent configuration updates.";
       }
 
-      leaf dynamic-sid {
-        type boolean;
-        description
-          "If true, server IDs are allocated dynamically.";
-      }
-
       leaf server-id-length {
         type uint8 {
           range "1..15";
@@ -1553,15 +1419,11 @@ module ietf-quic-lb {
           error-message
             "Server ID and nonce lengths must sum to no more than 19.";
         }
-        must '(. <= 7) or not(../dynamic-sid)' {
-          error-message
-            "With dynamic SIDs, server ID length cannot exceed 7.";
-        }
         must '(../algorithm != "block-cipher") or (. <= 12)' {
           error-message
             "block-cipher requires server ID length <= 12.";
         }
-        must '../algorithm != "block-cipher or
+        must '(../algorithm != "block-cipher") or
                 ((. + ../nonce-length) >= 16)' {
           error-message
             "For Block cipher, server ID length plus nonce length must be at
@@ -1574,7 +1436,6 @@ module ietf-quic-lb {
       }
 
       list server-id-mappings {
-        when "not(../dynamic-sid)";
         key "server-id";
         description "Statically allocated Server IDs";
 
@@ -1678,14 +1539,13 @@ module: ietf-quic-lb
      |  +--rw cid-key?                         quic-lb-key
      |  +--rw algorithm                        algorithm-tyype
      |  +--rw nonce-length                     uint8
-     |  +--rw dynamic-sid?                     boolean
      |  +--rw server-id-length                 uint8
      |  +--rw server-id-mappings* [server-id]
      |  |  +--rw server-id                     yang:hex-string
      |  |  +--rw server-address                inet:ip-address
      +--ro retry-service-config
      |  +--rw supported-versions*              uint32
-     |  +--rw unsupported-version-default?     enumeration {allow deny}
+     |  +--rw unsupported-version-default?     enumeration
      |  +--rw version-exceptions*              uint32
      |  +--rw token-keys*? [key-sequence-number]
      |  |  +--rw key-sequence-number           uint8
@@ -1949,6 +1809,7 @@ useful input to this document.
 > publication of a final version of this document.
 
 ## since draft-ietf-quic-load-balancers-08
+- Eliminate Dynamic SID allocation
 - Eliminated server use bytes
 
 ## since draft-ietf-quic-load-balancers-07
