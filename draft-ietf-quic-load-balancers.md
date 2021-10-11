@@ -378,7 +378,7 @@ All connection IDs use the following format:
 ~~~
 QUIC-LB Connection ID {
     First Octet (8),
-    Server ID (..152-len(Nonce)),
+    Server ID (8..152-len(Nonce)),
     Nonce (32..152-len(Server ID),
 }
 ~~~
