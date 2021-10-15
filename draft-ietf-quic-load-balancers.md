@@ -439,7 +439,7 @@ nonce MUST appear to be random (see {{cid-entropy}}).
 
 The Stream Cipher CID algorithm provides cryptographic protection at the cost of
 additional per-packet processing at the load balancer to decrypt every incoming
-connection ID. The CID format is depicted below.
+connection ID.
 
 ### Configuration Agent Actions
 
