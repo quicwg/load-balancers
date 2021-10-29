@@ -354,7 +354,7 @@ addresses. The corresponding server configurations contain one or
 more unique server IDs.
 
 The configuration agent chooses a server ID length for each configuration that
-MUST be at least one octet. 
+MUST be at least one octet.
 
 A QUIC-LB configuration MAY significantly over-provision the server ID space
 (i.e., provide far more codepoints than there are servers) to increase the
@@ -439,56 +439,63 @@ nonce MUST appear to be random (see {{cid-entropy}}).
 
 The Stream Cipher CID algorithm provides cryptographic protection at the cost of
 additional per-packet processing at the load balancer to decrypt every incoming
-connection ID.
+connection ID. The encryption algorithm used in stream cipher is set
+to be AES-128-ECB{{?RFC3826}}, and all data to be encrypted MUST be padded
+according to the PKCS #7 standard{{?RFC2315}}.
 
 ### Configuration Agent Actions
 
 The nonce length MUST be no fewer than 4 octets.
 
-The configuration agent also selects an 16-octet AES-ECB key to use for
+The configuration agent also selects an 16-octet AES-128-ECB key to use for
 connection ID decryption.
 
 ### Load Balancer Actions {#stream-cipher-load-balancer-actions}
 
-Upon receipt of a QUIC packet, the load balancer extracts as many of the
-earliest octets from the destination connection ID as necessary to match the
-server ID. The nonce immediately follows.
+The format of connection ID from quic-lb perspective is as follows:
 
-The load balancer decrypts the nonce and the server ID using the following three
-pass algorithm:
+~~~
+Stream Cipher Connection ID {
+    First Octet (8),
+    Encrypted Server ID (len(Server ID)),
+    Encrypted nonce (len(Nonce),
+}
+~~~
+{: #stream-cipher-cid-format title="stream cipher CID Format"}
 
-* Pass 1:  The load balancer decrypts the server ID using 128-bit AES Electronic
-Codebook (ECB) mode, much like QUIC header protection. The encrypted nonce
-octets are zero-padded to 16 octets.  AES-ECB encrypts this encrypted nonce
-using its key to generate a mask which it applies to the encrypted server id.
-This provides an intermediate value of the server ID, referred to as server-id
-intermediate.
+Upon receipt of a QUIC packet, the load balancer extracts
+encrypted server ID and encrypted nonce through the CID and
+corresponding configuration. The decryption of nonce and the
+server ID is much like QUIC header protection{{?RFC9001}}, which
+encrypts some intermediate data as mask, and obtains the plaintext
+through xor operation on mask and ciphertext. The complete
+decryption process is explained in the following three pass algorithm:
 
-server_id_intermediate = encrypted_server_id ^ AES-ECB(key, padded-encrypted-nonce)
+* Pass 1: The load balancer encrypts the encrypted nonce as mask,
+and calculates an intermediate value of the server ID, referred to as
+server_id_intermediate.
 
-* Pass 2:  The load balancer decrypts the nonce octets using 128-bit AES
-ECB mode, using the server-id intermediate as "nonce" for this pass. The
-server-id intermediate octets are zero-padded to 16 octets.  AES-ECB encrypts
-this padded server-id intermediate using its key to generate a mask which it
-applies to the encrypted nonce. This provides the decrypted nonce value.
+~~~
+mask = AES-128-ECB(key, encrypted_nonce)
+server_id_intermediate = encrypted_server_id ^ mask[0..len(server_id)]
+~~~
 
-nonce = encrypted_nonce ^ AES-ECB(key, padded-server_id_intermediate)
+* Pass 2: The load balancer encrypts the server_id_intermediate
+as mask, and calculates nonce through the mask and encrypted nonce.
 
-* Pass 3:  The load balancer decrypts the server ID using 128-bit AES ECB mode.
-The nonce octets are zero-padded to 16 octets.  AES-ECB encrypts this nonce
-using its key to generate a mask which it applies to the intermediate server id.
-This provides the decrypted server ID.
+~~~
+mask = AES-128-ECB(key, server_id_intermediate)
+nonce = encrypted_nonce ^ mask[0..len(nonce)]
+~~~
 
-server_id = server_id_intermediate ^ AES-ECB(key, padded-nonce)
+* Pass 3:  The load balancer encrypts the nonce as mask, and
+calculates the plaintext server ID through the mask and the
+intermediate value of the server ID.
 
-For example, if the nonce length is 10 octets and the server ID length is 2
-octets, the connection ID can be as small as 13 octets.  The load balancer uses
-the the second through eleventh octets of the connection ID for the nonce,
-zero-pads it to 16 octets, uses xors the result with the twelfth and thirteenth
-octet. The result is padded with 14 octets of zeros and encrypted to obtain a
-mask that is xored with the nonce octets. Finally, the nonce octets are padded
-with six octets of zeros, encrypted, and the first two octets xored with the
-server ID octets to obtain the actual server ID.
+~~~
+mask = AES-128-ECB(key, nonce)
+server_id = server_id_intermediate ^ mask[0..len(server_id)]
+~~~
 
 This three-pass algorithm is a simplified version of the FFX algorithm, with
 the property that each encrypted nonce value depends on all server ID bits, and
@@ -778,7 +785,7 @@ The tokens are protected using AES128-GCM AEAD, as explained in
 {{token-protection-with-aead}}. All tokens, generated by either the server or
 retry service, MUST use the following format, which includes:
 
-- A 1 bit token type identifier. 
+- A 1 bit token type identifier.
 - A 7 bit token key identifier.
 - A 96 bit unique token number transmitted in clear text, but protected as part
 of the AEAD associated data.
@@ -987,7 +994,7 @@ All algorithm configurations can have a server ID length, nonce length, and key.
 However, for Plaintext CID, there is no key.
 
 The load balancer MUST receive the full table of mappings, and each server must
-receive its assigned SID(s), from the configuration agent. 
+receive its assigned SID(s), from the configuration agent.
 
 Note that server IDs are opaque bytes, not integers, so there is no notion of
 network order or host order.
