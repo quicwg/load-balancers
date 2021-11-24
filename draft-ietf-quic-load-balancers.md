@@ -507,7 +507,7 @@ its nonce octets, and its provided server ID into the server ID octets. See
 {{cid-entropy}} for nonce generation considerations.
 
 The server encrypts the server ID using exactly the algorithm as described in
-{{encrypted-short-cipher-load-balancer-actions}}, performing the three passes
+{{encrypted-short-load-balancer-actions}}, performing the three passes
 in reverse order.
 
 ## Encrypted Long CID Algorithm
