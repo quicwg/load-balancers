@@ -459,15 +459,16 @@ The server encrypts the server ID using the following four pass algorithm, which
 leverages 128-bit AES Electronic Codebook (ECB) mode, much like QUIC header
 protection.
 
+In the text below, ^ is the XOR function, || is concatenation, and "zeros" is of
+length equal to 15 octets minus the server ID length, so that the input to
+AES-ECB is 16 octets.
+
+The truncate() function takes the most significant octets of its argument, so that
+the XOR function operates on fields of the same length.
+
 1. Set server_id_0 to the server ID, and nonce_0 to the nonce.
 
 2. server_id_1 = server_id_0 ^ (truncate(AES-ECB(key, nonce_0 || 0x01)))
-
-where ^ is the XOR function, || is concatenation, and "zeros" is of equal to
-15 octets minus the server ID length, so that the input to AES-ECB is 16 octets.
-
-The truncate function takes the most significant octets of its argument, so that
-the XOR function operates on fields of the same length.
 
 3. nonce_1 = nonce_0 ^ truncate(AES-ECB(key, server_id_1 || zeros || 0x02))
 
