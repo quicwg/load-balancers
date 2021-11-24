@@ -466,17 +466,16 @@ AES-ECB is 16 octets.
 The truncate() function takes the most significant octets of its argument, so that
 the XOR function operates on fields of the same length.
 
-1. Set server_id_0 to the server ID, and nonce_0 to the nonce.
+First, set server_id_0 to the server ID, and nonce_0 to the nonce.
 
-2. server_id_1 = server_id_0 ^ (truncate(AES-ECB(key, nonce_0 || 0x01)))
+Then apply the following steps:
 
-3. nonce_1 = nonce_0 ^ truncate(AES-ECB(key, server_id_1 || zeros || 0x02))
+    server_id_1 = server_id_0 ^ (truncate(AES-ECB(key, nonce_0 || zeros || 0x01)))
+    nonce_1 = nonce_0 ^ truncate(AES-ECB(key, server_id_1 || zeros || 0x02))
+    server_id_2 = server_id_1 ^ (truncate(AES-ECB(key, nonce_1 || zeros || 0x03)))
+    nonce_2 = nonce_1 ^ (truncate(AES-ECB(key, server_id_2 || zeros || 0x04)))
 
-3. server_id_2 = server_id_1 ^ (truncate(AES-ECB(key, nonce_1 || 0x03)))
-
-4. nonce_2 = nonce_1 ^ (truncate(AES-ECB(key, server_id_2 || 0x04)))
-
-The encrypted CID is first_octet || server_id_2 || nonce_2.
+The encrypted CID is ```first_octet || server_id_2 || nonce_2```.
 
 ### Load Balancer Actions {#encrypted-short-load-balancer-actions}
 
@@ -487,16 +486,13 @@ server ID. The nonce immediately follows.
 The load balancer decrypts the nonce and the server ID using the reverse of the
 algorithm above.
 
-1. Set server_id_2 to the encrypted server ID octets, and nonce_2 to the
+First, set server_id_2 to the encrypted server ID octets, and nonce_2 to the
 encrypted nonce octets.
 
-2. nonce_1 = nonce_2 ^ truncate(AES-ECB(key, server_id_2 || zeros || 0x04))
-
-3. server_id_1 = server_id_2 ^ (truncate(AES-ECB(key, nonce_1 || 0x03)))
-
-4. nonce_0 = nonce_1 ^ (truncate(AES-ECB(key, server_id_1 || 0x02)))
-
-5. server_id_0 = server_id_1 ^ (truncate(AES-ECB(key, nonce_0 || 0x01)))
+    nonce_1 = nonce_2 ^ truncate(AES-ECB(key, server_id_2 || zeros || 0x04))
+    server_id_1 = server_id_2 ^ (truncate(AES-ECB(key, nonce_1 || zeros || 0x03)))
+    nonce_0 = nonce_1 ^ (truncate(AES-ECB(key, server_id_1 || zeros || 0x02)))
+    server_id_0 = server_id_1 ^ (truncate(AES-ECB(key, nonce_0 || zeros || 0x01)))
 
 server_id_0 is the server ID the load balancer uses for routing.
 
