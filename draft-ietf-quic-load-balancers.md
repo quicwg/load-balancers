@@ -435,11 +435,12 @@ When a server needs a new connection ID, it encodes one of its assigned server
 IDs in consecutive octets beginning with the second and chooses a nonce. This
 nonce MUST appear to be random (see {{cid-entropy}}).
 
-## Stream Cipher CID Algorithm {#stream-cipher-cid-algorithm}
+## Encrypted Short CID Algorithm {#encrypted-short-cid-algorithm}
 
-The Stream Cipher CID algorithm provides cryptographic protection at the cost of
-additional per-packet processing at the load balancer to decrypt every incoming
-connection ID.
+The Encrypted Short CID algorithm provides cryptographic protection at the cost
+of additional per-packet processing at the load balancer to decrypt every
+incoming connection ID, unless the load balancer maintains state for the
+routing information of any given 4-tuple.
 
 ### Configuration Agent Actions
 
@@ -448,7 +449,7 @@ The nonce length MUST be no fewer than 4 octets.
 The configuration agent also selects an 16-octet AES-ECB key to use for
 connection ID decryption.
 
-### Load Balancer Actions {#stream-cipher-load-balancer-actions}
+### Load Balancer Actions {#encrypted-short-load-balancer-actions}
 
 Upon receipt of a QUIC packet, the load balancer extracts as many of the
 earliest octets from the destination connection ID as necessary to match the
@@ -506,15 +507,15 @@ its nonce octets, and its provided server ID into the server ID octets. See
 {{cid-entropy}} for nonce generation considerations.
 
 The server encrypts the server ID using exactly the algorithm as described in
-{{stream-cipher-load-balancer-actions}}, performing the three passes
+{{encrypted-short-load-balancer-actions}}, performing the three passes
 in reverse order.
 
-## Block Cipher CID Algorithm
+## Encrypted Long CID Algorithm
 
-The Block Cipher CID Algorithm, by using a full 16 octets of plaintext and a
-128-bit cipher, provides higher cryptographic protection and detection of
-unroutable connection IDs. However, it also requires connection IDs of at
-least 17 octets, increasing overhead of client-to-server packets.
+The Encrypted Long CID Algorithm, by using a full 16 octets of plaintext and a
+128-bit cipher, protects the server ID with a single encryption pass. However,
+it also requires connection IDs of at least 17 octets, increasing overhead of
+client-to-server packets.
 
 ### Configuration Agent Actions
 
@@ -1110,9 +1111,8 @@ aggressively simulate migration to obtain a large sample of IDs that map to the
 same server. It could then apply analytical techniques to try to obtain the
 server encoding.
 
-The Stream and Block Cipher CID algorithms provide robust protection against
-any sort of linkage. The Plaintext CID algorithm makes no attempt to protect
-this encoding.
+The Encrypted CID algorithms provide robust protection against any sort of
+linkage. The Plaintext CID algorithm makes no attempt to protect this encoding.
 
 Were this analysis to obtain the server encoding, then on-path observers might
 apply this analysis to correlating different client IP addresses.
@@ -1198,9 +1198,9 @@ risk exposure of the QUIC-LB key. If two clients receive the same connection ID,
 they also have each other's stateless reset token unless that key has changed in
 the interim.
 
-The Stream Cipher and Block Cipher algorithms need to generate different cipher
-text for each generated Connection ID instance to protect the Server ID. To
-do so, at least four octets of the CID are reserved for a nonce that, if used
+The Encrypted Short and Encrypted Long algorithms need to generate different
+cipher text for each generated Connection ID instance to protect the Server ID.
+To do so, at least four octets of the CID are reserved for a nonce that, if used
 only once, will result in unique cipher text for each Connection ID.
 
 If servers simply increment the nonce by one with each generated connection ID,
@@ -1209,11 +1209,11 @@ exhausts the allocated space and rolls over to zero. Whether or not it
 implements this method, the server MUST NOT reuse a nonce until it switches to a
 configuration with new keys.
 
-Both the Plaintext CID and Block Cipher CID algorithms send parts of their nonce
-in plaintext. Servers MUST generate nonces so that the plaintext portion appears
-to be random. Observable correlations between plaintext nonces would provide
-trivial linkability between individual connections, rather than just to a common
-server.
+Both the Plaintext CID and Encrypted Long CID algorithms send parts of their
+nonce in plaintext. Servers MUST generate nonces so that the plaintext portion
+appears to be random. Observable correlations between plaintext nonces would
+provide trivial linkability between individual connections, rather than just to
+a common server.
 
 For any algorithm, configuration agents SHOULD implement an out-of-band method
 to discover when servers are in danger of exhausting their nonce space, and
@@ -1352,11 +1352,11 @@ module ietf-quic-lb {
         enum plaintext {
           description "Plaintext CID Algorithm";
         }
-        enum stream-cipher {
-           description "Stream Cipher CID Algorithm";
+        enum encrypted-short {
+           description "Encrypted Short CID Algorithm";
         }
-        enum block-cipher {
-          description "Block Cipher CID Algorithm";
+        enum encrypted-long {
+          description "Encrypted Long CID Algorithm";
         }
       }
     }
@@ -1419,14 +1419,14 @@ module ietf-quic-lb {
           error-message
             "Server ID and nonce lengths must sum to no more than 19.";
         }
-        must '(../algorithm != "block-cipher") or (. <= 12)' {
+        must '(../algorithm != "encrypted-long") or (. <= 12)' {
           error-message
-            "block-cipher requires server ID length <= 12.";
+            "encrypted-long requires server ID length <= 12.";
         }
-        must '(../algorithm != "block-cipher") or
+        must '(../algorithm != "encrypted-long") or
                 ((. + ../nonce-length) >= 16)' {
           error-message
-            "For Block cipher, server ID length plus nonce length must be at
+            "For Encrypted Long CIDs, server ID length plus nonce length must be at
              least 16";
         }
         mandatory true;
@@ -1582,13 +1582,13 @@ format.
 
 TBD
 
-## Stream Cipher Connection ID Algorithm
+## Encrypted Short Connection ID Algorithm
 
 In each case below, the server is using a plain text nonce value of zero.
 
 TBD
 
-## Block Cipher Connection ID Algorithm
+## Encrypted Long Connection ID Algorithm
 
 In each case below, the server is using a plain text nonce value of zero.
 
@@ -1721,6 +1721,10 @@ useful input to this document.
 
 > **RFC Editor's Note:**  Please remove this section prior to
 > publication of a final version of this document.
+
+## since draft-ietf-quic-load-balancers-09
+- Renamed "Stream Cipher" and "Block Cipher" to "Encrypted Short" and
+"Encrypted Long"
 
 ## since draft-ietf-quic-load-balancers-08
 - Eliminate Dynamic SID allocation
