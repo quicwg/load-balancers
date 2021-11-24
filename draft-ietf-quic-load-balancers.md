@@ -449,66 +449,55 @@ The nonce length MUST be no fewer than 4 octets.
 The configuration agent also selects an 16-octet AES-ECB key to use for
 connection ID decryption.
 
-### Load Balancer Actions {#encrypted-short-load-balancer-actions}
-
-Upon receipt of a QUIC packet, the load balancer extracts as many of the
-earliest octets from the destination connection ID as necessary to match the
-server ID. The nonce immediately follows.
-
-The load balancer decrypts the nonce and the server ID using the following three
-pass algorithm:
-
-* Pass 1:  The load balancer decrypts the server ID using 128-bit AES Electronic
-Codebook (ECB) mode, much like QUIC header protection. The encrypted nonce
-octets are zero-padded to 16 octets.  AES-ECB encrypts this encrypted nonce
-using its key to generate a mask which it applies to the encrypted server id.
-This provides an intermediate value of the server ID, referred to as server-id
-intermediate.
-
-server_id_intermediate = encrypted_server_id ^ AES-ECB(key, padded-encrypted-nonce)
-
-* Pass 2:  The load balancer decrypts the nonce octets using 128-bit AES
-ECB mode, using the server-id intermediate as "nonce" for this pass. The
-server-id intermediate octets are zero-padded to 16 octets.  AES-ECB encrypts
-this padded server-id intermediate using its key to generate a mask which it
-applies to the encrypted nonce. This provides the decrypted nonce value.
-
-nonce = encrypted_nonce ^ AES-ECB(key, padded-server_id_intermediate)
-
-* Pass 3:  The load balancer decrypts the server ID using 128-bit AES ECB mode.
-The nonce octets are zero-padded to 16 octets.  AES-ECB encrypts this nonce
-using its key to generate a mask which it applies to the intermediate server id.
-This provides the decrypted server ID.
-
-server_id = server_id_intermediate ^ AES-ECB(key, padded-nonce)
-
-For example, if the nonce length is 10 octets and the server ID length is 2
-octets, the connection ID can be as small as 13 octets.  The load balancer uses
-the the second through eleventh octets of the connection ID for the nonce,
-zero-pads it to 16 octets, uses xors the result with the twelfth and thirteenth
-octet. The result is padded with 14 octets of zeros and encrypted to obtain a
-mask that is xored with the nonce octets. Finally, the nonce octets are padded
-with six octets of zeros, encrypted, and the first two octets xored with the
-server ID octets to obtain the actual server ID.
-
-This three-pass algorithm is a simplified version of the FFX algorithm, with
-the property that each encrypted nonce value depends on all server ID bits, and
-each encrypted server ID bit depends on all nonce bits and all server ID bits.
-This mitigates attacks against stream ciphers in which attackers simply flip
-encrypted server-ID bits.
-
-The output of the decryption is the server ID that the load balancer uses for
-routing.
-
 ### Server Actions
 
 When generating a routable connection ID, the server writes arbitrary bits into
 its nonce octets, and its provided server ID into the server ID octets. See
 {{cid-entropy}} for nonce generation considerations.
 
-The server encrypts the server ID using exactly the algorithm as described in
-{{encrypted-short-load-balancer-actions}}, performing the three passes
-in reverse order.
+The server encrypts the server ID using the following four pass algorithm, which
+leverages 128-bit AES Electronic Codebook (ECB) mode, much like QUIC header
+protection.
+
+1. Set server_id_0 to the server ID, and nonce_0 to the nonce.
+
+2. server_id_1 = server_id_0 ^ (truncate(AES-ECB(key, nonce_0 || 0x01)))
+
+where ^ is the XOR function, || is concatenation, and "zeros" is of equal to
+15 octets minus the server ID length, so that the input to AES-ECB is 16 octets.
+
+The truncate function takes the most significant octets of its argument, so that
+the XOR function operates on fields of the same length.
+
+3. nonce_1 = nonce_0 ^ truncate(AES-ECB(key, server_id_1 || zeros || 0x02))
+
+3. server_id_2 = server_id_1 ^ (truncate(AES-ECB(key, nonce_1 || 0x03)))
+
+4. nonce_2 = nonce_1 ^ (truncate(AES-ECB(key, server_id_2 || 0x04)))
+
+The encrypted CID is first_octet || server_id_2 || nonce_2.
+
+### Load Balancer Actions {#encrypted-short-load-balancer-actions}
+
+Upon receipt of a QUIC packet, the load balancer extracts as many of the
+earliest octets from the destination connection ID as necessary to match the
+server ID. The nonce immediately follows.
+
+The load balancer decrypts the nonce and the server ID using the reverse of the
+algorithm above.
+
+1. Set server_id_2 to the encrypted server ID octets, and nonce_2 to the
+encrypted nonce octets.
+
+2. nonce_1 = nonce_2 ^ truncate(AES-ECB(key, server_id_2 || zeros || 0x04))
+
+3. server_id_1 = server_id_2 ^ (truncate(AES-ECB(key, nonce_1 || 0x03)))
+
+4. nonce_0 = nonce_1 ^ (truncate(AES-ECB(key, server_id_1 || 0x02)))
+
+5. server_id_0 = server_id_1 ^ (truncate(AES-ECB(key, nonce_0 || 0x01)))
+
+server_id_0 is the server ID the load balancer uses for routing.
 
 ## Encrypted Long CID Algorithm
 
