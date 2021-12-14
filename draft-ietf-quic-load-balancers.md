@@ -470,12 +470,19 @@ First, set server_id_0 to the server ID, and nonce_0 to the nonce.
 
 Then apply the following steps:
 
-    server_id_1 = server_id_0 ^ (truncate(AES-ECB(key, nonce_0 || zeros || 0x01)))
-    nonce_1 = nonce_0 ^ truncate(AES-ECB(key, server_id_1 || zeros || 0x02))
-    server_id_2 = server_id_1 ^ (truncate(AES-ECB(key, nonce_1 || zeros || 0x03)))
-    nonce_2 = nonce_1 ^ (truncate(AES-ECB(key, server_id_2 || zeros || 0x04)))
+```
+    nonce_1 = nonce_0 ^ truncate(AES-ECB(key, server_id_0 || zeros || 0x01))
+    server_id_1 = server_id_0 ^ (truncate(AES-ECB(key, nonce_1 || zeros || 0x02)))
+    nonce_2 = nonce_1 ^ (truncate(AES-ECB(key, server_id_1 || zeros || 0x03)))
+    server_id_2 = server_id_1 ^ (truncate(AES-ECB(key, nonce_2 || zeros || 0x04)))
+```
 
 The encrypted CID is ```first_octet || server_id_2 || nonce_2```.
+
+For example, let server_id_0 be 0xfd11. Then the plaintext sent to the AES-ECB
+function in the first step is
+
+0xfd110000000000000000000000000001.
 
 ### Load Balancer Actions {#encrypted-short-load-balancer-actions}
 
@@ -489,12 +496,14 @@ algorithm above.
 First, set server_id_2 to the encrypted server ID octets, and nonce_2 to the
 encrypted nonce octets.
 
-    nonce_1 = nonce_2 ^ truncate(AES-ECB(key, server_id_2 || zeros || 0x04))
-    server_id_1 = server_id_2 ^ (truncate(AES-ECB(key, nonce_1 || zeros || 0x03)))
-    nonce_0 = nonce_1 ^ (truncate(AES-ECB(key, server_id_1 || zeros || 0x02)))
-    server_id_0 = server_id_1 ^ (truncate(AES-ECB(key, nonce_0 || zeros || 0x01)))
+```
+    server_id_1 = server_id_2 ^ (truncate(AES-ECB(key, nonce_2 || zeros || 0x04)))
+    nonce_1 = nonce_2 ^ truncate(AES-ECB(key, server_id_1 || zeros || 0x03))
+    server_id_0 = server_id_1 ^ (truncate(AES-ECB(key, nonce_1 || zeros || 0x02)))
+```
 
-server_id_0 is the server ID the load balancer uses for routing.
+server_id_0 is the server ID the load balancer uses for routing. The load balancer
+has no use for nonce_0, and therefore can skip the last pass.
 
 ## Encrypted Long CID Algorithm
 
