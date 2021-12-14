@@ -1795,13 +1795,10 @@ the applicability of this section to future versions of DTLS.
 
 # Acknowledgments
 
-The authors would like to thank Christian Huitema and Ian Swett for their major
-design contributions.
-
 Manasi Deval, Erik Fuller, Toma Gavrichenkov, Jana Iyengar, Subodh Iyengar,
-Ladislav Lhotka, Jan Lindblad, Ling Tao Nju, Kazuho Oku, Udip Pant, Martin
-Thomson, Dmitri Tikhonov, Victor Vasiliev, and William Zeng Ke all provided
-useful input to this document.
+Ladislav Lhotka, Jan Lindblad, Ling Tao Nju, Ilari Liusvaara, Kazuho Oku, Udip
+Pant, Ian Swett, Martin Thomson, Dmitri Tikhonov, Victor Vasiliev, and William
+Zeng Ke all provided useful input to this document.
 
 # Change Log
 
