@@ -1811,6 +1811,8 @@ useful input to this document.
 ## since draft-ietf-quic-load-balancers-09
 - Renamed "Stream Cipher" and "Block Cipher" to "Encrypted Short" and
 "Encrypted Long"
+- Changed "Encrypted Short" to a 4-pass algorithm.
+- Recommended a random initial nonce for encrypted short.
 
 ## since draft-ietf-quic-load-balancers-08
 - Eliminate Dynamic SID allocation
