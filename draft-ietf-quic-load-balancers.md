@@ -457,6 +457,10 @@ When generating a routable connection ID, the server writes arbitrary bits into
 its nonce octets, and its provided server ID into the server ID octets. See
 {{cid-entropy}} for nonce generation considerations.
 
+If the server simply increments the nonce each time it has to generate a server
+ID, this simplifies avoidance of using the same nonce twice. However, in such a
+case the server SHOULD pick a random nonce from which to start counting from.
+
 The server encrypts the server ID using the following four pass algorithm, which
 leverages 128-bit AES Electronic Codebook (ECB) mode, much like QUIC header
 protection.
