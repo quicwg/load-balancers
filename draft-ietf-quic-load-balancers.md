@@ -444,7 +444,9 @@ routing information of any given 4-tuple.
 
 ### Configuration Agent Actions
 
-The nonce length MUST be no fewer than 4 octets.
+The nonce length MUST be no fewer than 4 octets. The nonce SHOULD be at least as
+long as the server ID in order to save the load balancer an encryption pass; see
+below.
 
 The configuration agent also selects an 16-octet AES-ECB key to use for
 connection ID decryption.
@@ -459,30 +461,106 @@ The server encrypts the server ID using the following four pass algorithm, which
 leverages 128-bit AES Electronic Codebook (ECB) mode, much like QUIC header
 protection.
 
-In the text below, ^ is the XOR function, || is concatenation, and "zeros" is of
-length equal to 15 octets minus the server ID length, so that the input to
-AES-ECB is 16 octets.
+In the text below, ^ is the XOR function and || is concatenation. The truncate()
+function takes the most significant octets of its argument, so that the XOR
+function operates on fields of the same length. The expand() function outputs
+16 octets, with its first argument in the most significant bits, its second
+argument in the least significant bits, and zeros in all other positions. Thus,
 
-The truncate() function takes the most significant octets of its argument, so that
-the XOR function operates on fields of the same length.
+~~~pseudocode
+expand(0xaaba3c, 0x13) = 0xaaba3c00000000000000000000000013
+~~~
 
-First, set server_id_0 to the server ID, and nonce_0 to the nonce.
+The example at the end of this section helps to clarify the steps described
+below.
 
-Then apply the following steps:
+1. The server concatenates the server ID and nonce to create plaintext_CID.
 
-```
-    nonce_1 = nonce_0 ^ truncate(AES-ECB(key, server_id_0 || zeros || 0x01))
-    server_id_1 = server_id_0 ^ (truncate(AES-ECB(key, nonce_1 || zeros || 0x02)))
-    nonce_2 = nonce_1 ^ (truncate(AES-ECB(key, server_id_1 || zeros || 0x03)))
-    server_id_2 = server_id_1 ^ (truncate(AES-ECB(key, nonce_2 || zeros || 0x04)))
-```
+2. The server splits plaintext_CID into components left_0 and right_0 of equal
+length, splitting an odd octet in half if necessary.
 
-The encrypted CID is ```first_octet || server_id_2 || nonce_2```.
+3. Encrypt left_0. The encryption is 128-bit AES-ECB with the key provided by
+the configuration agent, and the plaintext argument is an expanded version of
+left_0 where left_0 constitutes the most significant bits, 0x01 is the least
+significant octet, and all other bits are zero.
 
-For example, let server_id_0 be 0xfd11. Then the plaintext sent to the AES-ECB
-function in the first step is
+4. XOR the most significant bits of the ciphertext with right_0 to form
+right_1.
 
-0xfd110000000000000000000000000001.
+    Thus steps 3 and 4 can be expressed as
+
+    ```
+    right_1 = right_0 ^ truncate(AES_ECB(key, expand(left_0, 0x01))
+    ```
+
+5. Repeat steps 3 and 4, but use them to compute left_1 by expanding and
+encrypting right_1 with the least significant octet as 0x02 and XOR the
+results with left_0.
+
+    ```
+    left_1 = left_0 ^ truncate(AES_ECB(key, expand(right_1), 0x02))
+    ```
+
+6. Repeat steps 3 and 4, but use them to compute right_2 by expanding and
+encrypting left_1 with the least significant octet as 0x03 and XOR the
+results with right_1.
+
+    ```
+    right_2 = right_1 ^ truncate(AES_ECB(key, expand(left_1, 0x03))
+    ```
+
+7. Repeat steps 3 and 4, but use them to compute left_2 by expanding and
+encrypting right_2 with the least significant octet as 0x04 and XOR the
+results with left_1.
+
+    ```
+    left_2 = left_1 ^ truncate(AES_ECB(key, expand(right_2), 0x04))
+    ```
+
+8. The server concatenates left_2 with right_2 to form the ciphertext CID,
+which it appends to the first octet.
+
+The following example executes the steps for the provided inputs. Note that the
+plaintext is of odd octet length, so the middle octet will be split evenly
+left_0 and right_0.
+
+~~~pseudocode
+server_id = 0x3144a
+nonce = 0x9c69c275
+key = 0xfdf726a9893ec05c0632d30z6680baf0
+
+// step 1
+plaintext_CID = 0x31441a9c69c275
+
+// step 2
+left_0 = 0x31441a9
+right_0 = 0xc69c275
+
+// step 3
+aes_input = 0x31441a90000000000000000000000001
+ciphertext = 0xdea73834473e88afee51be7f6bdff0e7
+
+// step 4
+right_1 = 0xc69c275 ^ 0xdea7383 = 0x183b1f6
+
+// step 5
+aes_input = 0x183b1f60000000000000000000000002
+aes_output = 0x15ab4a6f252c0283a0446c74c3f98860
+left_1 = 0x31441a9 ^ 0x15ab4a6 = 0x24ef50f
+
+// step 6
+AES input = 0x24ef50f0000000000000000000000003
+AES output = 0xbeaca161e903ebb97cfda599a29ad8ff
+right_2 = 0x183b1f6 ^ 0xbeaca16 = 0xa697be0
+
+// step 7
+AES input: = 0xa697be00000000000000000000000004
+AES output = 0x13ea04a5e3c707bf197e8fcbcd43ef98
+left_2 = 0x24ef50f ^ 0x13ea04a = 0x3705545
+
+// step 8
+cid = first_octet || left_2 || right_2 = 0x073705545a697be0
+~~~
 
 ### Load Balancer Actions {#encrypted-short-load-balancer-actions}
 
@@ -493,17 +571,26 @@ server ID. The nonce immediately follows.
 The load balancer decrypts the nonce and the server ID using the reverse of the
 algorithm above.
 
-First, set server_id_2 to the encrypted server ID octets, and nonce_2 to the
-encrypted nonce octets.
+First, split the ciphertext CID (excluding the first octet) into its equal-
+length components left_2 and right_2. Then follow the process below:
+
+~~~psuedocode
+left_1 = left_2 ^ truncate(AES_ECB(key, expand(right_2), 0x04))
+right_1 = right_2 ^ truncate(AES_ECB(key, expand(left_1, 0x03))
+left_0 = left_1 ^ truncate(AES_ECB(key, expand(right_1), 0x02))
+~~~
+
+As the load balancer has no need for the nonce, it can conclude after 3 passes
+as long as the server ID is entirely contained in left_0 (i.e., the nonce is at
+least as large as the server ID). If the server ID is longer, a fourth pass
+is necessary:
 
 ```
-    server_id_1 = server_id_2 ^ (truncate(AES-ECB(key, nonce_2 || zeros || 0x04)))
-    nonce_1 = nonce_2 ^ truncate(AES-ECB(key, server_id_1 || zeros || 0x03))
-    server_id_0 = server_id_1 ^ (truncate(AES-ECB(key, nonce_1 || zeros || 0x02)))
+right_0 = right_1 ^ truncate(AES_ECB(key, expand(left_0, 0x01)))
 ```
 
-server_id_0 is the server ID the load balancer uses for routing. The load balancer
-has no use for nonce_0, and therefore can skip the last pass.
+and the load balancer has to concatenate left_0 and right_0 to obtain the
+complete server ID.
 
 ## Encrypted Long CID Algorithm
 
