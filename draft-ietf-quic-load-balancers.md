@@ -303,7 +303,11 @@ configuration. Note: a packet with a DCID that indicates 5-tuple routing (see
 All other DCIDs are routable.
 
 Load balancers MUST forward packets with routable DCIDs to a server in
-accordance with the chosen routing algorithm.
+accordance with the chosen routing algorithm. Exception: if the load balancer
+can parse the QUIC packet and makes a routing decision in according with the
+contents (e.g., the SNI in a TLS client hello), it MAY route in accordance with
+this instead. However, load balancers MUST always route long header packets it
+cannot parse in accordance with the DCID.
 
 Load balancers SHOULD drop short header packets with unroutable DCIDs.
 
@@ -1166,7 +1170,12 @@ Some load balancers might inspect elements of the Server Name Indication (SNI)
 extension in the TLS Client Hello to make a routing decision. Note that the
 format and cryptographic protection of this information may change in future
 versions or extensions of TLS or QUIC, and therefore this functionality is
-inherently not version-invariant.
+inherently not version-invariant. See also {{unroutable}} for other
+considerations about this case. Note that an SNI-aware load balancer, faced with
+an unknown QUIC version, might misdirect initial packets to the wrong tenant.
+While inefficient, this preserves the ability for tenants to deploy new versions
+provided they have an out-of-band means of providing a connection ID for the
+client to use.
 
 # Security Considerations {#security-considerations}
 
@@ -1810,7 +1819,8 @@ Zeng Ke all provided useful input to this document.
 - Renamed "Stream Cipher" and "Block Cipher" to "Encrypted Short" and
 "Encrypted Long"
 - Changed "Encrypted Short" to a 4-pass algorithm.
-- Recommended a random initial nonce for encrypted short.
+- Recommended a random initial nonce when incrementing.
+- Clarified what SNI LBs should do with unknown QUIC versions.
 
 ## since draft-ietf-quic-load-balancers-08
 - Eliminate Dynamic SID allocation
