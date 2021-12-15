@@ -626,9 +626,9 @@ in {{cid-entropy}}.
 
 # Per-connection state
 
-QUIC-LB is designed to require no per-connection state at the load balancer. The
-load balancer can extract the server ID from the connection ID of each incoming
-packet and route that packet accordingly.
+QUIC-LB requires no per-connection state at the load balancer. The load balancer
+can extract the server ID from the connection ID of each incoming packet and
+route that packet accordingly.
 
 However, once the routing decision has been made, the load balancer MAY
 associate the 4-tuple with the decision. This has two advantages:
@@ -641,15 +641,18 @@ correct origin server.
 
 In addition to the increased state requirements, however, load balancers cannot
 detect the CONNECTION_CLOSE frame to indicate the end of the connection, so they
-rely on a timeout to delete connection state. In the event a connection ends,
-freeing an IP and port, and a different connection migrates to that IP and port
-before the timeout, the load balancer will misroute the different connection's
-packets to the original server.
+rely on a timeout to delete connection state. There are numerous considerations
+around setting such a timeout.
 
-A short timeout limits the likelihood of such a misrouting. If the load
-balancer prematurely deletes its state, the routing is easily recoverable by
-decoding an incoming Connection ID. However, a short timeout also reduces the
-chance that an incoming Stateless Reset is correctly routed.
+In the event a connection ends, freeing an IP and port, and a different
+connection migrates to that IP and port before the timeout, the load balancer
+will misroute the different connection's packets to the original server. A short
+timeout limits the likelihood of such a misrouting.
+
+Furthermore, if a short timeout causes premature deletion of state, the routing
+is easily recoverable by decoding an incoming Connection ID. However, a short
+timeout also reduces the chance that an incoming Stateless Reset is correctly
+routed.
 
 Servers MAY implement the technique described in Section 14.4.1 of {{RFC9000}}
 in case the load balancer is stateless, to increase the likelihood a Source
