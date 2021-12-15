@@ -457,10 +457,6 @@ When generating a routable connection ID, the server writes arbitrary bits into
 its nonce octets, and its provided server ID into the server ID octets. See
 {{cid-entropy}} for nonce generation considerations.
 
-If the server simply increments the nonce each time it has to generate a server
-ID, this simplifies avoidance of using the same nonce twice. However, in such a
-case the server SHOULD pick a random nonce from which to start counting from.
-
 The server encrypts the server ID using the following four pass algorithm, which
 leverages 128-bit AES Electronic Codebook (ECB) mode, much like QUIC header
 protection.
@@ -481,7 +477,9 @@ below.
 1. The server concatenates the server ID and nonce to create plaintext_CID.
 
 2. The server splits plaintext_CID into components left_0 and right_0 of equal
-length, splitting an odd octet in half if necessary.
+length, splitting an odd octet in half if necessary. For example,
+0x7040b81b55ccf3 would split into a left_0 of 0x7040b81 and right_0 of
+0xb55ccf3.
 
 3. Encrypt left_0. The encryption is 128-bit AES-ECB with the key provided by
 the configuration agent, and the plaintext argument is an expanded version of
@@ -578,7 +576,7 @@ algorithm above.
 First, split the ciphertext CID (excluding the first octet) into its equal-
 length components left_2 and right_2. Then follow the process below:
 
-~~~psuedocode
+~~~pseudocode
 left_1 = left_2 ^ truncate(AES_ECB(key, expand(right_2), 0x04))
 right_1 = right_2 ^ truncate(AES_ECB(key, expand(left_1, 0x03))
 left_0 = left_1 ^ truncate(AES_ECB(key, expand(right_1), 0x02))
@@ -1291,9 +1289,12 @@ only once, will result in unique cipher text for each Connection ID.
 
 If servers simply increment the nonce by one with each generated connection ID,
 then it is safe to use the existing keys until any server's nonce counter
-exhausts the allocated space and rolls over to zero. Whether or not it
-implements this method, the server MUST NOT reuse a nonce until it switches to a
-configuration with new keys.
+exhausts the allocated space and rolls over. To maximize entropy, servers SHOULD
+start with a random nonce value, in which case the configuration is usable until
+the nonce value wraps around to zero and then reaches the initial value again.
+
+Whether or not it implements the counter method, the server MUST NOT reuse a
+nonce until it switches to a configuration with new keys.
 
 Both the Plaintext CID and Encrypted Long CID algorithms send parts of their
 nonce in plaintext. Servers MUST generate nonces so that the plaintext portion
