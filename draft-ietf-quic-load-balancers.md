@@ -304,10 +304,10 @@ All other DCIDs are routable.
 
 Load balancers MUST forward packets with routable DCIDs to a server in
 accordance with the chosen routing algorithm. Exception: if the load balancer
-can parse the QUIC packet and makes a routing decision in according with the
+can parse the QUIC packet and makes a routing decision depending on the
 contents (e.g., the SNI in a TLS client hello), it MAY route in accordance with
 this instead. However, load balancers MUST always route long header packets it
-cannot parse in accordance with the DCID.
+cannot parse in accordance with the DCID (see {{version-invariance}}).
 
 Load balancers SHOULD drop short header packets with unroutable DCIDs.
 
