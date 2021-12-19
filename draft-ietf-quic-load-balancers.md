@@ -624,24 +624,42 @@ The server encrypts both its server ID and enough octets in a nonce to form a
 in the nonce are transmitted as plaintext, and should consider the constraints
 in {{cid-entropy}}.
 
-# ICMP Processing
+# Per-connection state
 
-For protocols where 4-tuple load balancing is sufficient, it is straightforward
-to deliver ICMP packets from the network to the correct server, by reading the
-echoed IP and transport-layer headers to obtain the 4-tuple. When routing is
-based on connection ID, further measures are required, as most QUIC packets that
-trigger ICMP responses will only contain a client-generated connection ID that
-contains no routing information.
+QUIC-LB requires no per-connection state at the load balancer. The load balancer
+can extract the server ID from the connection ID of each incoming packet and
+route that packet accordingly.
 
-To solve this problem, load balancers MAY maintain a mapping of Client IP and
-port to server ID based on recently observed packets.
+However, once the routing decision has been made, the load balancer MAY
+associate the 4-tuple with the decision. This has two advantages:
 
-Alternatively, servers MAY implement the technique described in Section 14.4.1
-of {{RFC9000}} to increase the likelihood a Source Connection ID is included in
-ICMP responses to Path Maximum Transmission Unit (PMTU) probes.  Load balancers
-MAY parse the echoed packet to extract the Source Connection ID, if it contains
-a QUIC long header, and extract the Server ID as if it were in a Destination
-CID.
+* The load balancer only extracts the server ID once per incoming 4-tuple. When
+the CID is encrypted, this substantially reduces computational load.
+
+* Incoming Stateless Reset packets and ICMP messages are easily routed to the
+correct origin server.
+
+In addition to the increased state requirements, however, load balancers cannot
+detect the CONNECTION_CLOSE frame to indicate the end of the connection, so they
+rely on a timeout to delete connection state. There are numerous considerations
+around setting such a timeout.
+
+In the event a connection ends, freeing an IP and port, and a different
+connection migrates to that IP and port before the timeout, the load balancer
+will misroute the different connection's packets to the original server. A short
+timeout limits the likelihood of such a misrouting.
+
+Furthermore, if a short timeout causes premature deletion of state, the routing
+is easily recoverable by decoding an incoming Connection ID. However, a short
+timeout also reduces the chance that an incoming Stateless Reset is correctly
+routed.
+
+Servers MAY implement the technique described in Section 14.4.1 of {{RFC9000}}
+in case the load balancer is stateless, to increase the likelihood a Source
+Connection ID is included in ICMP responses to Path Maximum Transmission Unit
+(PMTU) probes.  Load balancers MAY parse the echoed packet to extract the Source
+Connection ID, if it contains a QUIC long header, and extract the Server ID as
+if it were in a Destination CID.
 
 # Retry Service {#retry-offload}
 
@@ -1809,6 +1827,7 @@ Zeng Ke all provided useful input to this document.
 ## since draft-ietf-quic-load-balancers-09
 - Renamed "Stream Cipher" and "Block Cipher" to "Encrypted Short" and
 "Encrypted Long"
+- Added section on per-connection state
 - Changed "Encrypted Short" to a 4-pass algorithm.
 - Recommended a random initial nonce for encrypted short.
 
