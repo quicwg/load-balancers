@@ -15,7 +15,7 @@ author:
   -
     ins: M. Duke
     name: Martin Duke
-    org: F5 Networks, Inc.
+    org: Google
     email: martin.h.duke@gmail.com
 
   -
@@ -23,6 +23,12 @@ author:
     name: Nick Banks
     org: Microsoft
     email: nibanks@microsoft.com
+
+  -
+    ins: C. Huitema
+    name: Christian Huitema
+    org: Private Octopus Inc.
+    email: huitema@huitema.net
 
 normative:
 
