@@ -398,6 +398,11 @@ QUIC-LB Connection ID {
 
 ## Configuration Agent Actions
 
+The configuration agent assigns a server ID to every server in its pool in
+accordance with {{sid-allocation}}, and determines a server ID length (in
+octets) sufficiently large to encode all server IDs, including potential future
+servers.
+
 Each configuration specifies the length of the Server ID and Nonce fields, with
 limits defined for each algorithm.
 
@@ -410,11 +415,6 @@ least 1 octet.
 
 As QUIC version 1 limits connection IDs to 20 octets, the server ID and nonce
 lengths MUST sum to 19 octets or less.
-
-The configuration agent assigns a server ID to every server in its pool in
-accordance with {{sid-allocation}}, and determines a server ID length (in
-octets) sufficiently large to encode all server IDs, including potential future
-servers.
 
 ## Server Actions
 
@@ -430,10 +430,9 @@ specified in that version of QUIC, for its own use. These bytes MUST NOT
 provide observers with any information that could link two connection IDs to
 the same connection, client, or server. In particular, all servers using a
 configuration MUST consistently add the same length to each connection ID,
-this would compromise the linkability objectives of QUIC-LB. Any additional
-bytes SHOULD appear random unless individual servers are not distinguishable
-(e.g. any server using that configuration appends identical bytes to every
-connection ID).
+to preserve the linkability objectives of QUIC-LB. Any additional bytes SHOULD
+appear random unless individual servers are not distinguishable (e.g. any server
+using that configuration appends identical bytes to every connection ID).
 
 If there is no key in the configuration, the Connection ID is complete.
 Otherwise, there are further steps, as described in the two following
@@ -452,6 +451,9 @@ first form an AES-ECB block. This block is encrypted once, and the result forms
 the second through seventeenth most significant bytes of the connection ID.
 
 ### General Case: Four-Pass Encryption
+
+Any other field length requires four passes for encryption and at least three
+for decryption.
 
 In the text below, ^ is the XOR function and || is concatenation.
 
@@ -1070,11 +1072,9 @@ format.
 QUIC-LB requires common configuration to synchronize understanding of encodings
 and guarantee explicit consent of the server.
 
-The load balancer and server MUST agree on a routing algorithm and the relevant
-parameters for that algorithm.
-
-All algorithm configurations can have a server ID length, nonce length, and key.
-However, for Plaintext CID, there is no key.
+The load balancer and server MUST agree on the connection ID encoding
+parameters, which include the server ID length and nonce length. A key is
+optional.
 
 The load balancer MUST receive the full table of mappings, and each server must
 receive its assigned SID(s), from the configuration agent.
@@ -1183,15 +1183,15 @@ client to use.
 QUIC-LB is intended to prevent linkability.  Attacks would therefore attempt to
 subvert this purpose.
 
-Note that the Plaintext CID algorithm makes no attempt to obscure the server
-mapping, and therefore does not address these concerns. It exists to allow
-consistent CID encoding for compatibility across a network infrastructure, which
-makes QUIC robust to NAT rebinding. Servers that are running the Plaintext CID
-algorithm SHOULD only use it to generate new CIDs for the Server Initial Packet
-and SHOULD NOT send CIDs in QUIC NEW_CONNECTION_ID frames, except that it sends
-one new Connection ID in the event of config rotation {{config-rotation}}.
-Doing so might falsely suggest to the client that said CIDs were generated in a
-secure fashion.
+Note that without a key for the encoding, QUIC-LB makes no attempt to obscure
+the server mapping, and therefore does not address these concerns. Without a
+key, QUIC-LB merely allows consistent CID encoding for compatibility across a'
+network infrastructure, which makes QUIC robust to NAT rebinding. Servers that
+are encoding their server ID without a key algorithm SHOULD only use it to
+generate new CIDs for the Server Initial Packet and SHOULD NOT send CIDs in QUIC
+NEW_CONNECTION_ID frames, except that it sends one new Connection ID in the
+event of config rotation {{config-rotation}}. Doing so might falsely suggest to
+the client that said CIDs were generated in a secure fashion.
 
 A linkability attack would find some means of determining that two connection
 IDs route to the same server. As described above, there is no scheme that
@@ -1205,8 +1205,8 @@ aggressively simulate migration to obtain a large sample of IDs that map to the
 same server. It could then apply analytical techniques to try to obtain the
 server encoding.
 
-The Encrypted CID algorithms provide robust protection against any sort of
-linkage. The Plaintext CID algorithm makes no attempt to protect this encoding.
+An encrypted encoding provides robust protection against this. An unencrypted
+one provides none.
 
 Were this analysis to obtain the server encoding, then on-path observers might
 apply this analysis to correlating different client IP addresses.
@@ -1292,10 +1292,10 @@ risk exposure of the QUIC-LB key. If two clients receive the same connection ID,
 they also have each other's stateless reset token unless that key has changed in
 the interim.
 
-The Encrypted Short and Encrypted Long algorithms need to generate different
-cipher text for each generated Connection ID instance to protect the Server ID.
-To do so, at least four octets of the CID are reserved for a nonce that, if used
-only once, will result in unique cipher text for each Connection ID.
+The encrypte mode needs to generate different cipher text for each generated
+Connection ID instance to protect the Server ID. To do so, at least four octets
+of the CID are reserved for a nonce that, if used only once, will result in
+unique cipher text for each Connection ID.
 
 If servers simply increment the nonce by one with each generated connection ID,
 then it is safe to use the existing keys until any server's nonce counter
@@ -1306,9 +1306,8 @@ the nonce value wraps around to zero and then reaches the initial value again.
 Whether or not it implements the counter method, the server MUST NOT reuse a
 nonce until it switches to a configuration with new keys.
 
-Both the Plaintext CID and Encrypted Long CID algorithms send parts of their
-nonce in plaintext. Servers MUST generate nonces so that the plaintext portion
-appears to be random. Observable correlations between plaintext nonces would
+If the nonce is sent in plaintext, servers MUST generate nonces so that they
+appear to be random. Observable correlations between plaintext nonces would
 provide trivial linkability between individual connections, rather than just to
 a common server.
 
@@ -1469,8 +1468,7 @@ module ietf-quic-lb {
       leaf cid-key {
         type quic-lb-key;
         description
-          "Key for encrypting the connection ID. If absent, the
-           configuration uses the Plaintext algorithm.";
+          "Key for encrypting the connection ID.";
       }
 
       leaf nonce-length {
