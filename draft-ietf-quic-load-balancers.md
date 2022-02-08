@@ -1153,10 +1153,6 @@ trips in the connection.
 * While the client is using DCIDs it generated, some exposed fields (IP address,
 UDP port, client-generated destination Connection ID) remain constant for all
 packets sent on the same connection.
-* Dynamic server ID allocation is dependent on client-generated Destination CIDs
-in Initial Packets being at least 8 octets in length. If they are not, the load
-balancer may not be able to extract a valid server ID to add to its table.
-Configuring a shorter server ID length can increase robustness to a change.
 
 While this document does not update the commitments in {{RFC8999}}, the
 additional assumptions are minimal and narrowly scoped, and provide a likely
