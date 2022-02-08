@@ -453,7 +453,9 @@ the second through seventeenth most significant bytes of the connection ID.
 ### General Case: Four-Pass Encryption
 
 Any other field length requires four passes for encryption and at least three
-for decryption.
+for decryption. To understand this algorithm, it is useful to define four 
+functions that minimize the amount of bit-shifting necessary in the event that
+there are an odd number of octets.
 
 The expand_left() function outputs 16 octets, with its first argument in the
 most significant bits, its second argument in the least significant byte, and
