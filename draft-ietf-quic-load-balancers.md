@@ -381,6 +381,8 @@ common allocation between them.
 A server encodes one of its assigned server IDs in any CID it generates using
 the relevant configuration.
 
+# Server ID Encoding in Connection IDs
+
 ## CID format
 
 All connection IDs use the following format:
@@ -394,91 +396,88 @@ QUIC-LB Connection ID {
 ~~~
 {: #plaintext-cid-format title="CID Format"}
 
+## Configuration Agent Actions
+
 Each configuration specifies the length of the Server ID and Nonce fields, with
-limits defined for each algorithm. When using a given configuration, the server
-MUST generate CIDs of length equal to the lengths of these three fields.
+limits defined for each algorithm.
 
-The Server ID is assigned to each server in accordance with {{sid-allocation}}.
-Dynamically allocated SIDs are limited to seven octets or fewer. Statically
-allocated ones have different limits for each algorithm.
+Optionally, it also defines a 16-octet key. Note that failure to define a key
+means that observers can determine the assigned server of any connection,
+significantly increasing the linkability of QUIC address migration.
 
-The configuration agent assigns a server ID to every server in its pool, and
-determines a server ID length (in octets) sufficiently large to encode all
-server IDs, including potential future servers.
-
-The Nonce is selected by the server when it generates a CID. As the name
-implies, a server MUST use a nonce no more than once when generating a CID for
-a given server ID and unique set of configuration parameters.
-
-The nonce length MUST be at least 4 octets. Additional limits on its length are
-different for each algorithm. See {{cid-entropy}} for limits on nonce
-generation.
+The nonce length MUST be at least 4 octets. The server ID length MUST be at
+least 1 octet.
 
 As QUIC version 1 limits connection IDs to 20 octets, the server ID and nonce
 lengths MUST sum to 19 octets or less.
 
-# Routing Algorithms
+The configuration agent assigns a server ID to every server in its pool in
+accordance with {{sid-allocation}}, and determines a server ID length (in
+octets) sufficiently large to encode all server IDs, including potential future
+servers.
 
-Encryption in the algorithms below uses the AES-128-ECB cipher. Future standards
-could add new algorithms that use other ciphers to provide cryptographic agility
-in accordance with {{?RFC7696}}. QUIC-LB implementations SHOULD be extensible to
-support new algorithms.
+## Server Actions
 
-## Plaintext CID Algorithm {#plaintext-cid-algorithm}
+The server writes the first octet and its server ID into their respective
+fields.
 
-The Plaintext CID Algorithm makes no attempt to obscure the mapping of
-connections to servers, significantly increasing linkability.
+If there is no key in the configuration, the server MUST fill the Nonce field
+with bytes that appear to be random. If there is a key, the server fills the
+nonce field with a nonce of its choosing. See {{cid-entropy}} for details.
 
-### Configuration Agent Actions
+The server MAY append additional bytes to the connection ID, up to the limit
+specified in that version of QUIC, for its own use. These bytes MUST NOT
+provide observers with any information that could link two connection IDs to
+the same connection, client, or server. In particular, all servers using a
+configuration MUST consistently add the same length to each connection ID,
+this would compromise the linkability objectives of QUIC-LB. Any additional
+bytes SHOULD appear random unless individual servers are not distinguishable
+(e.g. any server using that configuration appends identical bytes to every
+connection ID).
 
-See {{cid-format}}.
+If there is no key in the configuration, the Connection ID is complete.
+Otherwise, there are further steps, as described in the two following
+subsections.
 
-### Load Balancer Actions
+Encryption below uses the AES-128-ECB cipher. Future standards could add new
+algorithms that use other ciphers to provide cryptographic agility in accordance
+with {{?RFC7696}}. QUIC-LB implementations SHOULD be extensible to support new
+algorithms.
 
-On each incoming packet, the load balancer extracts consecutive octets,
-beginning with the second octet. These bytes represent the server ID. It
-ignores the nonce.
+### Special Case: Single Pass Encryption
 
-### Server Actions
+When the nonce length and server ID length sum to exactly 16 octets, the server
+MUST use a single-pass encryption algorithm. All connection ID octets except the
+first form an AES-ECB block. This block is encrypted once, and the result forms
+the second through seventeenth most significant bytes of the connection ID.
 
-When a server needs a new connection ID, it encodes one of its assigned server
-IDs in consecutive octets beginning with the second and chooses a nonce. This
-nonce MUST appear to be random (see {{cid-entropy}}).
+### General Case: Four-Pass Encryption
 
-## Encrypted Short CID Algorithm {#encrypted-short-cid-algorithm}
+In the text below, ^ is the XOR function and || is concatenation.
 
-The Encrypted Short CID algorithm provides cryptographic protection at the cost
-of additional per-packet processing at the load balancer to decrypt every
-incoming connection ID, unless the load balancer maintains state for the
-routing information of any given 4-tuple.
-
-### Configuration Agent Actions
-
-The nonce length MUST be no fewer than 4 octets. The nonce SHOULD be at least as
-long as the server ID in order to save the load balancer an encryption pass; see
-below.
-
-The configuration agent also selects an 16-octet AES-ECB key to use for
-connection ID decryption.
-
-### Server Actions
-
-When generating a routable connection ID, the server writes arbitrary bits into
-its nonce octets, and its provided server ID into the server ID octets. See
-{{cid-entropy}} for nonce generation considerations.
-
-The server encrypts the server ID using the following four pass algorithm, which
-leverages 128-bit AES Electronic Codebook (ECB) mode, much like QUIC header
-protection.
-
-In the text below, ^ is the XOR function and || is concatenation. The truncate()
-function takes the most significant octets of its argument, so that the XOR
-function operates on fields of the same length. The expand() function outputs
-16 octets, with its first argument in the most significant bits, its second
-argument in the least significant bits, and zeros in all other positions. Thus,
+The expand_left() function outputs 16 octets, with its first argument in the
+most significant bits, its second argument in the least significant byte, and
+zeros in all other positions. Thus,
 
 ~~~pseudocode
-expand(0xaaba3c, 0x13) = 0xaaba3c00000000000000000000000013
+expand_left(0xaaba3c, 0x13) = 0xaaba3c00000000000000000000000013
+~~~
+
+expand_right() is similar, except that the second argument is in the most
+significant byte, and the first argument is in the least significant bits.
+Therefore,
+
+~~~pseudocode
+expand_right(0xaaba3c, 0x13) = 0x13000000000000000000000000aaba3c
+~~~
+
+Similarly, truncate_left() and truncate_right() take the most significant and
+least significant bits, respectively, from a ciphertext. For example, to take
+28 bits of a ciphertext:
+
+~~~pseudocode
+truncate_left(0x2094842ca49256198c2deaa0ba53caa0, 28) = 0x2094842
+truncate_right(0x2094842ca49256198c2deaa0ba53caa0, 28) = 0xa53caa0
 ~~~
 
 The example at the end of this section helps to clarify the steps described
@@ -491,26 +490,24 @@ length, splitting an odd octet in half if necessary. For example,
 0x7040b81b55ccf3 would split into a left_0 of 0x7040b81 and right_0 of
 0xb55ccf3.
 
-3. Encrypt left_0. The encryption is 128-bit AES-ECB with the key provided by
-the configuration agent, and the plaintext argument is an expanded version of
-left_0 where left_0 constitutes the most significant bits, 0x01 is the least
-significant octet, and all other bits are zero.
+3. Encrypt the result of expand_left(left_0) to obtain a ciphertext.
 
-4. XOR the most significant bits of the ciphertext with right_0 to form
+4. XOR the least significant bits of the ciphertext with right_0 to form
 right_1.
 
     Thus steps 3 and 4 can be expressed as
-
     ```
-    right_1 = right_0 ^ truncate(AES_ECB(key, expand(left_0, 0x01))
+    right_1 = right_0 ^ truncate_right(AES_ECB(key,
+                                               expand_left(left_0, 0x01)))
     ```
 
 5. Repeat steps 3 and 4, but use them to compute left_1 by expanding and
-encrypting right_1 with the least significant octet as 0x02 and XOR the
+encrypting right_1 with the most significant octet as 0x02 and XOR the
 results with left_0.
 
     ```
-    left_1 = left_0 ^ truncate(AES_ECB(key, expand(right_1), 0x02))
+    left_1 = left_0 ^ truncate_left(AES_ECB(key,
+                                            expand_right(right_1, 0x02)))
     ```
 
 6. Repeat steps 3 and 4, but use them to compute right_2 by expanding and
@@ -518,15 +515,17 @@ encrypting left_1 with the least significant octet as 0x03 and XOR the
 results with right_1.
 
     ```
-    right_2 = right_1 ^ truncate(AES_ECB(key, expand(left_1, 0x03))
+    right_2 = right_1 ^ truncate_right(AES_ECB(key,
+                                               expand_left(left_1, 0x03)))
     ```
 
 7. Repeat steps 3 and 4, but use them to compute left_2 by expanding and
-encrypting right_2 with the least significant octet as 0x04 and XOR the
+encrypting right_2 with the most significant octet as 0x04 and XOR the
 results with left_1.
 
     ```
-    left_2 = left_1 ^ truncate(AES_ECB(key, expand(right_2), 0x04))
+    left_2 = left_1 ^ truncate_left(AES_ECB(key,
+                                            expand_right(right_2, 0x04)))
     ```
 
 8. The server concatenates left_2 with right_2 to form the ciphertext CID,
@@ -539,7 +538,7 @@ left_0 and right_0.
 ~~~pseudocode
 server_id = 0x3144a
 nonce = 0x9c69c275
-key = 0xfdf726a9893ec05c0632d30z6680baf0
+key = 0xfdf726a9893ec05c0632d3956680baf0
 
 // step 1
 plaintext_CID = 0x31441a9c69c275
@@ -550,46 +549,54 @@ right_0 = 0xc69c275
 
 // step 3
 aes_input = 0x31441a90000000000000000000000001
-ciphertext = 0xdea73834473e88afee51be7f6bdff0e7
+ciphertext = 0x4d140de42d0b85bdf554ba35c1d5c653
 
 // step 4
-right_1 = 0xc69c275 ^ 0xdea7383 = 0x183b1f6
+right_1 = 0xc69c275 ^ 0x1d5c653 = 0xdbc0426
 
 // step 5
-aes_input = 0x183b1f60000000000000000000000002
-aes_output = 0x15ab4a6f252c0283a0446c74c3f98860
-left_1 = 0x31441a9 ^ 0x15ab4a6 = 0x24ef50f
+aes_input = 0x0200000000000000000000000dbc0426
+aes_output = 0x7e99160f3cf5b89c70584ccd2c2cd24b
+left_1 = 0x31441a9 ^ 0x7e99160 = 0x4fdd0c9
 
 // step 6
-AES input = 0x24ef50f0000000000000000000000003
-AES output = 0xbeaca161e903ebb97cfda599a29ad8ff
-right_2 = 0x183b1f6 ^ 0xbeaca16 = 0xa697be0
+AES input = 0x4fdd0c90000000000000000000000003
+AES output = 0x26c1d5a3a5e31ff8e3ca505da6061ac6
+right_2 = 0xdbc0426 ^ 0x6061ac6 = 0xbba1ee0
 
 // step 7
-AES input: = 0xa697be00000000000000000000000004
-AES output = 0x13ea04a5e3c707bf197e8fcbcd43ef98
-left_2 = 0x24ef50f ^ 0x13ea04a = 0x3705545
+AES input = 0x0400000000000000000000000bba1ee0
+AES output = 0xade1b8b25b436a94007d80cf3704377b
+left_2 = 0x4fdd0c9 ^ 0xade1b8b = 0xe23cb42
 
 // step 8
-cid = first_octet || left_2 || right_2 = 0x073705545a697be0
+cid = first_octet || left_2 || right_2 = 0x07e23cb42bba1ee0
 ~~~
 
-### Load Balancer Actions {#encrypted-short-load-balancer-actions}
+## Load Balancer Actions
 
-Upon receipt of a QUIC packet, the load balancer extracts as many of the
-earliest octets from the destination connection ID as necessary to match the
-server ID. The nonce immediately follows.
+On each incoming packet, the load balancer extracts consecutive octets,
+beginning with the second octet. If there is no key, the first octets
+correspond to the server ID.
 
-The load balancer decrypts the nonce and the server ID using the reverse of the
-algorithm above.
+If there is a key, the load balancer takes one of two actions:
+
+### Special Case: Single Pass Encryption
+
+If server ID length and nonce length sum to exactly 16 octets, they form a
+ciphertext block. The load balancer decrypts the block using the AES-ECB key
+and extracts the server ID from the most significant bytes of the resulting
+plaintext.
+
+### General Case: Four-Pass Encryption
 
 First, split the ciphertext CID (excluding the first octet) into its equal-
 length components left_2 and right_2. Then follow the process below:
 
 ~~~pseudocode
-left_1 = left_2 ^ truncate(AES_ECB(key, expand(right_2), 0x04))
-right_1 = right_2 ^ truncate(AES_ECB(key, expand(left_1, 0x03))
-left_0 = left_1 ^ truncate(AES_ECB(key, expand(right_1), 0x02))
+left_1 = left_2 ^ truncate_left(AES_ECB(key, expand_right(right_2), 0x04))
+right_1 = right_2 ^ truncate_right(AES_ECB(key, expand_left(left_1, 0x03))
+left_0 = left_1 ^ truncate_left(AES_ECB(key, expand_right(right_1), 0x02))
 ~~~
 
 As the load balancer has no need for the nonce, it can conclude after 3 passes
@@ -598,41 +605,11 @@ least as large as the server ID). If the server ID is longer, a fourth pass
 is necessary:
 
 ```
-right_0 = right_1 ^ truncate(AES_ECB(key, expand(left_0, 0x01)))
+right_0 = right_1 ^ truncate_right(AES_ECB(key, expand_left(left_0, 0x01)))
 ```
 
 and the load balancer has to concatenate left_0 and right_0 to obtain the
 complete server ID.
-
-## Encrypted Long CID Algorithm
-
-The Encrypted Long CID Algorithm, by using a full 16 octets of plaintext and a
-128-bit cipher, protects the server ID with a single encryption pass. However,
-it also requires connection IDs of at least 17 octets, increasing overhead of
-client-to-server packets.
-
-### Configuration Agent Actions
-
-The server ID length MUST be no more than 12 octets. The nonce and server ID
-MUST sum to at least 16 octets.
-
-The configuration agent also selects an 16-octet AES-ECB key to use for
-connection ID decryption.
-
-### Load Balancer Actions
-
-Upon receipt of a QUIC packet, the load balancer reads the first octet to
-obtain the config rotation bits. It then decrypts the subsequent 16 octets using
-AES-ECB decryption and the chosen key.
-
-The first octets of the plaintext contains the server id.
-
-### Server Actions
-
-The server encrypts both its server ID and enough octets in a nonce to form a
-16-octet block using the configured AES-ECB key. Note that any remaining octets
-in the nonce are transmitted as plaintext, and should consider the constraints
-in {{cid-entropy}}.
 
 # Per-connection state
 
@@ -1467,20 +1444,6 @@ module ietf-quic-lb {
         "This is a 16-byte key, represented with 47 bytes";
     }
 
-    typedef algorithm-type {
-      type enumeration {
-        enum plaintext {
-          description "Plaintext CID Algorithm";
-        }
-        enum encrypted-short {
-           description "Encrypted Short CID Algorithm";
-        }
-        enum encrypted-long {
-          description "Encrypted Long CID Algorithm";
-        }
-      }
-    }
-
     list cid-configs {
       key "config-rotation-bits";
       description
@@ -1510,17 +1473,6 @@ module ietf-quic-lb {
            configuration uses the Plaintext algorithm.";
       }
 
-      leaf algorithm {
-        type algorithm-type;
-        mandatory true;
-        description
-          "The algorithm that encodes the server ID";
-      }
-
-      must 'cid-key or (algorithm = "plaintext")' {
-        error-message "Encrypted algorithm requires key";
-      }
-
       leaf nonce-length {
         type uint8 {
           range "4..18";
@@ -1538,16 +1490,6 @@ module ietf-quic-lb {
         must '. <= (19 - ../nonce-length)' {
           error-message
             "Server ID and nonce lengths must sum to no more than 19.";
-        }
-        must '(../algorithm != "encrypted-long") or (. <= 12)' {
-          error-message
-            "encrypted-long requires server ID length <= 12.";
-        }
-        must '(../algorithm != "encrypted-long") or
-                ((. + ../nonce-length) >= 16)' {
-          error-message
-            "For Encrypted Long CIDs, server ID length plus nonce length must be at
-             least 16";
         }
         mandatory true;
         description
@@ -1657,7 +1599,6 @@ module: ietf-quic-lb
      |  +--rw config-rotation-bits             uint8
      |  +--rw first-octet-encodes-cid-length?  boolean
      |  +--rw cid-key?                         quic-lb-key
-     |  +--rw algorithm                        algorithm-tyype
      |  +--rw nonce-length                     uint8
      |  +--rw server-id-length                 uint8
      |  +--rw server-id-mappings* [server-id]
@@ -1676,14 +1617,8 @@ module: ietf-quic-lb
 # Load Balancer Test Vectors {#test-vectors}
 
 Each section of this draft includes multiple sets of load balancer
-configuration, each of which has five examples of server ID and server use
-bytes and how they are encoded in a CID.
-
-In some cases, there are no server use bytes. Note that, for simplicity, the
-first octet bits used for neither config rotation nor length self-encoding are
-random, rather than listed in the server use field. Therefore, a server
-implementation using these parameters may generate CIDs with a slightly
-different first octet.
+configuration. All of these configurations self-encode the length, so that
+there are no random bits (except for the provided nonce, if there is no key).
 
 This section uses the following abbreviations:
 
@@ -1692,27 +1627,13 @@ cid      Connection ID
 cr_bits  Config Rotation Bits
 LB       Load Balancer
 sid      Server ID
-sid_len  Server ID length
 ~~~
 
-All values except length_self_encoding and sid_len are expressed in hexidecimal
-format.
+cr_bits key sid nonce cid
+0 none c4605e 4504cc4f 07c4605e4504cc4f
+1 none 350d28b420 3487d970b 0a350d28b4203487d970b
 
-## Plaintext Connection ID Algorithm
-
-TBD
-
-## Encrypted Short Connection ID Algorithm
-
-In each case below, the server is using a plain text nonce value of zero.
-
-TBD
-
-## Encrypted Long Connection ID Algorithm
-
-In each case below, the server is using a plain text nonce value of zero.
-
-TBD
+remainder TBD
 
 ## Shared State Retry Tokens
 
@@ -1838,6 +1759,11 @@ Zeng Ke all provided useful input to this document.
 
 > **RFC Editor's Note:**  Please remove this section prior to
 > publication of a final version of this document.
+
+## since draft-ietf-quic-load-balancers-10
+
+- Refactored algorithm descriptions; made the 4-pass algorithm easier to
+implement
 
 ## since draft-ietf-quic-load-balancers-09
 - Renamed "Stream Cipher" and "Block Cipher" to "Encrypted Short" and
