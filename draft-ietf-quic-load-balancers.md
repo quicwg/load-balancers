@@ -391,7 +391,7 @@ All connection IDs use the following format:
 QUIC-LB Connection ID {
     First Octet (8),
     Server ID (8..152-len(Nonce)),
-    Nonce (32..152-len(Server ID),
+    Nonce (32..152-len(Server ID)),
 }
 ~~~
 {: #plaintext-cid-format title="CID Format"}
@@ -497,8 +497,9 @@ right_1.
 
     Thus steps 3 and 4 can be expressed as
     ```
-    right_1 = right_0 ^ truncate_right(AES_ECB(key,
-                                               expand_left(left_0, 0x01)))
+    right_1 = right_0 ^ truncate_right(
+                            AES_ECB(key, expand_left(left_0, 0x01)),
+                            len(right_0))
     ```
 
 5. Repeat steps 3 and 4, but use them to compute left_1 by expanding and
@@ -506,8 +507,9 @@ encrypting right_1 with the most significant octet as 0x02 and XOR the
 results with left_0.
 
     ```
-    left_1 = left_0 ^ truncate_left(AES_ECB(key,
-                                            expand_right(right_1, 0x02)))
+    left_1 = left_0 ^ truncate_left(
+                          AES_ECB(key, expand_right(right_1, 0x02)),
+                          len(left_0))
     ```
 
 6. Repeat steps 3 and 4, but use them to compute right_2 by expanding and
@@ -515,8 +517,9 @@ encrypting left_1 with the least significant octet as 0x03 and XOR the
 results with right_1.
 
     ```
-    right_2 = right_1 ^ truncate_right(AES_ECB(key,
-                                               expand_left(left_1, 0x03)))
+    right_2 = right_1 ^ truncate_right(
+                            AES_ECB(key, expand_left(left_1, 0x03)),
+                            len(right_1))
     ```
 
 7. Repeat steps 3 and 4, but use them to compute left_2 by expanding and
@@ -524,8 +527,9 @@ encrypting right_2 with the most significant octet as 0x04 and XOR the
 results with left_1.
 
     ```
-    left_2 = left_1 ^ truncate_left(AES_ECB(key,
-                                            expand_right(right_2, 0x04)))
+    left_2 = left_1 ^ truncate_left(
+                          AES_ECB(key, expand_right(right_2, 0x04)),
+                          len(left_1))
     ```
 
 8. The server concatenates left_2 with right_2 to form the ciphertext CID,
