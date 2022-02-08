@@ -455,8 +455,6 @@ the second through seventeenth most significant bytes of the connection ID.
 Any other field length requires four passes for encryption and at least three
 for decryption.
 
-In the text below, ^ is the XOR function and || is concatenation.
-
 The expand_left() function outputs 16 octets, with its first argument in the
 most significant bits, its second argument in the least significant byte, and
 zeros in all other positions. Thus,
