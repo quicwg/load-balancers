@@ -1402,7 +1402,8 @@ module ietf-quic-lb-server {
 
   description
     "This module enables the explicit cooperation of QUIC servers with
-     trusted intermediaries without breaking important protocol features.
+     trusted intermediaries without breaking important protocol
+     features.
 
      Copyright (c) 2022 IETF Trust and the persons identified as
      authors of the code.  All rights reserved.
@@ -1482,8 +1483,8 @@ module ietf-quic-lb-server {
       }
       mandatory true;
       description
-        "Length, in octets, of the nonce. Short nonces mean there will be
-         frequent configuration updates.";
+        "Length, in octets, of the nonce. Short nonces mean there will
+         be frequent configuration updates.";
     }
 
     leaf cid-key {
@@ -1502,15 +1503,16 @@ module ietf-quic-lb-server {
 
     container retry-service-config {
       description
-        "Configuration of Retry Service. If supported-versions is empty, there
-         is no retry service. If token-keys is empty, it uses the non-shared-
-         state service. If present, it uses shared-state tokens.";
+        "Configuration of Retry Service. If supported-versions is empty,
+         there is no retry service. If token-keys is empty, it uses the
+         non-shared-state service. If present, it uses shared-state
+         tokens.";
 
       leaf-list supported-versions {
         type uint32;
         description
-          "QUIC versions that the retry service supports. If empty, there
-           is no retry service.";
+          "QUIC versions that the retry service supports. If empty,
+           there is no retry service.";
       }
 
       leaf unsupported-version-default {
@@ -1537,8 +1539,8 @@ module ietf-quic-lb-server {
       list token-keys {
         key "key-sequence-number";
         description
-          "list of active keys, for key rotation purposes. Existence implies
-           shared-state format";
+          "list of active keys, for key rotation purposes. Existence
+           implies shared-state format";
 
         leaf key-sequence-number {
           type uint8 {
@@ -1601,7 +1603,8 @@ module ietf-quic-lb-middlebox {
 
   description
     "This module enables the explicit cooperation of QUIC servers with
-     trusted intermediaries without breaking important protocol features.
+     trusted intermediaries without breaking important protocol
+     features.
 
      Copyright (c) 2021 IETF Trust and the persons identified as
      authors of the code.  All rights reserved.
@@ -1684,8 +1687,8 @@ module ietf-quic-lb-middlebox {
         }
         mandatory true;
         description
-          "Length, in octets, of the nonce. Short nonces mean there will be
-           frequent configuration updates.";
+          "Length, in octets, of the nonce. Short nonces mean there
+           will be frequent configuration updates.";
       }
 
       list server-id-mappings {
@@ -1712,15 +1715,16 @@ module ietf-quic-lb-middlebox {
 
     container retry-service-config {
       description
-        "Configuration of Retry Service. If supported-versions is empty, there
-         is no retry service. If token-keys is empty, it uses the non-shared-
-         state service. If present, it uses shared-state tokens.";
+        "Configuration of Retry Service. If supported-versions is empty,
+         there is no retry service. If token-keys is empty, it uses the
+         non-shared-state service. If present, it uses shared-state
+         tokens.";
 
       leaf-list supported-versions {
         type uint32;
         description
-          "QUIC versions that the retry service supports. If empty, there
-           is no retry service.";
+          "QUIC versions that the retry service supports. If empty,i
+           there is no retry service.";
       }
 
       leaf unsupported-version-default {
@@ -1747,8 +1751,8 @@ module ietf-quic-lb-middlebox {
       list token-keys {
         key "key-sequence-number";
         description
-          "list of active keys, for key rotation purposes. Existence implies
-           shared-state format";
+          "list of active keys, for key rotation purposes. Existence
+           implies shared-state format";
 
         leaf key-sequence-number {
           type uint8 {
