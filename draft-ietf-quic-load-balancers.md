@@ -1614,10 +1614,6 @@ module: ietf-quic-lb
 
 # Load Balancer Test Vectors {#test-vectors}
 
-Each section of this draft includes multiple sets of load balancer
-configuration. All of these configurations self-encode the length, so that
-there are no random bits (except for the provided nonce, if there is no key).
-
 This section uses the following abbreviations:
 
 ~~~
@@ -1627,11 +1623,30 @@ LB       Load Balancer
 sid      Server ID
 ~~~
 
-cr_bits key sid nonce cid
-0 none c4605e 4504cc4f 07c4605e4504cc4f
-1 none 350d28b420 3487d970b 0a350d28b4203487d970b
+In all cases, the server is configured to encode the CID length.
 
-remainder TBD
+## Unencrypted CIDs
+
+~~~pseudocode
+cr_bits sid nonce cid
+0 c4605e 4504cc4f 07c4605e4504cc4f
+1 350d28b420 3487d970b 40a350d28b4203487d970b
+~~~
+
+## Encrypted CIDs
+
+The key for all of these examples is 8f95f09245765f80256934e50c66207f. The
+test vectors include an example that uses the 16-octet single-pass special
+case, as well as an instance where the server ID length exceeds the nonce
+length, requiring a fourth decryption pass.
+
+~~~pseudocode
+cr_bits sid nonce cid
+0 ed793a ee080dbf 07b07d879e7f63c4 
+1 ed793a51d49b8f5fab65 ee080dbf48 4fcf549a705a6525af3f14c92d2fb6c6 
+2 ed793a51d49b8f5f ee080dbf48c0d1e5 904d4c1b1c024d2f59dd16c955d1b2a4ee
+0 ed793a51d49b8f5fab ee080dbf48c0d1e55d 128e0ccb2ecf5cd08998fca8ac9bfe5abae55d
+~~~
 
 ## Shared State Retry Tokens
 
@@ -1762,6 +1777,7 @@ Zeng Ke all provided useful input to this document.
 
 - Refactored algorithm descriptions; made the 4-pass algorithm easier to
 implement
+- Revised test vectors
 
 ## since draft-ietf-quic-load-balancers-09
 - Renamed "Stream Cipher" and "Block Cipher" to "Encrypted Short" and
