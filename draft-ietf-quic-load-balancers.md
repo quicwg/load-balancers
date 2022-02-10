@@ -1367,11 +1367,12 @@ There are no IANA requirements.
 
 # QUIC-LB YANG Model {#yang-model}
 
-This YANG model conforms to {{?RFC6020}} and expresses a complete QUIC-LB
-configuration.
+These YANG models conform to {{?RFC6020}} and express a complete QUIC-LB
+configuration. There is one model for the server and one for the middlebox
+(i.e the load balancer and/or Retry Service).
 
 ~~~
-module ietf-quic-lb {
+module ietf-quic-lb-server {
   yang-version "1.1";
   namespace "urn:ietf:params:xml:ns:yang:ietf-quic-lb";
   prefix "quic-lb";
@@ -1396,7 +1397,207 @@ module ietf-quic-lb {
      WG List:  <quic@ietf.org>
 
      Authors: Martin Duke (martin.h.duke at gmail dot com)
-              Nick Banks (nibanks at microsoft dot com)";
+              Nick Banks (nibanks at microsoft dot com)
+              Christian Huitema (huitema at huitema.net)";
+
+  description
+    "This module enables the explicit cooperation of QUIC servers with
+     trusted intermediaries without breaking important protocol features.
+
+     Copyright (c) 2022 IETF Trust and the persons identified as
+     authors of the code.  All rights reserved.
+
+     Redistribution and use in source and binary forms, with or
+     without modification, is permitted pursuant to, and subject to
+     the license terms contained in, the Simplified BSD License set
+     forth in Section 4.c of the IETF Trust's Legal Provisions
+     Relating to IETF Documents
+     (https://trustee.ietf.org/license-info).
+
+     This version of this YANG module is part of RFC XXXX
+     (https://www.rfc-editor.org/info/rfcXXXX); see the RFC itself
+     for full legal notices.
+
+     The key words 'MUST', 'MUST NOT', 'REQUIRED', 'SHALL', 'SHALL
+     NOT', 'SHOULD', 'SHOULD NOT', 'RECOMMENDED', 'NOT RECOMMENDED',
+     'MAY', and 'OPTIONAL' in this document are to be interpreted as
+     described in BCP 14 (RFC 2119) (RFC 8174) when, and only when,
+     they appear in all capitals, as shown here.";
+
+  revision "2022-02-10" {
+    description
+      "Updated to design in version 11 of the draft";
+    reference
+      "RFC XXXX, QUIC-LB: Generating Routable QUIC Connection IDs";
+  }
+
+  container quic-lb {
+    presence "The container for QUIC-LB configuration.";
+
+    description
+      "QUIC-LB container.";
+
+    typedef quic-lb-key {
+      type yang:hex-string {
+        length 47;
+      }
+      description
+        "This is a 16-byte key, represented with 47 bytes";
+    }
+
+    leaf config-id {
+      type uint8 {
+        range "0..2";
+      }
+      mandatory true;
+      description
+        "Identifier for this CID configuration.";
+    }
+
+    leaf first-octet-encodes-cid-length {
+      type boolean;
+      default false;
+      description
+        "If true, the six least significant bits of the first CID
+         octet encode the CID length minus one.";
+    }
+
+    leaf server-id-length {
+      type uint8 {
+        range "1..15";
+      }
+      must '. <= (19 - ../nonce-length)' {
+        error-message
+          "Server ID and nonce lengths must sum to no more than 19.";
+      }
+      mandatory true;
+      description
+        "Length (in octets) of a server ID. Further range-limited
+         by nonce-length.";
+    }
+
+    leaf nonce-length {
+      type uint8 {
+        range "4..18";
+      }
+      mandatory true;
+      description
+        "Length, in octets, of the nonce. Short nonces mean there will be
+         frequent configuration updates.";
+    }
+
+    leaf cid-key {
+      type quic-lb-key;
+      description
+        "Key for encrypting the connection ID.";
+    }
+
+    leaf server-id {
+      type yang:hex-string;
+      must "string-length(.) = 3 * ../../server-id-length - 1";
+      mandatory true;
+      description
+        "An allocated server ID";
+    }
+
+    container retry-service-config {
+      description
+        "Configuration of Retry Service. If supported-versions is empty, there
+         is no retry service. If token-keys is empty, it uses the non-shared-
+         state service. If present, it uses shared-state tokens.";
+
+      leaf-list supported-versions {
+        type uint32;
+        description
+          "QUIC versions that the retry service supports. If empty, there
+           is no retry service.";
+      }
+
+      leaf unsupported-version-default {
+        type enumeration {
+          enum allow {
+            description "Unsupported versions admitted by default";
+          }
+          enum deny {
+            description "Unsupported versions denied by default";
+          }
+        }
+        default allow;
+        description
+          "Are unsupported versions not in version-exceptions allowed
+           or denied?";
+      }
+
+      leaf-list version-exceptions {
+        type uint32;
+        description
+          "Exceptions to the default-deny or default-allow rule.";
+      }
+
+      list token-keys {
+        key "key-sequence-number";
+        description
+          "list of active keys, for key rotation purposes. Existence implies
+           shared-state format";
+
+        leaf key-sequence-number {
+          type uint8 {
+            range "0..127";
+          }
+          mandatory true;
+          description
+            "Identifies the key used to encrypt the token";
+        }
+
+        leaf token-key {
+          type quic-lb-key;
+          mandatory true;
+          description
+            "16-byte key to encrypt the token";
+        }
+
+        leaf token-iv {
+          type yang:hex-string {
+            length 23;
+          }
+          mandatory true;
+          description
+            "8-byte IV to encrypt the token, encoded in 23 bytes";
+        }
+      }
+    }
+  }
+}
+~~~
+
+~~~
+module ietf-quic-lb-middlebox {
+  yang-version "1.1";
+  namespace "urn:ietf:params:xml:ns:yang:ietf-quic-lb";
+  prefix "quic-lb";
+
+  import ietf-yang-types {
+    prefix yang;
+    reference
+      "RFC 6991: Common YANG Data Types.";
+  }
+
+  import ietf-inet-types {
+    prefix inet;
+    reference
+      "RFC 6991: Common YANG Data Types.";
+  }
+
+  organization
+    "IETF QUIC Working Group";
+
+  contact
+    "WG Web:   <http://datatracker.ietf.org/wg/quic>
+     WG List:  <quic@ietf.org>
+
+     Authors: Martin Duke (martin.h.duke at gmail dot com)
+              Nick Banks (nibanks at microsoft dot com)
+              Christian Huitema (huitema at huitema.net)";
 
   description
     "This module enables the explicit cooperation of QUIC servers with
@@ -1422,9 +1623,9 @@ module ietf-quic-lb {
      described in BCP 14 (RFC 2119) (RFC 8174) when, and only when,
      they appear in all capitals, as shown here.";
 
-  revision "2021-01-29" {
+  revision "2021-02-10" {
     description
-      "Initial Version";
+      "Updated to design in version 11 of the draft";
     reference
       "RFC XXXX, QUIC-LB: Generating Routable QUIC Connection IDs";
   }
@@ -1457,12 +1658,18 @@ module ietf-quic-lb {
           "Identifier for this CID configuration.";
       }
 
-      leaf first-octet-encodes-cid-length {
-        type boolean;
-        default false;
+      leaf server-id-length {
+        type uint8 {
+          range "1..15";
+        }
+        must '. <= (19 - ../nonce-length)' {
+          error-message
+            "Server ID and nonce lengths must sum to no more than 19.";
+        }
+        mandatory true;
         description
-          "If true, the six least significant bits of the first CID
-           octet encode the CID length minus one.";
+          "Length (in octets) of a server ID. Further range-limited
+           by nonce-length.";
       }
 
       leaf cid-key {
@@ -1481,20 +1688,6 @@ module ietf-quic-lb {
            frequent configuration updates.";
       }
 
-      leaf server-id-length {
-        type uint8 {
-          range "1..15";
-        }
-        must '. <= (19 - ../nonce-length)' {
-          error-message
-            "Server ID and nonce lengths must sum to no more than 19.";
-        }
-        mandatory true;
-        description
-          "Length (in octets) of a server ID. Further range-limited
-           by sid-allocation, cid-key, and nonce-length.";
-      }
-
       list server-id-mappings {
         key "server-id";
         description "Statically allocated Server IDs";
@@ -1505,6 +1698,7 @@ module ietf-quic-lb {
           mandatory true;
           description
             "An allocated server ID";
+
         }
 
         leaf server-address {
@@ -1588,28 +1782,46 @@ module ietf-quic-lb {
 
 ## Tree Diagram
 
-This summary of the YANG model uses the notation in {{?RFC8340}}.
+This summary of the YANG models uses the notation in {{?RFC8340}}.
 
 ~~~
-module: ietf-quic-lb
-  +--rw quic-lb
+module: ietf-quic-lb-server
+  +--rw quic-lb!
+     +--rw config-id                         uint8
+     +--rw first-octet-encodes-cid-length?   boolean
+     +--rw server-id-length                  uint8
+     +--rw nonce-length                      uint8
+     +--rw cid-key?                          quic-lb-key
+     +--rw server-id                         yang:hex-string
+     +--rw retry-service-config
+        +--rw supported-versions*            uint32
+        +--rw unsupported-version-default?   enumeration
+        +--rw version-exceptions*            uint32
+        +--rw token-keys* [key-sequence-number]
+           +--rw key-sequence-number    uint8
+           +--rw token-key              quic-lb-key
+           +--rw token-iv               yang:hex-string
+~~~
+
+~~~
+module: ietf-quic-lb-middlebox
+  +--rw quic-lb!
      +--rw cid-configs* [config-rotation-bits]
-     |  +--rw config-rotation-bits             uint8
-     |  +--rw first-octet-encodes-cid-length?  boolean
-     |  +--rw cid-key?                         quic-lb-key
-     |  +--rw nonce-length                     uint8
-     |  +--rw server-id-length                 uint8
+     |  +--rw config-rotation-bits    uint8
+     |  +--rw server-id-length        uint8
+     |  +--rw cid-key?                quic-lb-key
+     |  +--rw nonce-length            uint8
      |  +--rw server-id-mappings* [server-id]
-     |  |  +--rw server-id                     yang:hex-string
-     |  |  +--rw server-address                inet:ip-address
-     +--ro retry-service-config
-     |  +--rw supported-versions*              uint32
-     |  +--rw unsupported-version-default?     enumeration
-     |  +--rw version-exceptions*              uint32
-     |  +--rw token-keys*? [key-sequence-number]
-     |  |  +--rw key-sequence-number           uint8
-     |  |  +--rw token-key                     quic-lb-key
-     |  |  +--rw token-iv                      yang:hex-string
+     |     +--rw server-id         yang:hex-string
+     |     +--rw server-address    inet:ip-address
+     +--rw retry-service-config
+        +--rw supported-versions*            uint32
+        +--rw unsupported-version-default?   enumeration
+        +--rw version-exceptions*            uint32
+        +--rw token-keys* [key-sequence-number]
+           +--rw key-sequence-number    uint8
+           +--rw token-key              quic-lb-key
+           +--rw token-iv               yang:hex-string
 ~~~
 
 # Load Balancer Test Vectors {#test-vectors}
