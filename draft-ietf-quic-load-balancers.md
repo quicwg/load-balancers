@@ -1723,7 +1723,7 @@ module ietf-quic-lb-middlebox {
       leaf-list supported-versions {
         type uint32;
         description
-          "QUIC versions that the retry service supports. If empty,i
+          "QUIC versions that the retry service supports. If empty,
            there is no retry service.";
       }
 
@@ -1994,6 +1994,7 @@ Zeng Ke all provided useful input to this document.
 - Refactored algorithm descriptions; made the 4-pass algorithm easier to
 implement
 - Revised test vectors
+- Split YANG model into a server and middlebox version
 
 ## since draft-ietf-quic-load-balancers-09
 - Renamed "Stream Cipher" and "Block Cipher" to "Encrypted Short" and
