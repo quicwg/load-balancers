@@ -542,7 +542,7 @@ plaintext is of odd octet length, so the middle octet will be split evenly
 left_0 and right_0.
 
 ~~~pseudocode
-server_id = 0x3144a
+server_id = 0x31441a
 nonce = 0x9c69c275
 key = 0xfdf726a9893ec05c0632d3956680baf0
 
@@ -1858,10 +1858,10 @@ length, requiring a fourth decryption pass.
 
 ~~~pseudocode
 cr_bits sid nonce cid
-0 ed793a ee080dbf 07b07d879e7f63c4 
-1 ed793a51d49b8f5fab65 ee080dbf48 4fcf549a705a6525af3f14c92d2fb6c6 
-2 ed793a51d49b8f5f ee080dbf48c0d1e5 904d4c1b1c024d2f59dd16c955d1b2a4ee
-0 ed793a51d49b8f5fab ee080dbf48c0d1e55d 128e0ccb2ecf5cd08998fca8ac9bfe5abae55d
+0 ed793a ee080dbf 07fbfe05f731b425
+1 ed793a51d49b8f5fab65 ee080dbf48 4f010956fb5c1d4d86e010183e0b7d1e
+2 ed793a51d49b8f5f ee080dbf48c0d1e5 904dd2d05a7b0de9b2b9907afb5ecf8cc3
+0 ed793a51d49b8f5fab ee080dbf48c0d1e55d 127a285a09f85280f4fd6abb434a7159e4d3eb
 ~~~
 
 ## Shared State Retry Tokens
@@ -1988,6 +1988,10 @@ Zeng Ke all provided useful input to this document.
 
 > **RFC Editor's Note:**  Please remove this section prior to
 > publication of a final version of this document.
+
+## since draft-ietf-quic-load-balancers-11
+
+- Fixed mistakes in test vectors
 
 ## since draft-ietf-quic-load-balancers-10
 
