@@ -6,6 +6,10 @@ This is the working area for the IETF [QUIC Working Group](https://datatracker.i
 * [Working Group Draft](https://tools.ietf.org/html/draft-ietf-quic-load-balancers)
 * [Compare Editor's Copy to Working Group Draft](https://quicwg.github.io/load-balancers/#go.draft-ietf-quic-load-balancers.diff)
 
+It also the home for "QUIC Retry Offload".
+
+* [Editor's Copy](https://quicwg.github.io/load-balancers/#go.draft-ietf-quic-retry-offload.html)
+
 ## Building the Draft
 
 Formatted text and HTML versions of the draft can be built using `make`.
