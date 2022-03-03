@@ -1,7 +1,7 @@
 ---
 title: "QUIC Retry Offload"
 abbrev: QUIC Retry Offload
-docname: draft-ietf-quic-retry-offload-latest
+docname: draft-duke-quic-retry-offload-latest
 date: {DATE}
 category: std
 ipr: trust200902
