@@ -91,9 +91,9 @@ significance described in RFC 2119.
 
 For brevity, "Connection ID" will often be abbreviated as "CID".
 
-A "retry offload" is a hardware or software device that is conceptually separate
+A "Retry Offload" is a hardware or software device that is conceptually separate
 from a QUIC server that terminates QUIC connections. This document assumes that
-the retry offload and the server have an administrative relationship that allows
+the Retry Offload and the server have an administrative relationship that allows
 them to accept common configuation.
 
 A "configuration agent" is some entity that determines the common configuration
@@ -211,8 +211,7 @@ do this for all short headers.
 
 Nothing in this section prevents Retry Offloads from making basic syntax
 correctness checks on packets with QUIC versions that it understands (e.g.,
-enforcing the Initial Packet datagram size minimum in version 1) and
-dropping packets that are not routable with the QUIC specification.
+enforcing the Initial Packet datagram size minimum in version 1).
 
 # No-Shared-State Retry Offload
 
@@ -270,8 +269,8 @@ encryption operation, and encode only the timestamp and the authentication tag
 in the Opaque Data. If the Initial Packet has altered the Connection ID or
 source IP address, authentication of the token will fail.
 
-Upon receipt of an Initial packet with a token that begins with '0', the retry
-offload MUST validate the token in accordance with the QUIC specification.
+Upon receipt of an Initial packet with a token that begins with '0', the Retry
+Offload MUST validate the token in accordance with the QUIC specification.
 
 In active mode, the offload MUST issue Retry packets for all Client initial
 packets that contain no token, or a token that has the first bit set to '1'. It
