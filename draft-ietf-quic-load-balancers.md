@@ -30,25 +30,18 @@ author:
     org: Private Octopus Inc.
     email: huitema@huitema.net
 
-normative:
-
-  TIME_T:
-    title: "Open Group Standard: Vol. 1: Base Definitions, Issue 7"
-    date: 2018
-    seriesinfo: IEEE Std 1003.1
-    target: http://pubs.opengroup.org/onlinepubs/9699919799/basedefs/V1_chap04.html#tag_04_16
-
 --- abstract
 
-The QUIC protocol design is resistant to transparent packet inspection,
-injection, and modification by intermediaries. However, the server can
-explicitly cooperate with network services by agreeing to certain conventions
-and/or sharing state with those services. This specification provides a
-standardized means of solving three problems: (1) maintaining routability to
-servers via a low-state load balancer even when the connection IDs in use
-change; (2) explicit encoding of the connection ID length in all packets to
-assist hardware accelerators; and (3) injection of QUIC Retry packets by an
-anti-Denial-of-Service agent on behalf of the server.
+QUIC address migration allows clients to change their IP address while
+maintaining connection state. To reduce the ability of an observer to link two
+IP addresses, clients and servers use new connection IDs when they communicate
+via different client addresses. This poses a problem for traditional "layer-4"
+load balancers that route packets via the IP address and port 4-tuple. This
+specification provides a standardized means of securely encoding routing
+information in the server's connection IDs so that a properly configured load
+balancer can route packets with migrated addresses correctly. As it proposes a
+structured connection ID format, it also provides a means of connection IDs
+self-encoding their length to aid some hardware offloads.
 
 --- middle
 
@@ -84,13 +77,9 @@ a connection ID given some shared parameters. The mapping is generally only
 discoverable by observers that have the parameters, preserving unlinkability as
 much as possible.
 
-Aside from load balancing, a QUIC server may also desire to offload other
-protocol functions to trusted intermediaries. These intermediaries might
-include hardware assist on the server host itself, without access to fully
-decrypted QUIC packets. For example, this document specifies a means of
-offloading stateless retry to counter Denial of Service attacks. It also
-proposes a system for self-encoding connection ID length in all packets, so that
-crypto offload can consistently look up key information.
+As this document proposes a structured QUIC Connection ID, it also proposes a
+system for self-encoding connection ID length in all packets, so that crypto
+offload can efficiently obtain key information.
 
 While this document describes a small set of configuration parameters to make
 the server mapping intelligible, the means of distributing these parameters
@@ -151,37 +140,6 @@ Example Structure {
 }
 ~~~
 {: #fig-ex-format title="Example Format"}
-
-# Protocol Objectives
-
-## Simplicity
-
-QUIC is intended to provide unlinkability across connection migration, but
-servers are not required to provide additional connection IDs that effectively
-prevent linkability.  If the coordination scheme is too difficult to implement,
-servers behind load balancers using connection IDs for routing will use
-trivially linkable connection IDs. Clients will therefore be forced to choose
-between terminating the connection during migration or remaining linkable,
-subverting a design objective of QUIC.
-
-The solution should be both simple to implement and require little additional
-infrastructure for cryptographic keys, etc.
-
-## Security
-
-In the limit where there are very few connections to a pool of servers, no
-scheme can prevent the linking of two connection IDs with high probability.  In
-the opposite limit, where all servers have many connections that start and end
-frequently, it will be difficult to associate two connection IDs even if they
-are known to map to the same server.
-
-QUIC-LB is relevant in the region between these extremes: when the information
-that two connection IDs map to the same server is helpful to linking two
-connection IDs. Obviously, any scheme that transparently communicates this
-mapping to outside observers compromises QUIC's defenses against linkability.
-
-Though not an explicit goal of the QUIC-LB design, concealing the server mapping
-also complicates attempts to focus attacks on a specific server in the pool.
 
 # First CID octet {#first-octet}
 
@@ -654,452 +612,6 @@ Connection ID is included in ICMP responses to Path Maximum Transmission Unit
 Connection ID, if it contains a QUIC long header, and extract the Server ID as
 if it were in a Destination CID.
 
-# Retry Service {#retry-offload}
-
-When a server is under load, QUICv1 allows it to defer storage of connection
-state until the client proves it can receive packets at its advertised IP
-address.  Through the use of a Retry packet, a token in subsequent client
-Initial packets, and transport parameters, servers verify address ownership and
-clients verify that there is no on-path attacker generating Retry packets.
-
-A "Retry Service" detects potential Denial of Service attacks and handles
-sending of Retry packets on behalf of the server. As it is, by definition,
-literally an on-path entity, the service must communicate some of the original
-connection IDs back to the server so that it can pass client verification. It
-also must either verify the address itself (with the server trusting this
-verification) or make sure there is common context for the server to verify the
-address using a service-generated token.
-
-There are two different mechanisms to allow offload of DoS mitigation to a
-trusted network service. One requires no shared state; the server need only be
-configured to trust a retry service, though this imposes other operational
-constraints. The other requires a shared key, but has no such constraints.
-
-## Common Requirements {#common-requirements}
-
-Regardless of mechanism, a retry service has an active mode, where it is
-generating Retry packets, and an inactive mode, where it is not, based on its
-assessment of server load and the likelihood an attack is underway. The choice
-of mode MAY be made on a per-packet or per-connection basis, through a
-stochastic process or based on client address.
-
-A configuration agent MUST distribute a list of QUIC versions the Retry Service
-supports. It MAY also distribute either an "Allow-List" or a "Deny-List" of
-other QUIC versions. It MUST NOT distribute both an Allow-List and a Deny-List.
-
-The Allow-List or Deny-List MUST NOT include any versions included for Retry
-Service Support.
-
-The Configuration Agent MUST provide a means for the entity that controls the
-Retry Service to report its supported version(s) to the configuration Agent. If
-the entity has not reported this information, it MUST NOT activate the Retry
-Service and the configuration agent MUST NOT distribute configuration that
-activates it.
-
-The configuration agent MAY delete versions from the final supported version
-list if policy does not require the Retry Service to operate on those versions.
-
-The configuration Agent MUST provide a means for the entities that control
-servers behind the Retry Service to report either an Allow-List or a Deny-List.
-
-If all entities supply Allow-Lists, the consolidated list MUST be the union of
-these sets. If all entities supply Deny-Lists, the consolidated list MUST be
-the intersection of these sets.
-
-If entities provide a mixture of Allow-Lists and Deny-Lists, the consolidated
-list MUST be a Deny-List that is the intersection of all provided Deny-Lists and
-the inverses of all Allow-Lists.
-
-If no entities that control servers have reported Allow-Lists or Deny-Lists,
-the default is a Deny-List with the null set (i.e., all unsupported versions
-will be admitted). This preserves the future extensibilty of QUIC.
-
-A retry service MUST forward all packets for a QUIC version it does not
-support that are not on a Deny-List or absent from an Allow-List. Note that if
-servers support versions the retry service does not, this may increase load on
-the servers.
-
-Note that future versions of QUIC might not have Retry packets, require
-different information in Retry, or use different packet type indicators.
-
-### Considerations for Non-Initial Packets
-
-Initial Packets are especially effective at consuming server resources
-because they cause the server to create connection state. Even when mitigating
-this load with Retry Packets, the act of validating an Initial Token and sending
-a Retry Packet is more expensive than the response to a non-Initial packet with
-an unknown Connection ID: simply dropping it and/or sending a Stateless Reset.
-
-Nevertheless, a Retry Service in Active Mode might desire to shield servers
-from non-Initial packets that do not correspond to a previously admitted
-Initial Packet. This has a number of considerations.
-
-* If a Retry Service maintains no per-flow state whatsoever, it cannot
-distinguish between valid and invalid non-Initial packets and MUST forward all
-non-Initial Packets to the server.
-
-* For QUIC versions the Retry Service does not support and are present on the
-Allow-List (or absent from the Deny-List), the Retry Service cannot distinguish
-Initial Packets from other long headers and therefore MUST admit all long
-headers.
-
-* If a Retry Service keeps per-flow state, it can identify 4-tuples that have
-been previously approved, admit non-Initial packets from those flows, and
-drop all others. However, dropping short headers will effectively break Address
-Migration and NAT Rebinding when in Active Mode, as post-migration packets will
-arrive with a previously unknown 4-tuple. This policy will also break connection
-attempts using any new QUIC versions that begin connections with a short header.
-
-* If a Retry Service is integrated with a QUIC-LB routable load balancer, it
-can verify that the Destination Connection ID is routable, and only admit
-non-Initial packets with routable DCIDs. As the Connection ID encoding is
-invariant across QUIC versions, the Retry Service can do this for all short
-headers.
-
-Nothing in this section prevents Retry Services from making basic syntax
-correctness checks on packets with QUIC versions that it understands (e.g.,
-enforcing the Initial Packet datagram size minimum in version 1) and
-dropping packets that are not routable with the QUIC specification.
-
-## No-Shared-State Retry Service
-
-The no-shared-state retry service requires no coordination, except that the
-server must be configured to accept this service and know which QUIC versions
-the retry service supports. The scheme uses the first bit of the token to
-distinguish between tokens from Retry packets (codepoint '0') and tokens from
-NEW_TOKEN frames (codepoint '1').
-
-### Configuration Agent Actions
-
-See {{common-requirements}}.
-
-### Service Requirements {#nss-service-requirements}
-
-A no-shared-state retry service MUST be present on all paths from potential
-clients to the server. These paths MUST fail to pass QUIC traffic should the
-service fail for any reason. That is, if the service is not operational, the
-server MUST NOT be exposed to client traffic. Otherwise, servers that have
-already disabled their Retry capability would be vulnerable to attack.
-
-The path between service and server MUST be free of any potential attackers.
-Note that this and other requirements above severely restrict the operational
-conditions in which a no-shared-state retry service can safely operate.
-
-Retry tokens generated by the service MUST have the format below.
-
-~~~
-Non-Shared-State Retry Service Token {
-  Token Type (1) = 0,
-  ODCIL (7) = 8..20,
-  Original Destination Connection ID (64..160),
-  Opaque Data (..),
-}
-~~~
-{: #nss-retry-service-token-format title="Format of non-shared-state retry service tokens"}
-
-The first bit of retry tokens generated by the service MUST be zero. The token
-has the following additional fields:
-
-ODCIL: The length of the original destination connection ID from the triggering
-Initial packet. This is in cleartext to be readable for the server, but
-authenticated later in the token. The Retry Service SHOULD reject any token
-in which the value is less than 8.
-
-Original Destination Connection ID: This also in cleartext and authenticated
-later.
-
-Opaque Data: This data contains the information necessary to authenticate the
-Retry token in accordance with the QUIC specification. A straightforward
-implementation would encode the Retry Source Connection ID, client IP address,
-and a timestamp in the Opaque Data. A more space-efficient implementation would
-use the Retry Source Connection ID and Client IP as associated data in an
-encryption operation, and encode only the timestamp and the authentication tag
-in the Opaque Data. If the Initial Packet has altered the Connection ID or
-source IP address, authentication of the token will fail.
-
-Upon receipt of an Initial packet with a token that begins with '0', the retry
-service MUST validate the token in accordance with the QUIC specification.
-
-In active mode, the service MUST issue Retry packets for all Client initial
-packets that contain no token, or a token that has the first bit set to '1'. It
-MUST NOT forward the packet to the server. The service MUST validate all tokens
-with the first bit set to '0'. If successful, the service MUST forward the
-packet with the token intact. If unsuccessful, it MUST drop the packet. The
-Retry Service MAY send an Initial Packet containing a CONNECTION_CLOSE frame
-with the INVALID_TOKEN error code when dropping the packet.
-
-Note that this scheme has a performance drawback. When the retry service is in
-active mode, clients with a token from a NEW_TOKEN frame will suffer a 1-RTT
-penalty even though its token provides proof of address.
-
-In inactive mode, the service MUST forward all packets that have no token or a
-token with the first bit set to '1'. It MUST validate all tokens with the first
-bit set to '0'. If successful, the service MUST forward the packet with the
-token intact. If unsuccessful, it MUST either drop the packet or forward it
-with the token removed. The latter requires decryption and re-encryption of the
-entire Initial packet to avoid authentication failure. Forwarding the packet
-causes the server to respond without the original_destination_connection_id
-transport parameter, which preserves the normal QUIC signal to the client that
-there is an on-path attacker.
-
-### Server Requirements
-
-A server behind a non-shared-state retry service MUST NOT send Retry packets
-for a QUIC version the retry service understands. It MAY send Retry for QUIC
-versions the Retry Service does not understand.
-
-Tokens sent in NEW_TOKEN frames MUST have the first bit set to '1'.
-
-If a server receives an Initial Packet with the first bit set to '1', it could
-be from a server-generated NEW_TOKEN frame and should be processed in accordance
-with the QUIC specification. If a server receives an Initial Packet with the
-first bit to '0', it is a Retry token and the server MUST NOT attempt to
-validate it. Instead, it MUST assume the address is validated, MUST include the
-packet's Destination Connection ID in a Retry Source Connection ID transport
-parameter, and MUST extract the Original Destination Connection ID from the
-token cleartext for use in the transport parameter of the same name.
-
-## Shared-State Retry Service {#shared-state-retry}
-
-A shared-state retry service uses a shared key, so that the server can decode
-the service's retry tokens. It does not require that all traffic pass through
-the Retry service, so servers MAY send Retry packets in response to Initial
-packets that don't include a valid token.
-
-Both server and service must have time synchronized with respect to one another
-to prevent tokens being incorrectly marked as expired, though tight
-synchronization is unnecessary.
-
-The tokens are protected using AES128-GCM AEAD, as explained in
-{{token-protection-with-aead}}. All tokens, generated by either the server or
-retry service, MUST use the following format, which includes:
-
-- A 1 bit token type identifier.
-- A 7 bit token key identifier.
-- A 96 bit unique token number transmitted in clear text, but protected as part
-of the AEAD associated data.
-- A token body, encoding the Original Destination Connection ID and the
-Timestamp, optionally followed by server specific Opaque Data.
-
-The token protection uses an 128 bit representation of the source IP address
-from the triggering Initial packet.  The client IP address is 16 octets. If an
-IPv4 address, the last 12 octets are zeroes. It also uses the Source Connection
-ID of the Retry packet, which will cause an authentication failure if it
-differs from the Destination Connection ID of the packet bearing the token.
-
-If there is a Network Address Translator (NAT) in the server infrastructure that
-changes the client IP, the Retry Service MUST either be positioned behind the
-NAT, or the NAT must have the token key to rewrite the Retry token accordingly.
-Note also that a host that obtains a token through a NAT and then attempts to
-connect over a path that does not have an identically configured NAT will fail
-address validation.
-
-The 96 bit unique token number is set to a random value using a
-cryptography-grade random number generator.
-
-The token key identifier and the corresponding AEAD key and AEAD IV are
-provisioned by the configuration agent.
-
-The token body is encoded as follows:
-
-~~~
-Shared-State Retry Service Token Body {
-   Timestamp (64),
-   [ODCIL (8) = 8..20],
-   [Original Destination Connection ID (64..160)],
-   [Port (16)],
-   Opaque Data (..),
-}
-~~~
-{: #ss-retry-service-token-body title="Body of shared-state retry service tokens"}
-The token body has the following fields:
-
-Timestamp: The Timestamp is a 64-bit integer, in network order, that expresses
-the expiration time of the token as a number of seconds in POSIX time (see Sec.
-4.16 of {{TIME_T}}).
-
-ODCIL: The original destination connection ID length. Tokens in NEW_TOKEN frames
-do not have this field.
-
-Original Destination Connection ID: The server or Retry Service copies this
-from the field in the client Initial packet. Tokens in NEW_TOKEN frames do not
-have this field.
-
-Port: The Source Port of the UDP datagram that triggered the Retry packet.
-This field MUST be present if and only if the ODCIL is greater than zero. This
-field is therefore always absent in tokens in NEW_TOKEN frames.
-
-Opaque Data: The server may use this field to encode additional information,
-such as congestion window, RTT, or MTU. The Retry Service MUST have zero-length
-opaque data.
-
-Some implementations of QUIC encode in the token the Initial Packet Number used
-by the client, in order to verify that the client sends the retried Initial
-with a PN larger that the triggering Initial. Such implementations will encode
-the Initial Packet Number as part of the opaque data. As tokens may be
-generated by the Service, servers MUST NOT reject tokens because they lack
-opaque data and therefore the packet number.
-
-Shared-state Retry Services use the AES-128-ECB cipher. Future standards could
-add new algorithms that use other ciphers to provide cryptographic agility in
-accordance with {{?RFC7696}}. Retry Service and server implementations SHOULD be
-extensible to support new algorithms.
-
-### Token Protection with AEAD {#token-protection-with-aead}
-
-On the wire, the token is presented as:
-
-~~~
-Shared-State Retry Service Token {
-  Token Type (1),
-  Key Sequence (7),
-  Unique Token Number (96),
-  Encrypted Shared-State Retry Service Token Body (64..),
-  AEAD Integrity Check Value (128),
-}
-~~~
-{: #ss-retry-service-token-wire-image title="Wire image of shared-state retry service tokens"}
-
-The tokens are protected using AES128-GCM as follows:
-
-* The Key Sequence is the 7 bit identifier to retrieve the token key and IV.
-
-* The AEAD IV, is a 96 bit data which produced by implementer's custom
-AEAD IV derivation function.
-
-* The AEAD nonce, N, is formed by combining the AEAD IV with the 96 bit unique
-token number. The 96 bits of the unique token number are left-padded with zeros
-to the size of the IV. The exclusive OR of the padded unique token number and
-the AEAD IV forms the AEAD nonce.
-
-* The associated data is a formatted as a pseudo header by combining the
-cleartext part of the token with the IP address of the client. The format of
-the pseudoheader depends on whether the Token Type bit is '1' (a NEW_TOKEN
-token) or '0' (a Retry token).
-
-~~~
-Shared-State Retry Service Token Pseudoheader {
-  IP Address (128),
-  Token Type (1),
-  Key Sequence (7),
-  Unique Token Number (96),
-  [RSCIL (8)],
-  [Retry Source Connection ID (0..20)],
-}
-~~~
-{: #ss-retry-service-token-pseudoheader title="Psuedoheader for shared-state retry service tokens"}
-
-RSCIL: The Retry Source Connection ID Length in octets. This field is only
-present when the Token Type is '0'.
-
-Retry Source Connection ID: To create a Retry Token, populate this field with
-the Source Connection ID the Retry packet will use. To validate a Retry token,
-populate it with the Destination Connection ID of the Initial packet that
-carries the token. This field is only present when the Token Type is '0'.
-
-* The input plaintext for the AEAD is the token body. The output ciphertext of
-the AEAD is transmitted in place of the token body.
-* The AEAD Integrity Check Value(ICV), defined in Section 6 of {{?RFC4106}}, is
-computed as part of the AEAD encryption process, and is verified during
- decryption.
-
-### Configuration Agent Actions
-
-The configuration agent generates and distributes a "token key", a "token IV",
-a key sequence, and the information described in {{common-requirements}}.
-
-### Service Requirements {#ss-service}
-
-In inactive mode, the Retry service forwards all packets without further
-inspection or processing. The rest of this section only applies to a service in
-active mode.
-
-Retry services MUST NOT issue Retry packets except where explicitly allowed
-below, to avoid sending a Retry packet in response to a Retry token.
-
-The service MUST generate Retry tokens with the format described above when it
-receives a client Initial packet with no token.
-
-If there is a token of either type, the service MUST attempt to decrypt it.
-
-To decrypt a packet, the service checks the Token Type and constructs a
-pseudoheader with the appropriate format for that type, using the bearing
-packet's Destination Connection ID to populate the Retry Source Connection ID
-field, if any.
-
-A token is invalid if:
-
-* it uses unknown key sequence,
-
-* the AEAD ICV does not match the expected value (By construction, it will only
-match if the client IP Address, and any Retry Source Connection ID, also
-matches),
-
-* the ODCIL, if present, is invalid for a client-generated CID (less than 8 or
-more than 20 in QUIC version 1),
-
-* the Timestamp of a token points to time in the past (however, in order to
-allow for clock skew, it SHOULD NOT consider tokens to be expired if the
-Timestamp encodes a few seconds in the past), or
-
-* the port number, if present, does not match the source port in the
-encapsulating UDP header.
-
-Packets with valid tokens MUST be forwarded to the server.
-
-The service MUST drop packets with invalid tokens. If the token is of type '1'
-(NEW_TOKEN), it MUST respond with a Retry packet. If of type '0', it MUST NOT
-respond with a Retry packet.
-
-### Server Requirements
-
-The server MAY issue Retry or NEW_TOKEN tokens in accordance with {{RFC9000}}.
-When doing so, it MUST follow the format above.
-
-The server MUST validate all tokens that arrive in Initial packets, as they may
-have bypassed the Retry service. It determines validity using the procedure
-in {{ss-service}}.
-
-If a valid Retry token, the server populates the
-original_destination_connection_id transport parameter using the
-corresponding token field. It populates the retry_source_connection_id transport
-parameter with the Destination Connection ID of the packet bearing the token.
-
-In all other respects, the server processes both valid and invalid tokens in
-accordance with {{RFC9000}}.
-
-For QUIC versions the service does not support, the server MAY use any token
-format.
-
-# Configuration Requirements
-
-QUIC-LB requires common configuration to synchronize understanding of encodings
-and guarantee explicit consent of the server.
-
-The load balancer and server MUST agree on the connection ID encoding
-parameters, which include the server ID length and nonce length. A key is
-optional.
-
-The load balancer MUST receive the full table of mappings, and each server must
-receive its assigned SID(s), from the configuration agent.
-
-Note that server IDs are opaque bytes, not integers, so there is no notion of
-network order or host order.
-
-A server configuration MUST specify if the first octet encodes the CID length.
-Note that a load balancer does not need the CID length, as the required bytes
-are present in the QUIC packet.
-
-A full QUIC-LB server configuration MUST also specify the supported QUIC
-versions of any Retry Service. If a shared-state service, the server also must
-have the token key.
-
-A non-shared-state Retry Service need only be configured with the QUIC versions
-it supports, and an Allow- or Deny-List. A shared-state Retry Service also needs
-the token key, and to be aware if a NAT sits between it and the servers.
-
-{{yang-model}} provides a YANG Model of the a full QUIC-LB configuration.
-
 # Additional Use Cases
 
 This section discusses considerations for some deployment scenarios not implied
@@ -1119,6 +631,12 @@ to the correct forwarding address. Note that this solution is extensible to
 arbitrarily large numbers of load-balancing tiers, as the maximum server ID
 space is quite large.
 
+If the number of necessary server IDs per next hop is uniform, a simple
+implementation would use successively longer server IDs at each tier of load
+balancing, and the server configuration would match the last tier. The forward
+load balancers would simply treat the least significant bits of the server ID
+as part of the nonce.
+
 ## Moving connections between servers
 
 Some deployments may transparently move a connection from one server to another.
@@ -1133,10 +651,6 @@ Alternately, if the old server is going offline, the load balancer could simply
 map its server ID to the new server's address.
 
 # Version Invariance of QUIC-LB {#version-invariance}
-
-Non-shared-state Retry Services are inherently dependent on the format (and
-existence) of Retry Packets in each version of QUIC, and so Retry Service
-configuration explicitly includes the supported QUIC versions.
 
 The server ID encodings, and requirements for their handling, are designed to be
 QUIC version independent (see {{RFC8999}}). A QUIC-LB load balancer will
@@ -1185,7 +699,7 @@ subvert this purpose.
 
 Note that without a key for the encoding, QUIC-LB makes no attempt to obscure
 the server mapping, and therefore does not address these concerns. Without a
-key, QUIC-LB merely allows consistent CID encoding for compatibility across a'
+key, QUIC-LB merely allows consistent CID encoding for compatibility across a
 network infrastructure, which makes QUIC robust to NAT rebinding. Servers that
 are encoding their server ID without a key algorithm SHOULD only use it to
 generate new CIDs for the Server Initial Packet and SHOULD NOT send CIDs in QUIC
@@ -1322,43 +836,6 @@ SHOULD consider that a server generating a N-bit nonce will create a duplicate
 about every 2^(N/2) attempts, and therefore compare the expected rate at which
 servers will generate CIDs with the lifetime of a configuration.
 
-## Shared-State Retry Keys
-
-The Shared-State Retry Service defined in {{shared-state-retry}} describes the
-format of retry tokens or new tokens protected and encrypted using AES128-GCM.
-Each token includes a 96 bit randomly generated unique token number, and an 8
-bit identifier used to get the AES-GCM encryption context. The AES-GCM
-encryption context contains a 128 bit key and an AEAD IV. There are three
-important security considerations for these tokens:
-
-* An attacker that obtains a copy of the encryption key will be able to decrypt
-  and forge tokens.
-
-* Attackers may be able to retrieve the key if they capture a sufficently large
-  number of retry tokens encrypted with a given key.
-
-* Confidentiality of the token data will fail if separate tokens reuse the
-  same 96 bit unique token number and the same key.
-
-To protect against disclosure of keys to attackers, service and servers MUST
-ensure that the keys are stored securely. To limit the consequences of potential
-exposures, the time to live of any given key should be limited.
-
-Section 6.6 of {{?RFC9001}} states that "Endpoints MUST count the number of
-encrypted packets for each set of keys. If the total number of encrypted packets
-with the same key exceeds the confidentiality limit for the selected AEAD, the
-endpoint MUST stop using those keys." It goes on with the specific limit: "For
-AEAD_AES_128_GCM and AEAD_AES_256_GCM, the confidentiality limit is 2^23
-encrypted packets; see Appendix B.1." It is prudent to adopt the same limit
-here, and configure the service in such a way that no more than 2^23 tokens are
-generated with the same key.
-
-In order to protect against collisions, the 96 bit unique token numbers should
-be generated using a cryptographically secure pseudorandom number generator
-(CSPRNG), as specified in Appendix C.1 of the TLS 1.3 specification
-{{!RFC8446}}. With proper random numbers, if fewer than 2^40 tokens are
-generated with a single key, the risk of collisions is lower than 0.001%.
-
 # IANA Considerations
 
 There are no IANA requirements.
@@ -1425,9 +902,9 @@ module ietf-quic-lb-server {
      described in BCP 14 (RFC 2119) (RFC 8174) when, and only when,
      they appear in all capitals, as shown here.";
 
-  revision "2022-02-10" {
+  revision "2022-02-11" {
     description
-      "Updated to design in version 11 of the draft";
+      "Updated to design in version 13 of the draft";
     reference
       "RFC XXXX, QUIC-LB: Generating Routable QUIC Connection IDs";
   }
@@ -1500,74 +977,6 @@ module ietf-quic-lb-server {
       description
         "An allocated server ID";
     }
-
-    container retry-service-config {
-      description
-        "Configuration of Retry Service. If supported-versions is empty,
-         there is no retry service. If token-keys is empty, it uses the
-         non-shared-state service. If present, it uses shared-state
-         tokens.";
-
-      leaf-list supported-versions {
-        type uint32;
-        description
-          "QUIC versions that the retry service supports. If empty,
-           there is no retry service.";
-      }
-
-      leaf unsupported-version-default {
-        type enumeration {
-          enum allow {
-            description "Unsupported versions admitted by default";
-          }
-          enum deny {
-            description "Unsupported versions denied by default";
-          }
-        }
-        default allow;
-        description
-          "Are unsupported versions not in version-exceptions allowed
-           or denied?";
-      }
-
-      leaf-list version-exceptions {
-        type uint32;
-        description
-          "Exceptions to the default-deny or default-allow rule.";
-      }
-
-      list token-keys {
-        key "key-sequence-number";
-        description
-          "list of active keys, for key rotation purposes. Existence
-           implies shared-state format";
-
-        leaf key-sequence-number {
-          type uint8 {
-            range "0..127";
-          }
-          mandatory true;
-          description
-            "Identifies the key used to encrypt the token";
-        }
-
-        leaf token-key {
-          type quic-lb-key;
-          mandatory true;
-          description
-            "16-byte key to encrypt the token";
-        }
-
-        leaf token-iv {
-          type yang:hex-string {
-            length 23;
-          }
-          mandatory true;
-          description
-            "8-byte IV to encrypt the token, encoded in 23 bytes";
-        }
-      }
-    }
   }
 }
 ~~~
@@ -1626,9 +1035,9 @@ module ietf-quic-lb-middlebox {
      described in BCP 14 (RFC 2119) (RFC 8174) when, and only when,
      they appear in all capitals, as shown here.";
 
-  revision "2021-02-10" {
+  revision "2021-02-11" {
     description
-      "Updated to design in version 11 of the draft";
+      "Updated to design in version 13 of the draft";
     reference
       "RFC XXXX, QUIC-LB: Generating Routable QUIC Connection IDs";
   }
@@ -1712,74 +1121,6 @@ module ietf-quic-lb-middlebox {
         }
       }
     }
-
-    container retry-service-config {
-      description
-        "Configuration of Retry Service. If supported-versions is empty,
-         there is no retry service. If token-keys is empty, it uses the
-         non-shared-state service. If present, it uses shared-state
-         tokens.";
-
-      leaf-list supported-versions {
-        type uint32;
-        description
-          "QUIC versions that the retry service supports. If empty,
-           there is no retry service.";
-      }
-
-      leaf unsupported-version-default {
-        type enumeration {
-          enum allow {
-            description "Unsupported versions admitted by default";
-          }
-          enum deny {
-            description "Unsupported versions denied by default";
-          }
-        }
-        default allow;
-        description
-          "Are unsupported versions not in version-exceptions allowed
-           or denied?";
-      }
-
-      leaf-list version-exceptions {
-        type uint32;
-        description
-          "Exceptions to the default-deny or default-allow rule.";
-      }
-
-      list token-keys {
-        key "key-sequence-number";
-        description
-          "list of active keys, for key rotation purposes. Existence
-           implies shared-state format";
-
-        leaf key-sequence-number {
-          type uint8 {
-            range "0..127";
-          }
-          mandatory true;
-          description
-            "Identifies the key used to encrypt the token";
-        }
-
-        leaf token-key {
-          type quic-lb-key;
-          mandatory true;
-          description
-            "16-byte key to encrypt the token";
-        }
-
-        leaf token-iv {
-          type yang:hex-string {
-            length 23;
-          }
-          mandatory true;
-          description
-            "8-byte IV to encrypt the token, encoded in 23 bytes";
-        }
-      }
-    }
   }
 }
 ~~~
@@ -1797,14 +1138,6 @@ module: ietf-quic-lb-server
      +--rw nonce-length                      uint8
      +--rw cid-key?                          quic-lb-key
      +--rw server-id                         yang:hex-string
-     +--rw retry-service-config
-        +--rw supported-versions*            uint32
-        +--rw unsupported-version-default?   enumeration
-        +--rw version-exceptions*            uint32
-        +--rw token-keys* [key-sequence-number]
-           +--rw key-sequence-number    uint8
-           +--rw token-key              quic-lb-key
-           +--rw token-iv               yang:hex-string
 ~~~
 
 ~~~
@@ -1818,14 +1151,6 @@ module: ietf-quic-lb-middlebox
      |  +--rw server-id-mappings* [server-id]
      |     +--rw server-id         yang:hex-string
      |     +--rw server-address    inet:ip-address
-     +--rw retry-service-config
-        +--rw supported-versions*            uint32
-        +--rw unsupported-version-default?   enumeration
-        +--rw version-exceptions*            uint32
-        +--rw token-keys* [key-sequence-number]
-           +--rw key-sequence-number    uint8
-           +--rw token-key              quic-lb-key
-           +--rw token-iv               yang:hex-string
 ~~~
 
 # Load Balancer Test Vectors {#test-vectors}
@@ -1862,40 +1187,6 @@ cr_bits sid nonce cid
 1 ed793a51d49b8f5fab65 ee080dbf48 4f010956fb5c1d4d86e010183e0b7d1e
 2 ed793a51d49b8f5f ee080dbf48c0d1e5 904dd2d05a7b0de9b2b9907afb5ecf8cc3
 0 ed793a51d49b8f5fab ee080dbf48c0d1e55d 127a285a09f85280f4fd6abb434a7159e4d3eb
-~~~
-
-## Shared State Retry Tokens
-
-In this case, the shared-state retry token is issued by retry service, so the
-opaque data of shared-state retry token body would be null
-({{shared-state-retry}}).
-
-~~~
-LB configuration:
-key_seq 0x00
-encrypt_key 0x30313233343536373839303132333435
-AEAD_IV 0x313233343536373839303132
-
-Shared-State Retry Service Token Body:
-ODCIL 0x12
-RSCIL 0x10
-port 0x1a0a
-original_destination_connection_id 0x0c3817b544ca1c94313bba41757547eec937
-retry_source_connection_id 0x0301e770d24b3b13070dd5c2a9264307
-timestamp 0x0000000060c7bf4d
-
-Shared-State Retry Service Token:
-unique_token_number 0x59ef316b70575e793e1a8782
-key_sequence 0x00
-encrypted_shared_state_retry_service_token_body
-0x7d38b274aa4427c7a1557c3fa666945931defc65da387a83855196a7cb73caac1e28e5346fd76868de94f8b62294
-AEAD_ICV 0xf91174fdd711543a32d5e959867f9c22
-
-AEAD related parameters:
-client_ip_addr 127.0.0.1
-client_port 6666
-AEAD_nonce 0x68dd025f45616941072ab6b0
-AEAD_associated_data 0x7f00000100000000000000000000000059ef316b70575e793e1a878200
 ~~~
 
 # Interoperability with DTLS over UDP
@@ -1988,6 +1279,10 @@ Zeng Ke all provided useful input to this document.
 
 > **RFC Editor's Note:**  Please remove this section prior to
 > publication of a final version of this document.
+
+## since draft-ietf-quic-load-balancers-12
+
+- Separated Retry Service design into a separate draft.
 
 ## since draft-ietf-quic-load-balancers-11
 
