@@ -450,7 +450,9 @@ length, splitting an odd octet in half if necessary. For example,
 0x7040b81b55ccf3 would split into a left_0 of 0x7040b81 and right_0 of
 0xb55ccf3.
 
-3. Encrypt the result of expand_left(left_0) to obtain a ciphertext.
+3. Encrypt the result of expand_left(left_0, index)) to obtain a ciphertext,
+where 'index' is 1 plus the total length of the resulting connection ID
+excluding the first octet, cid_len.
 
 4. XOR the least significant bits of the ciphertext with right_0 to form
 right_1.
@@ -458,37 +460,37 @@ right_1.
     Thus steps 3 and 4 can be expressed as
     ```
     right_1 = right_0 ^ truncate_right(
-                            AES_ECB(key, expand_left(left_0, 0x01)),
+                            AES_ECB(key, expand_left(left_0, 1 + cid_len)),
                             len(right_0))
     ```
 
 5. Repeat steps 3 and 4, but use them to compute left_1 by expanding and
-encrypting right_1 with the most significant octet as 0x02 and XOR the
-results with left_0.
+encrypting right_1 with the most significant octet as 0x02 plus cid_len,
+and XOR the results with left_0.
 
     ```
     left_1 = left_0 ^ truncate_left(
-                          AES_ECB(key, expand_right(right_1, 0x02)),
+                          AES_ECB(key, expand_right(right_1, 2 + cid_len)),
                           len(left_0))
     ```
 
 6. Repeat steps 3 and 4, but use them to compute right_2 by expanding and
-encrypting left_1 with the least significant octet as 0x03 and XOR the
-results with right_1.
+encrypting left_1 with the least significant octet as 0x03 + cid_len, and XOR
+the results with right_1.
 
     ```
     right_2 = right_1 ^ truncate_right(
-                            AES_ECB(key, expand_left(left_1, 0x03)),
+                            AES_ECB(key, expand_left(left_1, 3 + cid_len)),
                             len(right_1))
     ```
 
 7. Repeat steps 3 and 4, but use them to compute left_2 by expanding and
-encrypting right_2 with the most significant octet as 0x04 and XOR the
-results with left_1.
+encrypting right_2 with the most significant octet as 0x04 plus cid_len, and
+XOR the results with left_1.
 
     ```
     left_2 = left_1 ^ truncate_left(
-                          AES_ECB(key, expand_right(right_2, 0x04)),
+                          AES_ECB(key, expand_right(right_2, 4 + cid_len)),
                           len(left_1))
     ```
 
@@ -512,29 +514,30 @@ left_0 = 0x31441a9
 right_0 = 0xc69c275
 
 // step 3
-aes_input = 0x31441a90000000000000000000000001
-ciphertext = 0x4d140de42d0b85bdf554ba35c1d5c653
+cid_len = 7
+aes_input = 0x31441a90000000000000000000000008
+ciphertext = 0x146b6235303d7543faeb733fd0d9b68e
 
 // step 4
-right_1 = 0xc69c275 ^ 0x1d5c653 = 0xdbc0426
+right_1 = 0xc69c275 ^ 0x0d9b68e = 0xcb074fb
 
 // step 5
-aes_input = 0x0200000000000000000000000dbc0426
-aes_output = 0x7e99160f3cf5b89c70584ccd2c2cd24b
-left_1 = 0x31441a9 ^ 0x7e99160 = 0x4fdd0c9
+aes_input = 0x0900000000000000000000000cb074fb
+aes_output = 0x8b822a94eca1586d5a6c9dfe4500e77b
+left_1 = 0x31441a9 ^ 0x8b822a9 = 0xbac6300
 
 // step 6
-AES input = 0x4fdd0c90000000000000000000000003
-AES output = 0x26c1d5a3a5e31ff8e3ca505da6061ac6
-right_2 = 0xdbc0426 ^ 0x6061ac6 = 0xbba1ee0
+aes_input = 0xbac6300000000000000000000000000a
+aes_output = 0x0522078ebebadd09d7e5d5d248a5055a
+right_2 = 0xcb074fb ^ 0x8a5055a = 0x41571a1
 
 // step 7
-AES input = 0x0400000000000000000000000bba1ee0
-AES output = 0xade1b8b25b436a94007d80cf3704377b
-left_2 = 0x4fdd0c9 ^ 0xade1b8b = 0xe23cb42
+aes_input = 0x0b0000000000000000000000041571a1
+aes_output = 0xd8b3eb755b3c48ccdde9fb747f738298
+left_2 = 0xbac6300 ^ 0xd8b3eb7 = 0x6275db7
 
 // step 8
-cid = first_octet || left_2 || right_2 = 0x07e23cb42bba1ee0
+cid = first_octet || left_2 || right_2 = 0x076275db741571a1
 ~~~
 
 ## Load Balancer Actions
@@ -558,9 +561,12 @@ First, split the ciphertext CID (excluding the first octet) into its equal-
 length components left_2 and right_2. Then follow the process below:
 
 ~~~pseudocode
-left_1 = left_2 ^ truncate_left(AES_ECB(key, expand_right(right_2), 0x04))
-right_1 = right_2 ^ truncate_right(AES_ECB(key, expand_left(left_1, 0x03))
-left_0 = left_1 ^ truncate_left(AES_ECB(key, expand_right(right_1), 0x02))
+left_1 = left_2 ^
+  truncate_left(AES_ECB(key, expand_right(right_2), 4 + cid_len))
+right_1 = right_2 ^
+  truncate_right(AES_ECB(key, expand_left(left_1, 3 + cid_len))
+left_0 = left_1 ^
+  truncate_left(AES_ECB(key, expand_right(right_1), 2 + cid_len))
 ~~~
 
 As the load balancer has no need for the nonce, it can conclude after 3 passes
@@ -569,7 +575,8 @@ least as large as the server ID). If the server ID is longer, a fourth pass
 is necessary:
 
 ```
-right_0 = right_1 ^ truncate_right(AES_ECB(key, expand_left(left_0, 0x01)))
+right_0 = right_1 ^
+  truncate_right(AES_ECB(key, expand_left(left_0, 1 + cid_len)))
 ```
 
 and the load balancer has to concatenate left_0 and right_0 to obtain the
@@ -1183,10 +1190,10 @@ length, requiring a fourth decryption pass.
 
 ~~~pseudocode
 cr_bits sid nonce cid
-0 ed793a ee080dbf 07fbfe05f731b425
-1 ed793a51d49b8f5fab65 ee080dbf48 4f010956fb5c1d4d86e010183e0b7d1e
+0 ed793a ee080dbf 07bc1a799d5d7aa8
+1 ed793a51d49b8f5fab65 ee080dbf48 4f5b694361cce311383349087fc8dbe6
 2 ed793a51d49b8f5f ee080dbf48c0d1e5 904dd2d05a7b0de9b2b9907afb5ecf8cc3
-0 ed793a51d49b8f5fab ee080dbf48c0d1e55d 127a285a09f85280f4fd6abb434a7159e4d3eb
+0 ed793a51d49b8f5fab ee080dbf48c0d1e55d 1211ac4299f6b13879f3d3540200abf8880a69
 ~~~
 
 # Interoperability with DTLS over UDP
@@ -1280,9 +1287,13 @@ Zeng Ke all provided useful input to this document.
 > **RFC Editor's Note:**  Please remove this section prior to
 > publication of a final version of this document.
 
+## since draft-ietf-quic-load-balancers-13
+
+- Incorporated Connection ID length in argument of truncate function
+
 ## since draft-ietf-quic-load-balancers-12
 
-- Separated Retry Service design into a separate draft.
+- Separated Retry Service design into a separate draft
 
 ## since draft-ietf-quic-load-balancers-11
 
