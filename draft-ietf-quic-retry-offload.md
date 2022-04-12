@@ -216,7 +216,7 @@ by the Retry Offload, and the server cannot generate Handshake packets.
 use Initial packets and potentially be dropped by the Retry Offload.
 
 Under the following conditions, the server SHOULD send CONNECTION_CLOSE instead
-of an oversize Server Hello or Hello Retry Request:
+of a Hello Retry Request or oversize Server Hello:
 
 * the first client Initial did not include a Retry Token;
 
