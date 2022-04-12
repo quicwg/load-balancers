@@ -174,43 +174,60 @@ the servers.
 Note that future versions of QUIC might not have Retry packets, require
 different information in Retry, or use different packet type indicators.
 
-## Considerations for Non-Initial Packets
+## Retry Offloads with Per-Connection State
 
-Initial Packets are especially effective at consuming server resources
-because they cause the server to create connection state. Even when mitigating
-this load with Retry Packets, the act of validating an Initial Token and sending
-a Retry Packet is more expensive than the response to a non-Initial packet with
-an unknown Connection ID: simply dropping it and/or sending a Stateless Reset.
+A Retry Offload that keeps per-connection state can keep track of 5-tuples that
+it has accepted, either because it was in inactive mode or because it contained
+a valid token. It SHOULD accept subsequent Initial packets from these 4-tuples,
+regardless of the presence of a token, to avoid dropping part of the client's
+second flight.
 
-Nevertheless, a Retry Offload in Active Mode might desire to shield servers
-from non-Initial packets that do not correspond to a previously admitted
-Initial Packet. This has a number of considerations.
+With per-connection state, the Retry Offload MAY drop Handshake and 0-RTT
+packets that do not correspond to an accepted 5-tuple. It SHOULD NOT drop short
+header packets, as these may be the result of a connection migration.
 
-* If a Retry Offload maintains no per-flow state, it cannot distinguish between
-valid and invalid non-Initial packets and MUST forward all non-Initial Packets
-to the server.
+## Retry Offloads without Per-Connection State
 
-* For QUIC versions the Retry Offload does not support and are present on the
-Allow-List (or absent from the Deny-List), the Retry Offload cannot distinguish
-Initial Packets from other long headers and therefore MUST admit all long
-headers.
+Without per-connection state, Retry Offloads MUST admit all datagrams that begin
+with non-Initial packets.
 
-* If a Retry Offload keeps per-flow state, it can identify 4-tuples that have
-been previously approved, admit non-Initial packets from those flows, and
-drop all others. However, dropping short headers will effectively break Address
-Migration and NAT Rebinding when in Active Mode, as post-migration packets will
-arrive with a previously unknown 4-tuple. This policy will also break connection
-attempts using any new QUIC versions that begin connections with a short header.
+If a client Initial packet arrives without a Retry token, it might be the second
+client packet flight of a connection that was admitted when the Retry Offload
+was in inactive mode. If the Initial Packet does not consume the entire length
+of the UDP datagram, the Retry Offload MUST identify other packet types in the
+datagram. If there is a Handshake packet present, the Retry Offload MUST remove
+the Initial Packet and MAY remove any 0-RTT packet from the datagram, updating
+the UDP payload length accordingly. This prevents connection deadlock when
+client handshake packets progress the connection and the server is subject to
+the QUIC amplification limit.
 
-* If a Retry Offload is integrated with a QUIC-LB routable load balancer
-{{?I-D.ietf-quic-load-balancers}}, it can verify that the Destination Connection
-ID is routable, and only admit non-Initial packets with routable DCIDs. As the
-Connection ID encoding is invariant across QUIC versions, the Retry Offload can
-do this for all short headers.
+Nevertheless, there are two edge cases where Retry Offload can drop the second
+Initial packet and trigger a deadlock, when there is no per-connection state and
+the Retry Offload transitions from inactive to active mode mid-handshake.
 
-Nothing in this section prevents Retry Offloads from making basic syntax
-correctness checks on packets with QUIC versions that it understands (e.g.,
-enforcing the Initial Packet datagram size minimum in version 1).
+Note that {{RFC9000}} requires that clients ignore Retry packets after
+receiving a packet from the server other than Retry or Version Negotiation.
+
+1. The TLS Server Hello is spread over multiple Initial packets, and at least
+one of those is lost. Client Initial ACKs to recover the loss might be dropped
+by the Retry Offload, and the server cannot generate Handshake packets.
+
+2. The server sends a TLS Hello Retry Request. Subsequent communications will
+use Initial packets and potentially be dropped by the Retry Offload.
+
+Under the following conditions, the server SHOULD send CONNECTION_CLOSE instead
+of an oversize Server Hello or Hello Retry Request:
+
+* the first client Initial did not include a Retry Token;
+
+* the server cannot send additional packets due to the amplification limit; and
+
+* the server has recently received Retry tokens on other connections, indicating
+the Retry Offload is at in active mode on some connections.
+
+Sending CONNECTION_CLOSE under these conditions saves both endpoints from a
+potential long timeout. If any of these tests is false, the connection is likely
+to recover from any Initial packet drops or losses.
 
 # No-Shared-State Retry Offload
 
