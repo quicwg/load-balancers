@@ -8,7 +8,7 @@ This is the working area for the IETF [QUIC Working Group](https://datatracker.i
 
 It also the home for "QUIC Retry Offload".
 
-* [Editor's Copy](https://quicwg.github.io/load-balancers/#go.draft-duke-quic-retry-offload.html)
+* [Editor's Copy](https://quicwg.github.io/load-balancers/#go.draft-ietf-quic-retry-offload.html)
 * [IndividualDraft](https://tools.ietf.org/html/draft-duke-quic-retry-offload)
 * [Compare Editor's Copy to Working Group Draft](https://quicwg.github.io/load-balancers/#go.draft-duke-quic-retry-offload.diff)
 
