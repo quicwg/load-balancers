@@ -429,7 +429,7 @@ significant byte, the third is in the second most significant byte, and the
 first argument is in the least significant bits. Therefore,
 
 ~~~pseudocode
-expand_right(0xaaba3c, 0x0b, 0x02 = 0x0b020000000000000000000000aaba3c
+expand_right(0xaaba3c, 0x0b, 0x02) = 0x0b020000000000000000000000aaba3c
 ~~~
 
 Similarly, truncate_left() and truncate_right() take the most significant and
