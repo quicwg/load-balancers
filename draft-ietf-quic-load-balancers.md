@@ -416,19 +416,20 @@ functions that minimize the amount of bit-shifting necessary in the event that
 there are an odd number of octets.
 
 The expand_left() function outputs 16 octets, with its first argument in the
-most significant bits, its second argument in the least significant byte, and
-zeros in all other positions. Thus,
+most significant bits, its second argument in the least significant byte, its
+third argument in the second least significant byte, and zeros in all other
+positions. Thus,
 
 ~~~pseudocode
-expand_left(0xaaba3c, 0x13) = 0xaaba3c00000000000000000000000013
+expand_left(0xaaba3c, 0x0b, 0x02) = 0xaaba3c0000000000000000000000020b
 ~~~
 
 expand_right() is similar, except that the second argument is in the most
-significant byte, and the first argument is in the least significant bits.
-Therefore,
+significant byte, the third is in the second most significant byte, and the
+first argument is in the least significant bits. Therefore,
 
 ~~~pseudocode
-expand_right(0xaaba3c, 0x13) = 0x13000000000000000000000000aaba3c
+expand_right(0xaaba3c, 0x0b, 0x02 = 0x0b020000000000000000000000aaba3c
 ~~~
 
 Similarly, truncate_left() and truncate_right() take the most significant and
@@ -461,7 +462,7 @@ right_1.
     Thus steps 3 and 4 can be expressed as
     ```
     right_1 = right_0 ^ truncate_right(
-                            AES_ECB(key, expand_left(left_0, cid_len)),
+                            AES_ECB(key, expand_left(left_0, cid_len, 1)),
                             len(right_0))
     ```
 
@@ -471,7 +472,7 @@ encrypting right_1 with the most significant octet as the concatenation of
 
     ```
     left_1 = left_0 ^ truncate_left(
-                          AES_ECB(key, expand_right(right_1, 0x40 | cid_len)),
+                          AES_ECB(key, expand_right(right_1, cid_len, 2)),
                           len(left_0))
     ```
 
@@ -481,7 +482,7 @@ encrypting left_1 with the least significant octet as the concatenation of
 
     ```
     right_2 = right_1 ^ truncate_right(
-                            AES_ECB(key, expand_left(left_1, 0x80 | cid_len)),
+                            AES_ECB(key, expand_left(left_1, cid_len, 3),
                             len(right_1))
     ```
 
@@ -491,7 +492,7 @@ encrypting right_2 with the most significant octet as the concatenation of
 
     ```
     left_2 = left_1 ^ truncate_left(
-                          AES_ECB(key, expand_right(right_2, 0xc0 | cid_len)),
+                          AES_ECB(key, expand_right(right_2, cid_len, 4),
                           len(left_1))
     ```
 
@@ -516,24 +517,24 @@ right_0 = 0xc69c275
 
 // step 3
 cid_len = 7
-aes_input = 0x31441a90000000000000000000000008
+aes_input = 0x31441a90000000000000000000000108
 ciphertext = 0x146b6235303d7543faeb733fd0d9b68e
 
 // step 4
 right_1 = 0xc69c275 ^ 0x0d9b68e = 0xcb074fb
 
 // step 5
-aes_input = 0x4800000000000000000000000cb074fb
+aes_input = 0x0802000000000000000000000cb074fb
 aes_output = 0x91724d24111e62e3cddff5eaca0f8402
 left_1 = 0x31441a9 ^ 0x91724d2 = 0xa03657b
 
 // step 6
-aes_input = 0xa03657b0000000000000000000000088
+aes_input = 0xa03657b0000000000000000000000308
 aes_output = 0xa4d365bc744c83dd5bf2e28d10672e18
 right_2 = 0xcb074fb ^ 0x0672e18 = 0xcd75ae3
 
 // step 7
-aes_input = 0xc800000000000000000000000cd75ae3
+aes_input = 0x0804000000000000000000000cd75ae3
 aes_output = 0x73cf46f347236f5c946674df3fad24fd
 left_2 = 0xa03657b ^ 0x73cf46f = 0xd3f9114
 
