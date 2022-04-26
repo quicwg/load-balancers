@@ -516,30 +516,30 @@ left_0 = 0x31441a9
 right_0 = 0xc69c275
 
 // step 3
-cid_len = 7
+cid_len = 8
 aes_input = 0x31441a90000000000000000000000108
-ciphertext = 0x146b6235303d7543faeb733fd0d9b68e
+ciphertext = 0xa60469a0a97d565da383af820e3b689a
 
 // step 4
-right_1 = 0xc69c275 ^ 0x0d9b68e = 0xcb074fb
+right_1 = 0xc69c275 ^ 0xe3b689a = 0x252aaef
 
 // step 5
-aes_input = 0x0802000000000000000000000cb074fb
-aes_output = 0x91724d24111e62e3cddff5eaca0f8402
-left_1 = 0x31441a9 ^ 0x91724d2 = 0xa03657b
+aes_input = 0x0802000000000000000000000252aaef
+aes_output = 0xd7e5202ae06026c25d5f4d14d5ead17b
+left_1 = 0x31441a9 ^ 0xd7e5202 = 0xe6a13ab
 
 // step 6
-aes_input = 0xa03657b0000000000000000000000308
-aes_output = 0xa4d365bc744c83dd5bf2e28d10672e18
-right_2 = 0xcb074fb ^ 0x0672e18 = 0xcd75ae3
+aes_input = 0xe6a13ab0000000000000000000000308
+aes_output = 0x9b6d9e6777cfc4bfb8bbdc63beb34a3d
+right_2 = 0x252aaef ^ 0xeb34a3d = 0xce1e0d2
 
 // step 7
-aes_input = 0x0804000000000000000000000cd75ae3
-aes_output = 0x73cf46f347236f5c946674df3fad24fd
-left_2 = 0xa03657b ^ 0x73cf46f = 0xd3f9114
+aes_input = 0x0804000000000000000000000ce1e0d2
+aes_output = 0xd462594b30327d88117ac542c8c33b52
+left_2 = 0xe6a13ab ^ 0xd462594 = 0x32c363f
 
 // step 8
-cid = first_octet || left_2 || right_2 = 0x07d3f9114cd75ae3
+cid = first_octet || left_2 || right_2 = 0x0732c363fce1e0d2
 ~~~
 
 ## Load Balancer Actions
@@ -1193,10 +1193,10 @@ length, requiring a fourth decryption pass.
 
 ~~~pseudocode
 cr_bits sid nonce cid
-0 ed793a ee080dbf 0708791ddc957472
-1 ed793a51d49b8f5fab65 ee080dbf48 4f3f7e34cd8af1eaddf42611e8cec3e0
+0 ed793a ee080dbf 0727edaa37e7fac8
+1 ed793a51d49b8f5fab65 ee080dbf48 4f22614a97ceee84341ed7fbfeb1e6e2
 2 ed793a51d49b8f5f ee080dbf48c0d1e5 904dd2d05a7b0de9b2b9907afb5ecf8cc3
-0 ed793a51d49b8f5fab ee080dbf48c0d1e55d 12de4bf21e2fbeea784ec8ef788f8db6e138d2
+0 ed793a51d49b8f5fab ee080dbf48c0d1e55d 125e3b00aa5fcfd1a9a58102a89a19a1e4a10e
 ~~~
 
 # Interoperability with DTLS over UDP
