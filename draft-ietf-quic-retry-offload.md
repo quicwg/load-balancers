@@ -176,7 +176,7 @@ different information in Retry, or use different packet type indicators.
 
 ## Consistent Treatment of Initials
 
-Retry Offloads MUST treat Initial packets from the same connection with a
+Retry Offloads SHOULD treat Initial packets from the same connection with a
 uniform policy. Initial packets of the first and second client flight can be
 difficult to distinguish without expensive decryption of the contents, which is
 unsuitable under the conditions of a DDoS attack. If the first packet of a
