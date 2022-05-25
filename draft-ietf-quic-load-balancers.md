@@ -687,7 +687,7 @@ additional assumptions are minimal and narrowly scoped, and provide a likely
 set of constants that load balancers can use with minimal risk of version-
 dependence.
 
-If these assumptions are invalid, this specification is likely to lead to loss
+If these assumptions are not valid, this specification is likely to lead to loss
 of packets that contain unroutable DCIDs, and in extreme cases connection
 failure.
 
