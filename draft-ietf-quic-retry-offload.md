@@ -174,6 +174,58 @@ the servers.
 Note that future versions of QUIC might not have Retry packets, require
 different information in Retry, or use different packet type indicators.
 
+## Consistent Treatment of Initials
+
+Retry Offloads SHOULD treat Initial packets from the same connection with a
+uniform policy. Initial packets of the first and second client flight can be
+difficult to distinguish without expensive decryption of the contents, which is
+unsuitable under the conditions of a DDoS attack. If the first packet of a
+connection is admitted without Retry, but the second triggers a Retry, that
+Retry packet will be ignored and the loss of an Initial coalesced with other
+packets can impair performance. In some situations, the client does not yet have
+handshake keys, and dropping further client Initial packets creates a deadlock
+where the connection cannot progress.
+
+The simplest means to ensure this is to require, when active, a Retry Token
+for all incoming Initial packets, and send a Retry packet otherwise. If the
+Retry Offload is to be more selective, one technique keeps state on which
+address/port 4-tuples have been admitted. Another would be to apply a secure
+hash to the source IP address, port, and connection ID to deterministically
+compute whether the Initial requires a Retry Token or not. These source
+values remain consistent over the handshake.
+
+However, even with these techniques there is a potential problem when a Retry
+Offload switches from inactive to active mode. The Retry Offload could admit
+the first packet while in inactive mode, and then drop subsequent Initials in
+active mode.
+
+If the Retry Offload is always on-path, it MAY keep state on incoming
+connections while in inactive mode to avoid this problem. If it cannot or will
+not keep such state, it SHOULD implement "transition mode" for an interval
+chosen to include the likely Initial packet exchange of most clients (200ms is a
+sensible default).
+
+In transition mode, Retry Offloads process Initial packets with Retry tokens
+as in active mode. When the Retry Offload receives an Initial packet with no
+token, it issues a Retry AND forwards the packet to the server. If the client
+has already received a packet from the server, it will ignore the Retry and the
+connection will progress normally. If not, the client will reconnect based on
+the Retry, the server's response to the first initial will be discarded, and
+the connection will progress normally based on the client's second Initial.
+{{mid-handshake}} explores the various possible packet sequences in
+transition mode.
+
+Note that transition mode provides no actual DDoS relief to the server, so its
+duration should be as short as possible. The Retry Offload can choose not to
+implement transition mode and cause some client connections to fail.
+
+Servers operating behind a Retry Offload SHOULD implement a mechanism that
+operates whenever a client Initial arrives with a valid Retry token. If there
+is another connection with identical client Connection ID, IP, and Port, but
+with an unvalidated address, that connection is immediately and silently
+terminated. This mechanism eliminates incorrect connection state that is an
+artifact of transition mode, as explained in {{mid-handshake}}.
+
 ## Considerations for Non-Initial Packets
 
 Initial Packets are especially effective at consuming server resources
@@ -741,6 +793,56 @@ client_port 6666
 AEAD_nonce 0x68dd025f45616941072ab6b0
 AEAD_associated_data 0x7f00000100000000000000000000000059ef316b70575e793e1a878200
 ~~~
+
+# Transition Mode Scenarios {#mid-handshake}
+
+The logic motivating transition mode behavior involves detailed reasoning about
+endpoint behavior during the handshake. This non-normative appendix walks
+through the scenarios.
+
+Dropping Initial packets in the client's second flight can cause performance
+problems or deadlocks. In the case where the client and server first flight end
+with both sides having handshake keys, there will generally be no impact on
+performance. However, if an Initial ACK is critical to progress, as it can be in
+the case of multiple-packet TLS messages, Hello Retry Requests, and similar
+cases, dropping subsequent Initial ACKs results in deadlock.
+
+In transition mode, the Retry Offload forwards Initials with no token while also
+generating a Retry. This allows handshakes to progress without further incident.
+
+## Handshakes in Progress
+
+If the client hello was admitted in inactive mode, then the client has already
+received a packet from the server. Although subsequent client Initial packets
+will trigger a Retry, the client will ignore these packets. Those Initials will
+also be processed by the server to continue the handshake.
+
+## New Connections
+
+After sending a Client Hello in Initial Packet A, a client will rapidly receive
+a Retry Packet from the Offload and attempt to reconnect accordingly with
+Initial Packet B.
+
+The client will discard any server response to Initial A. If a Retry, it is a
+second Retry on the connection. If an Initial, its is encrypted with keys
+derived from Initial A, which have already been discarded, and will be a
+decryption failure.
+
+Initial B's destination connection ID will be new, so the server will process
+it as a new connection and proceed normally.
+
+Unfortunately, the server connection state initiated by Initial A will remain.
+For this reason, this document suggests that servers silently terminate the
+older connection. Requiring the address to be validated avoids cases where an
+attacker simply replays a client Initial with a new Destination Connection ID
+to terminate a valid connection.
+
+Note that there are corner cases involving further packet loss that result in
+connection timeout. For instance, if the Retry Offload's response to Initial A
+is lost, then the connection will proceed based on Initial A. If the Retry
+Offload then switches from transition mode to active mode before the client's
+second flight arrives, the Retry Offload will drop the Initial packet in that
+flight, and the connection might deadlock.
 
 # Acknowledgments
 
