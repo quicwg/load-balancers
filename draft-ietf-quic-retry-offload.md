@@ -855,7 +855,8 @@ to this document.
 > publication of a final version of this document.
 
 ## since draft-duke-quic-retry-offload-00
-- Converted to 
+- Converted to adopted IETF draft
+- Cleaner transition from inactive to active mode
 
 ## since draft-ietf-quic-load-balancers-12
 - Separated from the QUIC-LB draft
