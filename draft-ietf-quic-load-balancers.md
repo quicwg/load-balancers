@@ -187,11 +187,10 @@ It SHOULD NOT send NEW_CONNECTION_ID frames with new values.
 
 A load balancer that sees a connection ID with config rotation bits set to
 0b11 MUST route using an algorithm based solely on the address/port 4-tuple,
-which is consistent over the length of the QUIC handshake. However, a load
-balancer MAY observe the connection IDs used in during the handshake and
-populate a connection ID table that allows the connection to survive a NAT
-rebinding, and reduces the probability of connection failure due to a change in
-the number of servers.
+which is consistent well beyond the QUIC handshake. However, a load balancer MAY
+observe the connection IDs used during the handshake and populate a connection
+ID table that allows the connection to survive a NAT rebinding, and reduces the
+probability of connection failure due to a change in the number of servers.
 
 When using codepoint 0b11, all octets but the first MUST appear to be random.
 The connection ID SHOULD be of at least length 8 to provide 7 bytes of entropy
