@@ -192,11 +192,12 @@ observe the connection IDs used during the handshake and populate a connection
 ID table that allows the connection to survive a NAT rebinding, and reduces the
 probability of connection failure due to a change in the number of servers.
 
-When using codepoint 0b11, all octets but the first MUST appear to be random.
-The connection ID SHOULD be of at least length 8 to provide 7 bytes of entropy
-after the first octet with a low chance of collision. Furthermore, servers in a
-pool SHOULD also use a consistent connection ID length to simplify the load
-balancer's extraction of a connection ID from short headers.
+When using codepoint 0b11, all bytes but the first SHOULD have no larger of a
+chance of collision as random bytes. The connection ID SHOULD be of at least
+length 8 to provide 7 bytes of entropy after the first octet with a low chance
+of collision. Furthermore, servers in a pool SHOULD also use a consistent
+connection ID length to simplify the load balancer's extraction of a connection
+ID from short headers.
 
 ## Length Self-Description
 
