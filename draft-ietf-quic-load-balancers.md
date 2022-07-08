@@ -192,13 +192,23 @@ configurations, but this has privacy implications (see {{multiple-configs}}).
 
 If a server has not received a valid QUIC-LB configuration, and believes that
 low-state, Connection-ID aware load balancers are in the path, it SHOULD
-generate connection IDs with the config rotation bits set to '11' and SHOULD use
+generate connection IDs with the config rotation bits set to 0b11 and SHOULD use
 the "disable_active_migration" transport parameter in all new QUIC connections.
 It SHOULD NOT send NEW_CONNECTION_ID frames with new values.
 
 A load balancer that sees a connection ID with config rotation bits set to
-'11' MUST revert to 5-tuple routing. These connection IDs may be of any length;
-however, see {{cid-entropy}} for limits on this length.
+0b11 MUST route using an algorithm based solely on the address/port 4-tuple,
+which is consistent well beyond the QUIC handshake. However, a load balancer MAY
+observe the connection IDs used during the handshake and populate a connection
+ID table that allows the connection to survive a NAT rebinding, and reduces the
+probability of connection failure due to a change in the number of servers.
+
+When using codepoint 0b11, all bytes but the first SHOULD have no larger of a
+chance of collision as random bytes. The connection ID SHOULD be of at least
+length 8 to provide 7 bytes of entropy after the first octet with a low chance
+of collision. Furthermore, servers in a pool SHOULD also use a consistent
+connection ID length to simplify the load balancer's extraction of a connection
+ID from short headers.
 
 ## Length Self-Description
 
@@ -270,7 +280,7 @@ are not routable are "unroutable DCIDs" and receive similar treatment
 regardless of why they're unroutable:
 
 * The config rotation bits ({{config-rotation}}) may not correspond to an active
-configuration. Note: a packet with a DCID that indicates 5-tuple routing (see
+configuration. Note: a packet with a DCID with config ID codepoint 0b11 (see
 {{config-failover}}) is always routable.
 * The DCID might not be long enough for the decoder to process.
 * The extracted server mapping might not correspond to an active server.
@@ -608,10 +618,12 @@ can extract the server ID from the connection ID of each incoming packet and
 route that packet accordingly.
 
 However, once the routing decision has been made, the load balancer MAY
-associate the 4-tuple with the decision. This has two advantages:
+associate the 4-tuple or connection ID with the decision. This has two
+advantages:
 
-* The load balancer only extracts the server ID once per incoming 4-tuple. When
-the CID is encrypted, this substantially reduces computational load.
+* The load balancer only extracts the server ID once until the 4-tuple or
+connection ID changes. When the CID is encrypted, this might reduce
+computational load.
 
 * Incoming Stateless Reset packets and ICMP messages are easily routed to the
 correct origin server.
@@ -794,7 +806,7 @@ mapping to each other as described above;
 the config rotation bits ({{config-rotation}}), exposing information about the
 target domain to the entire network; or
 
-* tenants can use 4-tuple routing in their CIDs (in which case they SHOULD
+* tenants can use the 0b11 codepoint in their CIDs (in which case they SHOULD
 disable migration in their connections), which neutralizes the value of
 QUIC-LB but preserves privacy.
 
@@ -1342,6 +1354,7 @@ Zeng Ke all provided useful input to this document.
 ## since draft-ietf-quic-load-balancers-13
 
 - Incorporated Connection ID length in argument of truncate function
+- Added requirements for codepoint 0b11.
 - Describe Distinguishing Attack in Security Considerations.
 
 ## since draft-ietf-quic-load-balancers-12
