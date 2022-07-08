@@ -1342,6 +1342,7 @@ Zeng Ke all provided useful input to this document.
 ## since draft-ietf-quic-load-balancers-13
 
 - Incorporated Connection ID length in argument of truncate function
+- Describe Distinguishing Attack in Security Considerations.
 
 ## since draft-ietf-quic-load-balancers-12
 
