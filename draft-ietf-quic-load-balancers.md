@@ -30,6 +30,16 @@ author:
     org: Private Octopus Inc.
     email: huitema@huitema.net
 
+informative:
+    Patarin2008:
+        target: https://datatracker.ietf.org/
+        title: Generic Attacks on Feistel Schemes - Extended Version
+        author:
+            ins: J. Patarin
+            name: Jacques Patarin
+            org: PRiSM, University of Versailles
+        date: 2008
+
 --- abstract
 
 QUIC address migration allows clients to change their IP address while
@@ -816,7 +826,7 @@ risk exposure of the QUIC-LB key. If two clients receive the same connection ID,
 they also have each other's stateless reset token unless that key has changed in
 the interim.
 
-The encrypte mode needs to generate different cipher text for each generated
+The encrypted mode needs to generate different cipher text for each generated
 Connection ID instance to protect the Server ID. To do so, at least four octets
 of the CID are reserved for a nonce that, if used only once, will result in
 unique cipher text for each Connection ID.
@@ -843,8 +853,35 @@ the 4-tuple routing config rotation codepoint.
 
 When sizing a nonce that is to be randomly generated, the configuration agent
 SHOULD consider that a server generating a N-bit nonce will create a duplicate
-about every 2^(N/2) attempts, and therefore compare the expected rate at which
+about every 2^(N/2) attempts, and therefore compare the expected rate at w
 servers will generate CIDs with the lifetime of a configuration.
+
+## Distinguishing Attacks
+
+The Four Pass Encryption algorithm is structured as a 4-round Feistel network
+with non-bijective round function. As such, it does not offer a very high
+security level against distinguishing attacks, as explained in [Patarin2008].
+Attackers can mount these attacks if they are in possession of O(SQRT(len/2))
+pairs of ciphertext and known corresponding plain text, where "len" is the
+sum of the lengths of the Server ID and the Nonce.
+
+The authors considered increasing the number of passes from 4 to 12,
+which would definitely block these attacks. However, this would require
+12 round of AES decryption by load balancers accessing the CID, a cost deemed
+prohibitive in the planned deployments.
+
+The attacks described in [Patarin2008] rely on known plain text. In a normal
+deployment, the plain text is only known by the server that generates the ID
+and by the load balancer that decrypts the content of the CID. Attackers
+would have to compensate by guesses about the allocation of server identifiers
+or the generation of nonces. The these attacks are thus mitigated by making
+nonces hard to guess, as specified in {{cid-entropy}}, and by rules related
+to mixed deployments that use both clear text CID and encrypted CID, for
+example when transitioning from clear text to encryption. Such deployments
+MUST use different server ID allocations for the clear text and the
+encrypted versions.
+
+These attacks cannot be mounted against the Single Pass Encryption algorithm.
 
 # IANA Considerations
 
@@ -888,9 +925,9 @@ module ietf-quic-lb-server {
               Christian Huitema (huitema at huitema.net)";
 
   description
-    "This module enables the explicit cooperation of QUIC servers with
-     trusted intermediaries without breaking important protocol
-     features.
+    "This module enables the explicit cooperation of QUIC servers
+     with trusted intermediaries without breaking important
+     protocol features.
 
      Copyright (c) 2022 IETF Trust and the persons identified as
      authors of the code.  All rights reserved.
@@ -946,8 +983,8 @@ module ietf-quic-lb-server {
       type boolean;
       default false;
       description
-        "If true, the six least significant bits of the first CID
-         octet encode the CID length minus one.";
+        "If true, the six least significant bits of the first
+         CID octet encode the CID length minus one.";
     }
 
     leaf server-id-length {
@@ -956,7 +993,8 @@ module ietf-quic-lb-server {
       }
       must '. <= (19 - ../nonce-length)' {
         error-message
-          "Server ID and nonce lengths must sum to no more than 19.";
+          "Server ID and nonce lengths must sum
+           to no more than 19.";
       }
       mandatory true;
       description
@@ -970,8 +1008,8 @@ module ietf-quic-lb-server {
       }
       mandatory true;
       description
-        "Length, in octets, of the nonce. Short nonces mean there will
-         be frequent configuration updates.";
+        "Length, in octets, of the nonce. Short nonces mean there
+         will be frequent configuration updates.";
     }
 
     leaf cid-key {
@@ -1021,9 +1059,9 @@ module ietf-quic-lb-middlebox {
               Christian Huitema (huitema at huitema.net)";
 
   description
-    "This module enables the explicit cooperation of QUIC servers with
-     trusted intermediaries without breaking important protocol
-     features.
+    "This module enables the explicit cooperation of QUIC servers
+     with trusted intermediaries without breaking important
+     protocol features.
 
      Copyright (c) 2021 IETF Trust and the persons identified as
      authors of the code.  All rights reserved.
@@ -1086,7 +1124,8 @@ module ietf-quic-lb-middlebox {
         }
         must '. <= (19 - ../nonce-length)' {
           error-message
-            "Server ID and nonce lengths must sum to no more than 19.";
+            "Server ID and nonce lengths must sum to
+             no more than 19.";
         }
         mandatory true;
         description
@@ -1194,9 +1233,12 @@ length, requiring a fourth decryption pass.
 ~~~pseudocode
 cr_bits sid nonce cid
 0 ed793a ee080dbf 0727edaa37e7fac8
-1 ed793a51d49b8f5fab65 ee080dbf48 4f22614a97ceee84341ed7fbfeb1e6e2
-2 ed793a51d49b8f5f ee080dbf48c0d1e5 904dd2d05a7b0de9b2b9907afb5ecf8cc3
-0 ed793a51d49b8f5fab ee080dbf48c0d1e55d 125e3b00aa5fcfd1a9a58102a89a19a1e4a10e
+1 ed793a51d49b8f5fab65 ee080dbf48
+                         4f22614a97ceee84341ed7fbfeb1e6e2
+2 ed793a51d49b8f5f ee080dbf48c0d1e5
+                         904dd2d05a7b0de9b2b9907afb5ecf8cc3
+0 ed793a51d49b8f5fab ee080dbf48c0d1e55d
+                         125e3b00aa5fcfd1a9a58102a89a19a1e4a10e
 ~~~
 
 # Interoperability with DTLS over UDP
