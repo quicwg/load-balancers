@@ -30,6 +30,16 @@ author:
     org: Private Octopus Inc.
     email: huitema@huitema.net
 
+informative:
+    Patarin2008:
+        target: https://eprint.iacr.org/2008/036.pdf
+        title: Generic Attacks on Feistel Schemes - Extended Version
+        author:
+            ins: J. Patarin
+            name: Jacques Patarin
+            org: PRiSM, University of Versailles
+        date: 2008
+
 --- abstract
 
 QUIC address migration allows clients to change their IP address while
@@ -132,7 +142,8 @@ Example Structure {
   Field with Variable-Length Integer (i),
   Arbitrary-Length Field (..),
   Variable-Length Field (8..24),
-  Variable-Length Field with Dynamic Limit (8..24-len(Variable-Length Field)),
+  Variable-Length Field with Dynamic Limit
+           (8..24-len(Variable-Length Field)),
   Field With Minimum Length (16..),
   Field With Maximum Length (..128),
   [Optional Field (64)],
@@ -421,7 +432,8 @@ third argument in the second least significant byte, and zeros in all other
 positions. Thus,
 
 ~~~pseudocode
-expand_left(0xaaba3c, 0x0b, 0x02) = 0xaaba3c0000000000000000000000020b
+expand_left(0xaaba3c, 0x0b, 0x02) =
+                 0xaaba3c0000000000000000000000020b
 ~~~
 
 expand_right() is similar, except that the second argument is in the most
@@ -429,7 +441,8 @@ significant byte, the third is in the second most significant byte, and the
 first argument is in the least significant bits. Therefore,
 
 ~~~pseudocode
-expand_right(0xaaba3c, 0x0b, 0x02) = 0x0b020000000000000000000000aaba3c
+expand_right(0xaaba3c, 0x0b, 0x02) =
+                  0x0b020000000000000000000000aaba3c
 ~~~
 
 Similarly, truncate_left() and truncate_right() take the most significant and
@@ -462,7 +475,7 @@ right_1.
     Thus steps 3 and 4 can be expressed as
     ```
     right_1 = right_0 ^ truncate_right(
-                            AES_ECB(key, expand_left(left_0, cid_len, 1)),
+                    AES_ECB(key, expand_left(left_0, cid_len, 1)),
                             len(right_0))
     ```
 
@@ -472,8 +485,8 @@ encrypting right_1 with the most significant octet as the concatenation of
 
     ```
     left_1 = left_0 ^ truncate_left(
-                          AES_ECB(key, expand_right(right_1, cid_len, 2)),
-                          len(left_0))
+                   AES_ECB(key, expand_right(right_1, cid_len, 2)),
+                           len(left_0))
     ```
 
 6. Repeat steps 3 and 4, but use them to compute right_2 by expanding and
@@ -482,7 +495,7 @@ encrypting left_1 with the least significant octet as the concatenation of
 
     ```
     right_2 = right_1 ^ truncate_right(
-                            AES_ECB(key, expand_left(left_1, cid_len, 3),
+                    AES_ECB(key, expand_left(left_1, cid_len, 3),
                             len(right_1))
     ```
 
@@ -492,7 +505,7 @@ encrypting right_2 with the most significant octet as the concatenation of
 
     ```
     left_2 = left_1 ^ truncate_left(
-                          AES_ECB(key, expand_right(right_2, cid_len, 4),
+                  AES_ECB(key, expand_right(right_2, cid_len, 4),
                           len(left_1))
     ```
 
@@ -563,12 +576,15 @@ First, split the ciphertext CID (excluding the first octet) into its equal-
 length components left_2 and right_2. Then follow the process below:
 
 ~~~pseudocode
-left_1 = left_2 ^
-  truncate_left(AES_ECB(key, expand_right(right_2), 0xc0 | cid_len))
-right_1 = right_2 ^
-  truncate_right(AES_ECB(key, expand_left(left_1, 0x80 | cid_len))
-left_0 = left_1 ^
-  truncate_left(AES_ECB(key, expand_right(right_1), 0x40 | cid_len))
+    left_1 = left_2 ^ truncate_left(
+                  AES_ECB(key, expand_right(right_2, cid_len, 4),
+                          len(left_1))
+    right_1 = right_1 ^ truncate_right(
+                  AES_ECB(key, expand_left(left_1, cid_len, 3),
+                            len(right_1))
+    left_0 = left_1 ^ truncate_left(
+                  AES_ECB(key, expand_right(right_1, cid_len, 2),
+                          len(left_1))
 ~~~
 
 As the load balancer has no need for the nonce, it can conclude after 3 passes
@@ -577,8 +593,9 @@ least as large as the server ID). If the server ID is longer, a fourth pass
 is necessary:
 
 ```
-right_0 = right_1 ^
-  truncate_right(AES_ECB(key, expand_left(left_0, 1 + cid_len)))
+    right_0 = right_1 ^ truncate_right(
+                   AES_ECB(key, expand_left(left_0, cid_len, 1),
+                            len(right_1))
 ```
 
 and the load balancer has to concatenate left_0 and right_0 to obtain the
@@ -816,7 +833,7 @@ risk exposure of the QUIC-LB key. If two clients receive the same connection ID,
 they also have each other's stateless reset token unless that key has changed in
 the interim.
 
-The encrypte mode needs to generate different cipher text for each generated
+The encrypted mode needs to generate different cipher text for each generated
 Connection ID instance to protect the Server ID. To do so, at least four octets
 of the CID are reserved for a nonce that, if used only once, will result in
 unique cipher text for each Connection ID.
@@ -845,6 +862,33 @@ When sizing a nonce that is to be randomly generated, the configuration agent
 SHOULD consider that a server generating a N-bit nonce will create a duplicate
 about every 2^(N/2) attempts, and therefore compare the expected rate at which
 servers will generate CIDs with the lifetime of a configuration.
+
+## Distinguishing Attacks
+
+The Four Pass Encryption algorithm is structured as a 4-round Feistel network
+with non-bijective round function. As such, it does not offer a very high
+security level against distinguishing attacks, as explained in [Patarin2008].
+Attackers can mount these attacks if they are in possession of O(SQRT(len/2))
+pairs of ciphertext and known corresponding plain text, where "len" is the
+sum of the lengths of the Server ID and the Nonce.
+
+The authors considered increasing the number of passes from 4 to 12,
+which would definitely block these attacks. However, this would require
+12 round of AES decryption by load balancers accessing the CID, a cost deemed
+prohibitive in the planned deployments.
+
+The attacks described in [Patarin2008] rely on known plain text. In a normal
+deployment, the plain text is only known by the server that generates the ID
+and by the load balancer that decrypts the content of the CID. Attackers
+would have to compensate by guesses about the allocation of server identifiers
+or the generation of nonces. The these attacks are thus mitigated by making
+nonces hard to guess, as specified in {{cid-entropy}}, and by rules related
+to mixed deployments that use both clear text CID and encrypted CID, for
+example when transitioning from clear text to encryption. Such deployments
+MUST use different server ID allocations for the clear text and the
+encrypted versions.
+
+These attacks cannot be mounted against the Single Pass Encryption algorithm.
 
 # IANA Considerations
 
@@ -888,9 +932,9 @@ module ietf-quic-lb-server {
               Christian Huitema (huitema at huitema.net)";
 
   description
-    "This module enables the explicit cooperation of QUIC servers with
-     trusted intermediaries without breaking important protocol
-     features.
+    "This module enables the explicit cooperation of QUIC servers
+     with trusted intermediaries without breaking important
+     protocol features.
 
      Copyright (c) 2022 IETF Trust and the persons identified as
      authors of the code.  All rights reserved.
@@ -946,8 +990,8 @@ module ietf-quic-lb-server {
       type boolean;
       default false;
       description
-        "If true, the six least significant bits of the first CID
-         octet encode the CID length minus one.";
+        "If true, the six least significant bits of the first
+         CID octet encode the CID length minus one.";
     }
 
     leaf server-id-length {
@@ -956,7 +1000,8 @@ module ietf-quic-lb-server {
       }
       must '. <= (19 - ../nonce-length)' {
         error-message
-          "Server ID and nonce lengths must sum to no more than 19.";
+          "Server ID and nonce lengths must sum
+           to no more than 19.";
       }
       mandatory true;
       description
@@ -970,8 +1015,8 @@ module ietf-quic-lb-server {
       }
       mandatory true;
       description
-        "Length, in octets, of the nonce. Short nonces mean there will
-         be frequent configuration updates.";
+        "Length, in octets, of the nonce. Short nonces mean there
+         will be frequent configuration updates.";
     }
 
     leaf cid-key {
@@ -1021,9 +1066,9 @@ module ietf-quic-lb-middlebox {
               Christian Huitema (huitema at huitema.net)";
 
   description
-    "This module enables the explicit cooperation of QUIC servers with
-     trusted intermediaries without breaking important protocol
-     features.
+    "This module enables the explicit cooperation of QUIC servers
+     with trusted intermediaries without breaking important
+     protocol features.
 
      Copyright (c) 2021 IETF Trust and the persons identified as
      authors of the code.  All rights reserved.
@@ -1086,7 +1131,8 @@ module ietf-quic-lb-middlebox {
         }
         must '. <= (19 - ../nonce-length)' {
           error-message
-            "Server ID and nonce lengths must sum to no more than 19.";
+            "Server ID and nonce lengths must sum to
+             no more than 19.";
         }
         mandatory true;
         description
@@ -1194,9 +1240,12 @@ length, requiring a fourth decryption pass.
 ~~~pseudocode
 cr_bits sid nonce cid
 0 ed793a ee080dbf 0727edaa37e7fac8
-1 ed793a51d49b8f5fab65 ee080dbf48 4f22614a97ceee84341ed7fbfeb1e6e2
-2 ed793a51d49b8f5f ee080dbf48c0d1e5 904dd2d05a7b0de9b2b9907afb5ecf8cc3
-0 ed793a51d49b8f5fab ee080dbf48c0d1e55d 125e3b00aa5fcfd1a9a58102a89a19a1e4a10e
+1 ed793a51d49b8f5fab65 ee080dbf48
+                         4f22614a97ceee84341ed7fbfeb1e6e2
+2 ed793a51d49b8f5f ee080dbf48c0d1e5
+                         904dd2d05a7b0de9b2b9907afb5ecf8cc3
+0 ed793a51d49b8f5fab ee080dbf48c0d1e55d
+                         125e3b00aa5fcfd1a9a58102a89a19a1e4a10e
 ~~~
 
 # Interoperability with DTLS over UDP
@@ -1293,6 +1342,7 @@ Zeng Ke all provided useful input to this document.
 ## since draft-ietf-quic-load-balancers-13
 
 - Incorporated Connection ID length in argument of truncate function
+- Describe Distinguishing Attack in Security Considerations.
 
 ## since draft-ietf-quic-load-balancers-12
 
