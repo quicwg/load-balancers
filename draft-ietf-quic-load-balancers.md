@@ -522,7 +522,7 @@ encrypting right_2 with the most significant octet as the concatenation of
 
     ```
     left_2 = left_1 ^ truncate_left(
-                   AES_ECB(key, expand_right(right_2, cid_len, 4),
+                  AES_ECB(key, expand_right(right_2, cid_len, 4),
                           len(left_1))
     ```
 
@@ -1214,9 +1214,9 @@ module ietf-quic-lb-server {
         range "1..15";
       }
       must '. <= (19 - ../nonce-length)' {
-       error-message
-         "Server ID and nonce length must sum
-          to no more than 19.";
+        error-message
+          "Server ID and nonce length must sum
+           to no more than 19.";
       }
       mandatory true;
       description
