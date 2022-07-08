@@ -387,7 +387,7 @@ When the 16-octet key is defined, the configuration allows for three options:
 * Single Pass Encryption, which is always selected when the nonce length
 and server ID length sum to exactly 16 octets.
 
-* Four Pass Encryption, 
+* Four-Pass Encryption, 
 
 * or, Twelve-Pass encryption, when the Four Pass Encryption does not meet
 the security requirements of the configuration.
@@ -1215,7 +1215,7 @@ module ietf-quic-lb-server {
       }
       must '. <= (19 - ../nonce-length)' {
         error-message
-          "Server ID and nonce length must sum
+          "Server ID and nonce lengths must sum
            to no more than 19.";
       }
       mandatory true;
