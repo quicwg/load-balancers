@@ -142,7 +142,8 @@ Example Structure {
   Field with Variable-Length Integer (i),
   Arbitrary-Length Field (..),
   Variable-Length Field (8..24),
-  Variable-Length Field with Dynamic Limit (8..24-len(Variable-Length Field)),
+  Variable-Length Field with Dynamic Limit
+           (8..24-len(Variable-Length Field)),
   Field With Minimum Length (16..),
   Field With Maximum Length (..128),
   [Optional Field (64)],
@@ -431,7 +432,8 @@ third argument in the second least significant byte, and zeros in all other
 positions. Thus,
 
 ~~~pseudocode
-expand_left(0xaaba3c, 0x0b, 0x02) = 0xaaba3c0000000000000000000000020b
+expand_left(0xaaba3c, 0x0b, 0x02) =
+                 0xaaba3c0000000000000000000000020b
 ~~~
 
 expand_right() is similar, except that the second argument is in the most
@@ -439,7 +441,8 @@ significant byte, the third is in the second most significant byte, and the
 first argument is in the least significant bits. Therefore,
 
 ~~~pseudocode
-expand_right(0xaaba3c, 0x0b, 0x02) = 0x0b020000000000000000000000aaba3c
+expand_right(0xaaba3c, 0x0b, 0x02) =
+                  0x0b020000000000000000000000aaba3c
 ~~~
 
 Similarly, truncate_left() and truncate_right() take the most significant and
@@ -472,7 +475,7 @@ right_1.
     Thus steps 3 and 4 can be expressed as
     ```
     right_1 = right_0 ^ truncate_right(
-                            AES_ECB(key, expand_left(left_0, cid_len, 1)),
+                    AES_ECB(key, expand_left(left_0, cid_len, 1)),
                             len(right_0))
     ```
 
@@ -482,8 +485,8 @@ encrypting right_1 with the most significant octet as the concatenation of
 
     ```
     left_1 = left_0 ^ truncate_left(
-                          AES_ECB(key, expand_right(right_1, cid_len, 2)),
-                          len(left_0))
+                   AES_ECB(key, expand_right(right_1, cid_len, 2)),
+                           len(left_0))
     ```
 
 6. Repeat steps 3 and 4, but use them to compute right_2 by expanding and
@@ -492,7 +495,7 @@ encrypting left_1 with the least significant octet as the concatenation of
 
     ```
     right_2 = right_1 ^ truncate_right(
-                            AES_ECB(key, expand_left(left_1, cid_len, 3),
+                    AES_ECB(key, expand_left(left_1, cid_len, 3),
                             len(right_1))
     ```
 
@@ -502,7 +505,7 @@ encrypting right_2 with the most significant octet as the concatenation of
 
     ```
     left_2 = left_1 ^ truncate_left(
-                          AES_ECB(key, expand_right(right_2, cid_len, 4),
+                  AES_ECB(key, expand_right(right_2, cid_len, 4),
                           len(left_1))
     ```
 
@@ -573,12 +576,15 @@ First, split the ciphertext CID (excluding the first octet) into its equal-
 length components left_2 and right_2. Then follow the process below:
 
 ~~~pseudocode
-left_1 = left_2 ^
-  truncate_left(AES_ECB(key, expand_right(right_2), 0xc0 | cid_len))
-right_1 = right_2 ^
-  truncate_right(AES_ECB(key, expand_left(left_1, 0x80 | cid_len))
-left_0 = left_1 ^
-  truncate_left(AES_ECB(key, expand_right(right_1), 0x40 | cid_len))
+    left_1 = left_2 ^ truncate_left(
+                  AES_ECB(key, expand_right(right_2, cid_len, 4),
+                          len(left_1))
+    right_1 = right_1 ^ truncate_right(
+                  AES_ECB(key, expand_left(left_1, cid_len, 3),
+                            len(right_1))
+    left_0 = left_1 ^ truncate_left(
+                  AES_ECB(key, expand_right(right_1, cid_len, 2),
+                          len(left_1))
 ~~~
 
 As the load balancer has no need for the nonce, it can conclude after 3 passes
@@ -587,8 +593,9 @@ least as large as the server ID). If the server ID is longer, a fourth pass
 is necessary:
 
 ```
-right_0 = right_1 ^
-  truncate_right(AES_ECB(key, expand_left(left_0, 1 + cid_len)))
+    right_0 = right_1 ^ truncate_right(
+                   AES_ECB(key, expand_left(left_0, cid_len, 1),
+                            len(right_1))
 ```
 
 and the load balancer has to concatenate left_0 and right_0 to obtain the
