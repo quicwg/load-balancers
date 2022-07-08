@@ -32,7 +32,7 @@ author:
 
 informative:
     Patarin2008:
-        target: https://datatracker.ietf.org/
+        target: https://eprint.iacr.org/2008/036.pdf
         title: Generic Attacks on Feistel Schemes - Extended Version
         author:
             ins: J. Patarin
