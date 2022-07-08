@@ -389,11 +389,11 @@ and server ID length sum to exactly 16 octets.
 
 * Four Pass Encryption, 
 
-* or, Twelve Pass encryption, when the Four Pass Encryption does not meet
+* or, Twelve-Pass encryption, when the Four Pass Encryption does not meet
 the security requirements of the configuration.
 
-The configuration must explicitly indicate Twelve Pass Encryption if selected.
-Twelve Pass Encryption MUST NOT be selected if the nonce length
+The configuration must explicitly indicate Twelve-Pass Encryption if selected.
+Twelve-Pass Encryption MUST NOT be selected if the nonce length
 and server ID length sum to exactly 16 octets.
 In the absence of this indication, load balancers use Single Pass Encryption
 if the nonce length
@@ -581,7 +581,7 @@ a distinguishing attack. The attacker may be able to determine that the
 CID used in the deployment were not picked at random, but result from
 the encryption of an unknown clear text. A deployment for which this
 distinguishing attack is problematic SHOULD use the following
-Twelve Pass Encryption method:
+Twelve-Pass Encryption method:
 
 1. The server concatenates the server ID and nonce to create plaintext_CID.
 
@@ -1079,7 +1079,7 @@ servers will generate CIDs with the lifetime of a configuration.
 
 ## Distinguishing Attacks
 
-The Four Pass Encryption algorithm is structured as a 4-round Feistel network
+The Four-Pass Encryption algorithm is structured as a 4-round Feistel network
 with non-bijective round function. As such, it does not offer a very high
 security level against distinguishing attacks, as explained in [Patarin2008].
 Attackers can mount these attacks if they are in possession of O(SQRT(len/2))
@@ -1102,7 +1102,8 @@ example when transitioning from clear text to encryption. Such deployments
 MUST use different server ID allocations for the clear text and the
 encrypted versions.
 
-These attacks cannot be mounted against the Single Pass Encryption algorithm.
+These attacks cannot be mounted against the Single Pass Encryption algorithm
+or the Twelve-Pass Encryption algorithm.
 
 # IANA Considerations
 
@@ -1214,8 +1215,8 @@ module ietf-quic-lb-server {
       }
       must '. <= (19 - ../nonce-length)' {
        error-message
-         "Server ID and nonce length 
-          must sum to no more than 19.";
+         "Server ID and nonce length must sum
+          to no more than 19.";
       }
       mandatory true;
       description
