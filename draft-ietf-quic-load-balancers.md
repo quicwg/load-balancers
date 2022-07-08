@@ -860,7 +860,7 @@ the 4-tuple routing config rotation codepoint.
 
 When sizing a nonce that is to be randomly generated, the configuration agent
 SHOULD consider that a server generating a N-bit nonce will create a duplicate
-about every 2^(N/2) attempts, and therefore compare the expected rate at w
+about every 2^(N/2) attempts, and therefore compare the expected rate at which
 servers will generate CIDs with the lifetime of a configuration.
 
 ## Distinguishing Attacks
