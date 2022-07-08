@@ -382,6 +382,23 @@ significantly increasing the linkability of QUIC address migration.
 The nonce length MUST be at least 4 octets. The server ID length MUST be at
 least 1 octet.
 
+When the 16-octet key is defined, the configuration allows for three options:
+
+* Single Pass Encryption, which is always selected when the nonce length
+and server ID length sum to exactly 16 octets.
+
+* Four Pass Encryption, 
+
+* or, Twelve Pass encryption, when the Four Pass Encryption does not meet
+the security requirements of the configuration.
+
+The configuration must explicitly indicate Twelve Pass Encryption if selected.
+Twelve Pass Encryption MUST NOT be selected if the nonce length
+and server ID length sum to exactly 16 octets.
+In the absence of this indication, load balancers use Single Pass Encryption
+if the nonce length
+and server ID length sum to exactly 16 octets, and Four Pass Encryption otherwise.
+
 As QUIC version 1 limits connection IDs to 20 octets, the server ID and nonce
 lengths MUST sum to 19 octets or less.
 
@@ -419,7 +436,7 @@ MUST use a single-pass encryption algorithm. All connection ID octets except the
 first form an AES-ECB block. This block is encrypted once, and the result forms
 the second through seventeenth most significant bytes of the connection ID.
 
-### General Case: Four-Pass Encryption
+### General Case: Four-Pass Encryption {#four-passes}
 
 Any other field length requires four passes for encryption and at least three
 for decryption. To understand this algorithm, it is useful to define four 
@@ -505,7 +522,7 @@ encrypting right_2 with the most significant octet as the concatenation of
 
     ```
     left_2 = left_1 ^ truncate_left(
-                  AES_ECB(key, expand_right(right_2, cid_len, 4),
+                   AES_ECB(key, expand_right(right_2, cid_len, 4),
                           len(left_1))
     ```
 
@@ -555,6 +572,149 @@ left_2 = 0xe6a13ab ^ 0xd462594 = 0x32c363f
 cid = first_octet || left_2 || right_2 = 0x0732c363fce1e0d2
 ~~~
 
+### Alternative Case: Twelve-Pass Encryption
+
+The four pass encryption described in {{four-passes}} protects against the
+linkability attacks described in {{security-considerations}}, but an
+attacker observing a sufficient number of CID may be able to mount
+a distinguishing attack. The attacker may be able to determine that the
+CID used in the deployment were not picked at random, but result from
+the encryption of an unknown clear text. A deployment for which this
+distinguishing attack is problematic SHOULD use the following
+Twelve Pass Encryption method:
+
+1. The server concatenates the server ID and nonce to create plaintext_CID.
+
+2. The server splits plaintext_CID into components left_0 and right_0 of equal
+length, splitting an odd octet in half if necessary. For example,
+0x7040b81b55ccf3 would split into a left_0 of 0x7040b81 and right_0 of
+0xb55ccf3.
+
+3. Encrypt the result of expand_left(left_0, index)) to obtain a ciphertext,
+where 'index' is one octet: the two most significant bits of which are 0b00,
+and the six least significant bits are the length of the resulting connection
+ID in bytes, cid_len.
+
+4. XOR the least significant bits of the ciphertext with right_0 to form
+right_1.
+
+    Thus steps 3 and 4 can be expressed as
+    ```
+    right_1 = right_0 ^ truncate_right(
+                     AES_ECB(key, expand_left(left_0, cid_len, 1)),
+                            len(right_0))
+    ```
+
+5. Repeat steps 3 and 4, but use them to compute left_1 by expanding and
+encrypting right_1 with the most significant octet as the concatenation of
+0b01 and cid_len, and XOR the results with left_0.
+
+    ```
+    left_1 = left_0 ^ truncate_left(
+                   AES_ECB(key, expand_right(right_1, cid_len, 2)),
+                          len(left_0))
+    ```
+
+6. Repeat steps 3 and 4, but use them to compute right_2 by expanding and
+encrypting left_1 with the least significant octet as the concatenation of
+0b10 and cid_len, and XOR the results with right_1.
+
+    ```
+    right_2 = right_1 ^ truncate_right(
+                    AES_ECB(key, expand_left(left_1, cid_len, 3),
+                            len(right_1))
+    ```
+
+7. Repeat steps 3 and 4, but use them to compute left_2 by expanding and
+encrypting right_2 with the most significant octet as the concatenation of
+0b11 ands cid_len, and XOR the results with left_1.
+
+    ```
+    left_2 = left_1 ^ truncate_left(
+                   AES_ECB(key, expand_right(right_2, cid_len, 4),
+                          len(left_1))
+    ```
+
+8. Repeat steps 3 and 4, but use them to compute right_3 by expanding and
+encrypting left_2 with the least significant octet as the concatenation of
+0b10 and cid_len, and XOR the results with right_2.
+
+    ```
+    right_3 = right_2 ^ truncate_right(
+                    AES_ECB(key, expand_left(left_2, cid_len, 5),
+                            len(right_1))
+    ```
+
+9. Repeat steps 3 and 4, but use them to compute left_3 by expanding and
+encrypting right_3 with the most significant octet as the concatenation of
+0b11 ands cid_len, and XOR the results with left_2.
+
+    ```
+    left_3 = left_2 ^ truncate_left(
+                   AES_ECB(key, expand_right(right_3, cid_len, 6),
+                          len(left_1))
+    ```
+
+10. Repeat steps 3 and 4, but use them to compute right_4 by expanding and
+encrypting left_3 with the least significant octet as the concatenation of
+0b10 and cid_len, and XOR the results with right_3.
+
+    ```
+    right_4 = right_3 ^ truncate_right(
+                     AES_ECB(key, expand_left(left_3, cid_len, 7),
+                            len(right_1))
+    ```
+
+11. Repeat steps 3 and 4, but use them to compute left_4 by expanding and
+encrypting right_4 with the most significant octet as the concatenation of
+0b11 ands cid_len, and XOR the results with left_3.
+
+    ```
+    left_4 = left_3 ^ truncate_left(
+                   AES_ECB(key, expand_right(right_4, cid_len, 8),
+                          len(left_1))
+    ```
+12. Repeat steps 3 and 4, but use them to compute right_5 by expanding and
+encrypting left_4 with the least significant octet as the concatenation of
+0b10 and cid_len, and XOR the results with right_4.
+
+    ```
+    right_5 = right_4 ^ truncate_right(
+                    AES_ECB(key, expand_left(left_4, cid_len, 9),
+                            len(right_1))
+    ```
+
+13. Repeat steps 3 and 4, but use them to compute left_5 by expanding and
+encrypting right_5 with the most significant octet as the concatenation of
+0b11 ands cid_len, and XOR the results with left_4.
+
+    ```
+    left_5 = left_4 ^ truncate_left(
+                   AES_ECB(key, expand_right(right_5, cid_len, 10),
+                          len(left_1))
+    ```
+14. Repeat steps 3 and 4, but use them to compute right_6 by expanding and
+encrypting left_5 with the least significant octet as the concatenation of
+0b10 and cid_len, and XOR the results with right_5.
+
+    ```
+    right_6 = right_5 ^ truncate_right(
+                    AES_ECB(key, expand_left(left_5, cid_len, 11),
+                            len(right_1))
+    ```
+
+15. Repeat steps 3 and 4, but use them to compute left_6 by expanding and
+encrypting right_6 with the most significant octet as the concatenation of
+0b11 ands cid_len, and XOR the results with left_5.
+
+    ```
+    left_6 = left_5 ^ truncate_left(
+                   AES_ECB(key, expand_right(right_6, cid_len, 12),
+                          len(left_1))
+    ```
+16. The server concatenates left_6 with right_6 to form the ciphertext CID,
+which it appends to the first octet.
+
 ## Load Balancer Actions
 
 On each incoming packet, the load balancer extracts consecutive octets,
@@ -590,6 +750,60 @@ length components left_2 and right_2. Then follow the process below:
 As the load balancer has no need for the nonce, it can conclude after 3 passes
 as long as the server ID is entirely contained in left_0 (i.e., the nonce is at
 least as large as the server ID). If the server ID is longer, a fourth pass
+is necessary:
+
+```
+    right_0 = right_1 ^ truncate_right(
+                   AES_ECB(key, expand_left(left_0, cid_len, 1),
+                            len(right_1))
+```
+
+and the load balancer has to concatenate left_0 and right_0 to obtain the
+complete server ID.
+
+### Alternative Case: Twelve-Pass Encryption
+
+First, split the ciphertext CID (excluding the first octet) into its equal-
+length components left_6 and right_6. Then follow the process below:
+
+~~~pseudocode
+    left_5 = left_6 ^ truncate_left(
+                   AES_ECB(key, expand_right(right_6, cid_len, 12),
+                          len(left_1))
+    right_5 = right_6 ^ truncate_right(
+                   AES_ECB(key, expand_left(left_5, cid_len, 11),
+                            len(right_1))
+    left_4 = left_5 ^ truncate_left(
+                   AES_ECB(key, expand_right(right_5, cid_len, 10),
+                          len(left_1))
+    right_4 = right_5 ^ truncate_right(
+                   AES_ECB(key, expand_left(left_5, cid_len, 9),
+                            len(right_1))
+    left_3 = left_4 ^ truncate_left(
+                   AES_ECB(key, expand_right(right_4, cid_len, 8),
+                          len(left_1))
+    right_3 = right_4 ^ truncate_right(
+                   AES_ECB(key, expand_left(left_3, cid_len, 7),
+                            len(right_1))
+    left_2 = left_3 ^ truncate_left(
+                   AES_ECB(key, expand_right(right_3, cid_len, 6),
+                          len(left_1))
+    right_2 = right_3 ^ truncate_right(
+                   AES_ECB(key, expand_left(left_2, cid_len, 5),
+                            len(right_1))
+    left_1 = left_2 ^ truncate_left(
+                   AES_ECB(key, expand_right(right_2, cid_len, 4),
+                          len(left_1))
+    right_1 = right_1 ^ truncate_right(
+                   AES_ECB(key, expand_left(left_1, cid_len, 3),
+                            len(right_1))
+    left_0 = left_1 ^ truncate_left(
+                   AES_ECB(key, expand_right(right_1, cid_len, 2),
+                          len(left_1))
+~~~~
+As the load balancer has no need for the nonce, it can conclude after 11 passes
+as long as the server ID is entirely contained in left_0 (i.e., the nonce is at
+least as large as the server ID). If the server ID is longer, a twelth pass
 is necessary:
 
 ```
@@ -999,9 +1213,9 @@ module ietf-quic-lb-server {
         range "1..15";
       }
       must '. <= (19 - ../nonce-length)' {
-        error-message
-          "Server ID and nonce lengths must sum
-           to no more than 19.";
+       error-message
+         "Server ID and nonce length 
+          must sum to no more than 19.";
       }
       mandatory true;
       description
