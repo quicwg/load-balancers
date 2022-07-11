@@ -1385,6 +1385,7 @@ Zeng Ke all provided useful input to this document.
 - Incorporated Connection ID length in argument of truncate function
 - Added requirements for codepoint 0b11.
 - Describe Distinguishing Attack in Security Considerations.
+- Added non-normative language about server process demultiplexers
 
 ## since draft-ietf-quic-load-balancers-12
 
