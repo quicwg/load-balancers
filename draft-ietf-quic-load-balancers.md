@@ -675,6 +675,35 @@ balancing, and the server configuration would match the last tier. The forward
 load balancers would simply treat the least significant bits of the server ID
 as part of the nonce.
 
+## Server Process Demultiplexing
+
+QUIC servers might have QUIC running on multiple processes listening on the same
+address, and have a need to demultiplex between them. In principle, this
+demultiplexer is a Layer 4 load balancer, and the guidance in {{lb-chains}}
+applies. However, in many deployments the demultiplexer lacks the capability to
+perform decryption operations. There are some other techniques that might work,
+depending on the capabilities of the server architecture.
+
+* Some bytes of the server ID are reserved to encode the process ID. The
+demultiplexer might operate based on the 4-tuple or other legacy indicator, but
+the receiving server process extracts the server ID, and if it does not match
+the one for that process, the process could "toss" the packet to the correct
+destination process.
+
+* Each process could register the connection IDs it generates with the
+demultiplexer, which routes those connection IDs accordingly.
+
+* Some bytes of the server ID are reserved to encode the process ID. The load
+balancer writes the decrypted connection ID into the packet. The demultiplexer
+reads the process ID from the relevant bytes and routes it accordingly. The
+receiving server process immediately re-encrypts the connection ID in deliver
+the packet to the correct connection and successfully authenticate the packet.
+While this requires coordination between load balancer and server, this document
+does not standardize the technique because it is unsafe to use unless the path
+between load balancer and server is fully secure. An observer at that point can
+determine the server mapping via the IP address of the destination server, but
+the process ID provides additional linkability information.
+
 ## Moving connections between servers
 
 Some deployments may transparently move a connection from one server to another.
