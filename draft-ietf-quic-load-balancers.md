@@ -343,7 +343,7 @@ addresses. The corresponding server configurations contain one or
 more unique server IDs.
 
 The configuration agent chooses a server ID length for each configuration that
-MUST be at least one octet. 
+MUST be at least one octet.
 
 A QUIC-LB configuration MAY significantly over-provision the server ID space
 (i.e., provide far more codepoints than there are servers) to increase the
@@ -432,7 +432,7 @@ the second through seventeenth most significant bytes of the connection ID.
 ### General Case: Four-Pass Encryption
 
 Any other field length requires four passes for encryption and at least three
-for decryption. To understand this algorithm, it is useful to define four 
+for decryption. To understand this algorithm, it is useful to define four
 functions that minimize the amount of bit-shifting necessary in the event that
 there are an odd number of octets.
 
