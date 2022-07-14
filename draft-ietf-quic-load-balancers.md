@@ -725,9 +725,11 @@ generally not require changes as servers deploy new versions of QUIC. However,
 there are several unlikely future design decisions that could impact the
 operation of QUIC-LB.
 
-The maximum Connection ID length could be below the minimum necessary to use all
-or part of this specification. The minimum Connection ID length could exceed the
-limits in this specification.
+A QUIC version might define limits on connection ID length that make some or all
+of the mechanisms in this document unusable.  For example, a maximum connection
+ID length could be below the minimum necessary to use all or part of this
+specification; or, the minimum connection ID length could be larger than the
+largest value in this specification.
 
 {{unroutable}} provides guidance about how load balancers should handle
 unroutable DCIDs. This guidance, and the implementation of an algorithm to
