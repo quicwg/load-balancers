@@ -747,16 +747,19 @@ dependence.
 
 If these assumptions are not valid, this specification is likely to lead to loss
 of packets that contain unroutable DCIDs, and in extreme cases connection
-failure.
+failure.  A QUIC version that violates the assumptions in this section therefore
+cannot be safely deployed with a load balancer that follows this specification.
+An updated or alternative version of this specification might address these
+shortcomings for such a QUIC version.
 
-Some load balancers might inspect elements of the Server Name Indication (SNI)
-extension in the TLS Client Hello to make a routing decision. Note that the
-format and cryptographic protection of this information may change in future
-versions or extensions of TLS or QUIC, and therefore this functionality is
-inherently not version-invariant. See also {{unroutable}} for other
-considerations about this case. Note that an SNI-aware load balancer, faced with
-an unknown QUIC version, might misdirect initial packets to the wrong tenant.
-While inefficient, this preserves the ability for tenants to deploy new versions
+Some load balancers might inspect version-specific elements of packets to make a
+routing decision.  This might include the Server Name Indication (SNI) extension
+in the TLS Client Hello.  The format and cryptographic protection of this
+information may change in future versions or extensions of TLS or QUIC, and
+therefore this functionality is inherently not version-invariant. Such a load
+balancer, when it receives packets from an unknown QUIC version, might misdirect
+initial packets to the wrong tenant.  While this can be inefficient, the design
+in this document preserves the ability for tenants to deploy new versions
 provided they have an out-of-band means of providing a connection ID for the
 client to use.
 
