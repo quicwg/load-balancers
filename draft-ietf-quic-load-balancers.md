@@ -643,7 +643,7 @@ is easily recoverable by decoding an incoming Connection ID. However, a short
 timeout also reduces the chance that an incoming Stateless Reset is correctly
 routed.
 
-Servers MAY implement the technique described in Section 14.4.1 of {{RFC9000}}
+Servers MAY implement the technique described in {{Section 14.4.1 of RFC9000}}
 in case the load balancer is stateless, to increase the likelihood a Source
 Connection ID is included in ICMP responses to Path Maximum Transmission Unit
 (PMTU) probes.  Load balancers MAY parse the echoed packet to extract the Source
