@@ -613,11 +613,11 @@ complete server ID.
 
 # Per-connection state
 
-QUIC-LB requires no per-connection state at the load balancer. The load balancer
-can extract the server ID from the connection ID of each incoming packet and
-route that packet accordingly.
+The CID allocation methods QUIC-LB defines require no per-connection state at
+the load balancer. The load balancer can extract the server ID from the
+connection ID of each incoming packet and route that packet accordingly.
 
-However, once the routing decision has been made, the load balancer MAY
+However, once a routing decision has been made, the load balancer MAY
 associate the 4-tuple or connection ID with the decision. This has two
 advantages:
 
