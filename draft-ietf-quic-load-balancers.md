@@ -671,9 +671,9 @@ space is quite large.
 
 If the number of necessary server IDs per next hop is uniform, a simple
 implementation would use successively longer server IDs at each tier of load
-balancing, and the server configuration would match the last tier. The forward
-load balancers would simply treat the least significant bits of the server ID
-as part of the nonce.
+balancing, and the server configuration would match the last tier. Load
+balancers closer to the client can then treat any parts of the server ID they
+did not use as part of the nonce.
 
 ## Server Process Demultiplexing
 
