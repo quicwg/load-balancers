@@ -218,9 +218,9 @@ ID from short headers.
 
 Local hardware cryptographic offload devices may accelerate QUIC servers by
 receiving keys from the QUIC implementation indexed to the connection ID.
-However, on physical devices operating multiple QUIC servers, it is impractical
-to efficiently lookup these keys if the connection ID does not self-encode its
-own length.
+However, on physical devices operating multiple QUIC servers, it might be
+impractical to efficiently lookup keys if the connection ID varies in length and
+does not self-encode its own length.
 
 Note that this is a function of particular server devices and is irrelevant to
 load balancers. As such, load balancers MAY omit this from their configuration.
