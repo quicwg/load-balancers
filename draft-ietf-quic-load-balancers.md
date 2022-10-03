@@ -191,11 +191,14 @@ configurations, but this has privacy implications (see {{multiple-configs}}).
 
 ## Configuration Failover {#config-failover}
 
-If a server has not received a valid QUIC-LB configuration, and believes that
-low-state, Connection-ID aware load balancers are in the path, it SHOULD
-generate connection IDs with the config rotation bits set to 0b11 and SHOULD use
-the "disable_active_migration" transport parameter in all new QUIC connections.
-It SHOULD NOT send NEW_CONNECTION_ID frames with new values.
+A server that is configured to use QUIC-LB might be forced to accept new
+connections without having received a current configuration.  A server without
+QUIC-LB configuration can accept connections, but it SHOULD generate initial
+connection IDs with the config rotation bits set to 0b11 and avoid sending the
+client connection IDs in NEW_CONNECTION_ID frames or the preferred_address
+transport parameter.  Servers in this state SHOULD use the
+"disable_active_migration" transport parameter until a valid configuration is
+received.
 
 A load balancer that sees a connection ID with config rotation bits set to
 0b11 MUST route using an algorithm based solely on the address/port 4-tuple,
