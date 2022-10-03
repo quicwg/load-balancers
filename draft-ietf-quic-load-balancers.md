@@ -64,11 +64,11 @@ QUIC endpoints usually designate the connection ID which peers use to address
 packets. Server-generated connection IDs create a potential need for out-of-band
 communication to support QUIC.
 
-QUIC allows servers (or load balancers) to encode useful routing
-information for load balancers in connection IDs.  It also encourages servers,
-in packets protected by cryptography, to provide additional connection IDs to
-the client.  This allows clients that know they are going to change IP address
-or port to use a separate connection ID on the new path, thus reducing
+QUIC allows servers (or load balancers) to designate an initial connection ID to
+encode useful routing information for load balancers.  It also encourages
+servers, in packets protected by cryptography, to provide additional connection
+IDs to the client.  This allows clients that know they are going to change IP
+address or port to use a separate connection ID on the new path, thus reducing
 linkability as clients move through the world.
 
 There is a tension between the requirements to provide routing information and
@@ -154,9 +154,8 @@ Example Structure {
 
 # First CID octet {#first-octet}
 
-The Connection ID construction schemes defined in this document reserve the
-first octet of a CID for two special purposes: one mandatory (config rotation)
-and one optional (length self-description).
+The first octet of a Connection ID is reserved for two special purposes, one
+mandatory (config rotation) and one optional (length self-description).
 
 Subsequent sections of this document refer to the contents of this octet as the
 "first octet."
@@ -191,14 +190,11 @@ configurations, but this has privacy implications (see {{multiple-configs}}).
 
 ## Configuration Failover {#config-failover}
 
-A server that is configured to use QUIC-LB might be forced to accept new
-connections without having received a current configuration.  A server without
-QUIC-LB configuration can accept connections, but it SHOULD generate initial
-connection IDs with the config rotation bits set to 0b11 and avoid sending the
-client connection IDs in NEW_CONNECTION_ID frames or the preferred_address
-transport parameter.  Servers in this state SHOULD use the
-"disable_active_migration" transport parameter until a valid configuration is
-received.
+If a server has not received a valid QUIC-LB configuration, and believes that
+low-state, Connection-ID aware load balancers are in the path, it SHOULD
+generate connection IDs with the config rotation bits set to 0b11 and SHOULD use
+the "disable_active_migration" transport parameter in all new QUIC connections.
+It SHOULD NOT send NEW_CONNECTION_ID frames with new values.
 
 A load balancer that sees a connection ID with config rotation bits set to
 0b11 MUST route using an algorithm based solely on the address/port 4-tuple,
@@ -218,9 +214,9 @@ ID from short headers.
 
 Local hardware cryptographic offload devices may accelerate QUIC servers by
 receiving keys from the QUIC implementation indexed to the connection ID.
-However, on physical devices operating multiple QUIC servers, it might be
-impractical to efficiently lookup keys if the connection ID varies in length and
-does not self-encode its own length.
+However, on physical devices operating multiple QUIC servers, it is impractical
+to efficiently lookup these keys if the connection ID does not self-encode its
+own length.
 
 Note that this is a function of particular server devices and is irrelevant to
 load balancers. As such, load balancers MAY omit this from their configuration.
@@ -378,6 +374,14 @@ QUIC-LB Connection ID {
 }
 ~~~
 {: #plaintext-cid-format title="CID Format"}
+
+The First Octet field serves one or two purposes, as defined in {{first-octet}}.
+
+The Server ID field encodes the information necessary for the load balancer to
+route a packet with that connection ID. It is often encrypted.
+
+The server uses the Nonce field to make sure that each connection ID it
+generates is unique, even though they all use the same Server ID.
 
 ## Configuration Agent Actions
 
@@ -617,11 +621,11 @@ complete server ID.
 
 # Per-connection state
 
-The CID allocation methods QUIC-LB defines require no per-connection state at
-the load balancer. The load balancer can extract the server ID from the
-connection ID of each incoming packet and route that packet accordingly.
+QUIC-LB requires no per-connection state at the load balancer. The load balancer
+can extract the server ID from the connection ID of each incoming packet and
+route that packet accordingly.
 
-However, once a routing decision has been made, the load balancer MAY
+However, once the routing decision has been made, the load balancer MAY
 associate the 4-tuple or connection ID with the decision. This has two
 advantages:
 
@@ -647,7 +651,7 @@ is easily recoverable by decoding an incoming Connection ID. However, a short
 timeout also reduces the chance that an incoming Stateless Reset is correctly
 routed.
 
-Servers MAY implement the technique described in {{Section 14.4.1 of RFC9000}}
+Servers MAY implement the technique described in Section 14.4.1 of {{RFC9000}}
 in case the load balancer is stateless, to increase the likelihood a Source
 Connection ID is included in ICMP responses to Path Maximum Transmission Unit
 (PMTU) probes.  Load balancers MAY parse the echoed packet to extract the Source
@@ -675,9 +679,9 @@ space is quite large.
 
 If the number of necessary server IDs per next hop is uniform, a simple
 implementation would use successively longer server IDs at each tier of load
-balancing, and the server configuration would match the last tier. Load
-balancers closer to the client can then treat any parts of the server ID they
-did not use as part of the nonce.
+balancing, and the server configuration would match the last tier. The forward
+load balancers would simply treat the least significant bits of the server ID
+as part of the nonce.
 
 ## Server Process Demultiplexing
 
@@ -729,11 +733,9 @@ generally not require changes as servers deploy new versions of QUIC. However,
 there are several unlikely future design decisions that could impact the
 operation of QUIC-LB.
 
-A QUIC version might define limits on connection ID length that make some or all
-of the mechanisms in this document unusable.  For example, a maximum connection
-ID length could be below the minimum necessary to use all or part of this
-specification; or, the minimum connection ID length could be larger than the
-largest value in this specification.
+The maximum Connection ID length could be below the minimum necessary to use all
+or part of this specification. The minimum Connection ID length could exceed the
+limits in this specification.
 
 {{unroutable}} provides guidance about how load balancers should handle
 unroutable DCIDs. This guidance, and the implementation of an algorithm to
@@ -753,19 +755,16 @@ dependence.
 
 If these assumptions are not valid, this specification is likely to lead to loss
 of packets that contain unroutable DCIDs, and in extreme cases connection
-failure.  A QUIC version that violates the assumptions in this section therefore
-cannot be safely deployed with a load balancer that follows this specification.
-An updated or alternative version of this specification might address these
-shortcomings for such a QUIC version.
+failure.
 
-Some load balancers might inspect version-specific elements of packets to make a
-routing decision.  This might include the Server Name Indication (SNI) extension
-in the TLS Client Hello.  The format and cryptographic protection of this
-information may change in future versions or extensions of TLS or QUIC, and
-therefore this functionality is inherently not version-invariant. Such a load
-balancer, when it receives packets from an unknown QUIC version, might misdirect
-initial packets to the wrong tenant.  While this can be inefficient, the design
-in this document preserves the ability for tenants to deploy new versions
+Some load balancers might inspect elements of the Server Name Indication (SNI)
+extension in the TLS Client Hello to make a routing decision. Note that the
+format and cryptographic protection of this information may change in future
+versions or extensions of TLS or QUIC, and therefore this functionality is
+inherently not version-invariant. See also {{unroutable}} for other
+considerations about this case. Note that an SNI-aware load balancer, faced with
+an unknown QUIC version, might misdirect initial packets to the wrong tenant.
+While inefficient, this preserves the ability for tenants to deploy new versions
 provided they have an out-of-band means of providing a connection ID for the
 client to use.
 
