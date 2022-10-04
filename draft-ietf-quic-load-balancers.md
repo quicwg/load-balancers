@@ -1389,6 +1389,10 @@ Zeng Ke all provided useful input to this document.
 > **RFC Editor's Note:**  Please remove this section prior to
 > publication of a final version of this document.
 
+## since draft-ietf-quic-load-balancers-14
+
+- Editorial comments from Martin Thomson.
+
 ## since draft-ietf-quic-load-balancers-13
 
 - Incorporated Connection ID length in argument of truncate function
