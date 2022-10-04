@@ -123,34 +123,7 @@ For brevity, "Connection ID" will often be abbreviated as "CID".
 ## Notation
 
 All wire formats will be depicted using the notation defined in Section 1.3 of
-{{RFC9000}}. There is one addition: the function len() refers to the length of
-a field which can serve as a limit on a different field, so that the lengths of
-two fields can be concisely defined as limited to a sum, for example:
-
-x(A..B)
-y(C..B-len(x))
-
-indicates that x can be of any length between A and B, and y can be of any
-length between C and B provided that (len(x) + len(y)) does not exceed B.
-
-The example below illustrates the basic framework:
-
-~~~
-Example Structure {
-  One-bit Field (1),
-  7-bit Field with Fixed Value (7) = 61,
-  Field with Variable-Length Integer (i),
-  Arbitrary-Length Field (..),
-  Variable-Length Field (8..24),
-  Variable-Length Field with Dynamic Limit
-           (8..24-len(Variable-Length Field)),
-  Field With Minimum Length (16..),
-  Field With Maximum Length (..128),
-  [Optional Field (64)],
-  Repeated Field (8) ...,
-}
-~~~
-{: #fig-ex-format title="Example Format"}
+{{RFC9000}}.
 
 # First CID octet {#first-octet}
 
@@ -373,8 +346,11 @@ All connection IDs use the following format:
 ~~~
 QUIC-LB Connection ID {
     First Octet (8),
-    Server ID (8..152-len(Nonce)),
-    Nonce (32..152-len(Server ID)),
+    Plaintext Block (40..152),
+}
+Plaintext Block {
+    Server ID (8..),
+    Nonce (32..),
 }
 ~~~
 {: #plaintext-cid-format title="CID Format"}
