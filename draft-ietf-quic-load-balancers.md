@@ -416,9 +416,8 @@ provide observers with any information that could link two connection IDs to
 the same connection, client, or server. In particular, all servers using a
 configuration MUST consistently add the same length to each connection ID,
 to preserve the linkability objectives of QUIC-LB. Any additional bytes SHOULD
-NOT provide any observable indication that correlates the connection ID to a
-previous connection IDs for that connection (e.g. the bytes are random, or all
-servers using that configuration append identical bytes to every connection ID).
+NOT provide any observable correlation to previous connection IDs for that
+connection (e.g. the bytes are random).
 
 If there is no key in the configuration, the Connection ID is complete.
 Otherwise, there are further steps, as described in the two following
