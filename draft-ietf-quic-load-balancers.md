@@ -228,8 +228,8 @@ However, the remaining 6 bits in the first octet of the Connection ID are
 reserved to express the length of the following connection ID, not including
 the first octet.
 
-A server not using this functionality SHOULD make the six bits appear to be
-random.
+A server not using this functionality SHOULD choose the six bits so as to have
+no observable relationship to previous connection IDs.
 
 ## Format
 
@@ -405,8 +405,9 @@ The server writes the first octet and its server ID into their respective
 fields.
 
 If there is no key in the configuration, the server MUST fill the Nonce field
-with bytes that appear to be random. If there is a key, the server fills the
-nonce field with a nonce of its choosing. See {{cid-entropy}} for details.
+with bytes that have no observable relationship to the field in previously
+issued connection IDs. If there is a key, the server fills the nonce field with
+a nonce of its choosing. See {{cid-entropy}} for details.
 
 The server MAY append additional bytes to the connection ID, up to the limit
 specified in that version of QUIC, for its own use. These bytes MUST NOT
@@ -414,8 +415,9 @@ provide observers with any information that could link two connection IDs to
 the same connection, client, or server. In particular, all servers using a
 configuration MUST consistently add the same length to each connection ID,
 to preserve the linkability objectives of QUIC-LB. Any additional bytes SHOULD
-appear random unless individual servers are not distinguishable (e.g. any server
-using that configuration appends identical bytes to every connection ID).
+NOT provide any observable indication that correlates the connection ID to a
+particular server instance (e.g. the bytes are random, or all servers using that
+configuration append identical bytes to every connection ID).
 
 If there is no key in the configuration, the Connection ID is complete.
 Otherwise, there are further steps, as described in the two following
@@ -898,8 +900,9 @@ Whether or not it implements the counter method, the server MUST NOT reuse a
 nonce until it switches to a configuration with new keys.
 
 If the nonce is sent in plaintext, servers MUST generate nonces so that they
-appear to be random. Observable correlations between plaintext nonces would
-provide trivial linkability between individual connections, rather than just to
+have no observable relationship to connection IDs previously issued for that
+connection. Observable correlations between plaintext nonces would provide
+trivial linkability between individual connections, rather than just to
 a common server.
 
 For any algorithm, configuration agents SHOULD implement an out-of-band method
