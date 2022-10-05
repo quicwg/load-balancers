@@ -692,10 +692,7 @@ this document.
 
 To support a handover, a server involved in the transition could issue CIDs that
 map to the new server via a NEW_CONNECTION_ID frame, and retire CIDs associated
-with the new server using the "Retire Prior To" field in that frame.
-
-Alternately, if the old server is going offline, the load balancer could simply
-map its server ID to the new server's address.
+with the old server using the "Retire Prior To" field in that frame.
 
 # Version Invariance of QUIC-LB {#version-invariance}
 
