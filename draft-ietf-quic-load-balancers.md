@@ -417,7 +417,7 @@ the same connection, client, or server. In particular, all servers using a
 configuration MUST consistently add the same length to each connection ID,
 to preserve the linkability objectives of QUIC-LB. Any additional bytes SHOULD
 NOT provide any observable correlation to previous connection IDs for that
-connection (i.e., the bytes can be chosen at random).
+connection (e.g., the bytes can be chosen at random).
 
 If there is no key in the configuration, the Connection ID is complete.
 Otherwise, there are further steps, as described in the two following
