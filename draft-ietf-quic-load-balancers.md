@@ -64,7 +64,7 @@ QUIC endpoints usually designate the connection ID which peers use to address
 packets. Server-generated connection IDs create a potential need for out-of-band
 communication to support QUIC.
 
-QUIC allows servers (or load balancers) to designate an initial connection ID to
+QUIC allows servers (or load balancers) to select connection IDs so that the identifier
 encode useful routing information for load balancers.  It also encourages
 servers, in packets protected by cryptography, to provide additional connection
 IDs to the client.  This allows clients that know they are going to change IP
