@@ -154,7 +154,7 @@ Example Structure {
 
 # First CID octet {#first-octet}
 
-The first octet of a Connection ID is reserved for two special purposes, one
+The encoding scheme used in this document reserves the first octet of a Connection ID for two purposes: one
 mandatory (config rotation) and one optional (length self-description).
 
 Subsequent sections of this document refer to the contents of this octet as the
