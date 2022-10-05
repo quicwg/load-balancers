@@ -214,7 +214,7 @@ ID from short headers.
 
 Local hardware cryptographic offload devices may accelerate QUIC servers by
 receiving keys from the QUIC implementation indexed to the connection ID.
-However, on physical devices operating multiple QUIC servers, it is impractical
+However, on physical devices operating multiple QUIC servers, it might be impractical
 to efficiently lookup these keys if the connection ID does not self-encode its
 own length.
 
