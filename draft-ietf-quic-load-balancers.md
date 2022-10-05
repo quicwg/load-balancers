@@ -625,7 +625,7 @@ QUIC-LB requires no per-connection state at the load balancer. The load balancer
 can extract the server ID from the connection ID of each incoming packet and
 route that packet accordingly.
 
-However, once the routing decision has been made, the load balancer MAY
+However, once a routing decision has been made, the load balancer MAY
 associate the 4-tuple or connection ID with the decision. This has two
 advantages:
 
@@ -679,9 +679,9 @@ space is quite large.
 
 If the number of necessary server IDs per next hop is uniform, a simple
 implementation would use successively longer server IDs at each tier of load
-balancing, and the server configuration would match the last tier. The forward
-load balancers would simply treat the least significant bits of the server ID
-as part of the nonce.
+balancing, and the server configuration would match the last tier. Load
+balancers closer to the client would simply treat the least significant bits of
+the server ID as part of the nonce.
 
 ## Server Process Demultiplexing
 
