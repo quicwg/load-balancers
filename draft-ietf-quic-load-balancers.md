@@ -30,6 +30,16 @@ author:
     org: Private Octopus Inc.
     email: huitema@huitema.net
 
+normative:
+  NIST-AES-ECB:
+    title: "Recommendation for Block Cipher Modes of Operation: Methods and Techniques"
+    author:
+      - ins: M. Dworkin
+    date: 2021
+    refcontent:
+      - "NIST Special Publication 800-38A"
+    target: "https://nvlpubs.nist.gov/nistpubs/Legacy/SP/nistspecialpublication800-38a.pdf"
+
 informative:
     Patarin2008:
         target: https://eprint.iacr.org/2008/036.pdf
@@ -399,10 +409,10 @@ If there is no key in the configuration, the Connection ID is complete.
 Otherwise, there are further steps, as described in the two following
 subsections.
 
-Encryption below uses the AES-128-ECB cipher. Future standards could add new
-algorithms that use other ciphers to provide cryptographic agility in accordance
-with {{?RFC7696}}. QUIC-LB implementations SHOULD be extensible to support new
-algorithms.
+Encryption below uses the AES-128-ECB cipher {{NIST-AES-ECB}}. Future standards
+could add new algorithms that use other ciphers to provide cryptographic agility
+in accordance with {{?RFC7696}}. QUIC-LB implementations SHOULD be extensible to
+support new algorithms.
 
 ### Special Case: Single Pass Encryption
 
