@@ -30,6 +30,16 @@ author:
     org: Private Octopus Inc.
     email: huitema@huitema.net
 
+normative:
+  NIST-AES-ECB:
+    title: "Recommendation for Block Cipher Modes of Operation: Methods and Techniques"
+    author:
+      - ins: M. Dworkin
+    date: 2021
+    refcontent:
+      - "NIST Special Publication 800-38A"
+    target: "https://nvlpubs.nist.gov/nistpubs/Legacy/SP/nistspecialpublication800-38a.pdf"
+
 informative:
     Patarin2008:
         target: https://eprint.iacr.org/2008/036.pdf
@@ -64,12 +74,12 @@ QUIC endpoints usually designate the connection ID which peers use to address
 packets. Server-generated connection IDs create a potential need for out-of-band
 communication to support QUIC.
 
-QUIC allows servers (or load balancers) to encode useful routing
-information for load balancers in connection IDs.  It also encourages servers,
-in packets protected by cryptography, to provide additional connection IDs to
-the client.  This allows clients that know they are going to change IP address
-or port to use a separate connection ID on the new path, thus reducing
-linkability as clients move through the world.
+QUIC allows servers (or load balancers) to encode useful routing information for
+load balancers in connection IDs.  It also encourages servers, in packets
+protected by cryptography, to provide additional connection IDs to the client.
+This allows clients that know they are going to change IP address or port to use
+a separate connection ID on the new path, thus reducing linkability as clients
+move through the world.
 
 There is a tension between the requirements to provide routing information and
 mitigate linkability.  Ultimately, because new connection IDs are in protected
@@ -123,34 +133,7 @@ For brevity, "Connection ID" will often be abbreviated as "CID".
 ## Notation
 
 All wire formats will be depicted using the notation defined in Section 1.3 of
-{{RFC9000}}. There is one addition: the function len() refers to the length of
-a field which can serve as a limit on a different field, so that the lengths of
-two fields can be concisely defined as limited to a sum, for example:
-
-x(A..B)
-y(C..B-len(x))
-
-indicates that x can be of any length between A and B, and y can be of any
-length between C and B provided that (len(x) + len(y)) does not exceed B.
-
-The example below illustrates the basic framework:
-
-~~~
-Example Structure {
-  One-bit Field (1),
-  7-bit Field with Fixed Value (7) = 61,
-  Field with Variable-Length Integer (i),
-  Arbitrary-Length Field (..),
-  Variable-Length Field (8..24),
-  Variable-Length Field with Dynamic Limit
-           (8..24-len(Variable-Length Field)),
-  Field With Minimum Length (16..),
-  Field With Maximum Length (..128),
-  [Optional Field (64)],
-  Repeated Field (8) ...,
-}
-~~~
-{: #fig-ex-format title="Example Format"}
+{{RFC9000}}.
 
 # First CID octet {#first-octet}
 
@@ -228,8 +211,9 @@ However, the remaining 6 bits in the first octet of the Connection ID are
 reserved to express the length of the following connection ID, not including
 the first octet.
 
-A server not using this functionality SHOULD make the six bits appear to be
-random.
+A server not using this functionality SHOULD choose the six bits so as to have
+no observable relationship to previous connection IDs issued for that
+connection.
 
 ## Format
 
@@ -373,11 +357,22 @@ All connection IDs use the following format:
 ~~~
 QUIC-LB Connection ID {
     First Octet (8),
-    Server ID (8..152-len(Nonce)),
-    Nonce (32..152-len(Server ID)),
+    Plaintext Block (40..152),
+}
+Plaintext Block {
+    Server ID (8..),
+    Nonce (32..),
 }
 ~~~
 {: #plaintext-cid-format title="CID Format"}
+
+The First Octet field serves one or two purposes, as defined in {{first-octet}}.
+
+The Server ID field encodes the information necessary for the load balancer to
+route a packet with that connection ID. It is often encrypted.
+
+The server uses the Nonce field to make sure that each connection ID it
+generates is unique, even though they all use the same Server ID.
 
 ## Configuration Agent Actions
 
@@ -405,8 +400,9 @@ The server writes the first octet and its server ID into their respective
 fields.
 
 If there is no key in the configuration, the server MUST fill the Nonce field
-with bytes that appear to be random. If there is a key, the server fills the
-nonce field with a nonce of its choosing. See {{cid-entropy}} for details.
+with bytes that have no observable relationship to the field in previously
+issued connection IDs. If there is a key, the server fills the nonce field with
+a nonce of its choosing. See {{cid-entropy}} for details.
 
 The server MAY append additional bytes to the connection ID, up to the limit
 specified in that version of QUIC, for its own use. These bytes MUST NOT
@@ -414,17 +410,17 @@ provide observers with any information that could link two connection IDs to
 the same connection, client, or server. In particular, all servers using a
 configuration MUST consistently add the same length to each connection ID,
 to preserve the linkability objectives of QUIC-LB. Any additional bytes SHOULD
-appear random unless individual servers are not distinguishable (e.g. any server
-using that configuration appends identical bytes to every connection ID).
+NOT provide any observable correlation to previous connection IDs for that
+connection (e.g., the bytes can be chosen at random).
 
 If there is no key in the configuration, the Connection ID is complete.
 Otherwise, there are further steps, as described in the two following
 subsections.
 
-Encryption below uses the AES-128-ECB cipher. Future standards could add new
-algorithms that use other ciphers to provide cryptographic agility in accordance
-with {{?RFC7696}}. QUIC-LB implementations SHOULD be extensible to support new
-algorithms.
+Encryption below uses the AES-128-ECB cipher {{NIST-AES-ECB}}. Future standards
+could add new algorithms that use other ciphers to provide cryptographic agility
+in accordance with {{?RFC7696}}. QUIC-LB implementations SHOULD be extensible to
+support new algorithms.
 
 ### Special Case: Single Pass Encryption
 
@@ -716,10 +712,7 @@ this document.
 
 To support a handover, a server involved in the transition could issue CIDs that
 map to the new server via a NEW_CONNECTION_ID frame, and retire CIDs associated
-with the new server using the "Retire Prior To" field in that frame.
-
-Alternately, if the old server is going offline, the load balancer could simply
-map its server ID to the new server's address.
+with the old server using the "Retire Prior To" field in that frame.
 
 # Version Invariance of QUIC-LB {#version-invariance}
 
@@ -897,10 +890,9 @@ the nonce value wraps around to zero and then reaches the initial value again.
 Whether or not it implements the counter method, the server MUST NOT reuse a
 nonce until it switches to a configuration with new keys.
 
-If the nonce is sent in plaintext, servers MUST generate nonces so that they
-appear to be random. Observable correlations between plaintext nonces would
-provide trivial linkability between individual connections, rather than just to
-a common server.
+Servers are forbidden from generating linkable plaintext nonces, because
+observable correlations between plaintext nonces would provide trivial
+linkability between individual connections, rather than just to a common server.
 
 For any algorithm, configuration agents SHOULD implement an out-of-band method
 to discover when servers are in danger of exhausting their nonce space, and
@@ -1388,6 +1380,10 @@ Zeng Ke all provided useful input to this document.
 
 > **RFC Editor's Note:**  Please remove this section prior to
 > publication of a final version of this document.
+
+## since draft-ietf-quic-load-balancers-14
+
+- Editorial comments from Martin Thomson.
 
 ## since draft-ietf-quic-load-balancers-13
 
