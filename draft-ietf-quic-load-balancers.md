@@ -805,10 +805,9 @@ apply this analysis to correlating different client IP addresses.
 ## Attackers between the load balancer and server
 
 Attackers in this privileged position are intrinsically able to map two
-connection IDs to the same server.  The QUIC-LB algorithms do prevent the
-linkage of two connection IDs to the same individual connection, as long as the
-server chooses first octet and (if plaintext) nonce to not observably correlate
-with previous connection IDs issues for the connection.
+connection IDs to the same server. These algorithms ensure that two connection
+IDs for the same connection cannot be identified as such as long as the server
+chooses the first octet and any plaintext nonce correctly.
 
 ## Multiple Configuration IDs {#multiple-configs}
 
