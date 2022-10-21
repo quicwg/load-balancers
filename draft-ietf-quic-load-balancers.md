@@ -778,9 +778,20 @@ event of config rotation {{config-rotation}}. Doing so might falsely suggest to
 the client that said CIDs were generated in a secure fashion.
 
 A linkability attack would find some means of determining that two connection
-IDs route to the same server. As described above, there is no scheme that
-strictly prevents linkability for all traffic patterns, and therefore efforts to
-frustrate any analysis of server ID encoding have diminishing returns.
+IDs route to the same server. Due to the limitations of measures at QUIC layer,
+there is no scheme that strictly prevents linkability for all traffic patterns.
+
+To see why, consider two limits. At one extreme, one client is connected to the
+server pool and migrates its address. An observer can easily link the two
+addresses, and there is no remedy at the QUIC layer.
+
+At the other extreme, a very large number of clients are connected to each
+server, and they all migrate address constantly. At this limit, even an
+unencrypted server ID encoding is unlikely to definitively link two addresses.
+
+Therefore, efforts to frustrate any analysis of server ID encoding have
+diminishing returns. Nevertheless, this specification seeks to minimize the
+probability two addresses can be linked.
 
 ## Attackers not between the load balancer and server
 
@@ -1297,10 +1308,10 @@ which may be hard to distinguish.
 
 In most cases, the packet parsing rules above will cause a QUIC-LB load
 balancer to route DTLS traffic in an appropriate way. DTLS 1.3 implementations
-that use the connection_id extension {{?I-D.ietf-tls-dtls-connection-id}} might
-use the techniques in this document to generate connection IDs and achieve
-robust routability for DTLS associations if they meet a few additional
-requirements. This non-normative appendix describes this interaction.
+that use the connection_id extension {{?RFC9146}} might use the techniques in
+this document to generate connection IDs and achieve robust routability for DTLS
+associations if they meet a few additional requirements. This non-normative
+appendix describes this interaction.
 
 ## DTLS 1.0 and 1.2
 
@@ -1329,16 +1340,16 @@ will interpret this as a connection ID that requires 4-tuple based load
 balancing, meaning that the routing will be consistent as long as the 4-tuple
 remains the same.
 
-{{?I-D.ietf-tls-dtls-connection-id}} defines an extension to add connection IDs
-to DTLS 1.2. Unfortunately, a QUIC-LB load balancer will not correctly parse
-the connection ID and will continue 4-tuple routing. An modified QUIC-LB load
-balancer that correctly identifies DTLS and parses a DTLS 1.2 datagram for
-the connection ID is outside the scope of this document.
+{{?RFC9146}} defines an extension to add connection IDs to DTLS 1.2.
+Unfortunately, a QUIC-LB load balancer will not correctly parse the connection
+ID and will continue 4-tuple routing. An modified QUIC-LB load balancer that
+correctly identifies DTLS and parses a DTLS 1.2 datagram for the connection ID
+is outside the scope of this document.
 
 ## DTLS 1.3
 
-DTLS 1.3 {{?I-D.draft-ietf-tls-dtls13}} changes the structure of datagram
-headers in relevant ways.
+DTLS 1.3 {{?RFC9147}} changes the structure of datagram headers in relevant
+ways.
 
 Handshake packets continue to have a TLS content type in the first octet and
 0xfe in the second octet, so they will be 4-tuple routed, which should not
@@ -1383,6 +1394,8 @@ Zeng Ke all provided useful input to this document.
 
 ## since draft-ietf-quic-load-balancers-14
 
+- Revised process demultiplexing text
+- Restored lost text in Security Considerations
 - Editorial comments from Martin Thomson.
 
 ## since draft-ietf-quic-load-balancers-13
