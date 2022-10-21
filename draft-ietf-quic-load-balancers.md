@@ -454,73 +454,58 @@ expanded into a 16B plaintext, encrypted with AES-ECB, and the result XORed with
 the other half. The diagram below shows the conceptual processing of a plaintext
 server ID and nonce into a connection ID. 'FO' stands for 'First Octet'.
 
-```
+~~~
    +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-   | FO  | server ID |         Nonce         |
+   | FO  | Server ID |         Nonce         |
    +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
       |                    |
       |                    \/
       |  +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
       |  |      left_0     |      right_0    |
       |  +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-      |    |    |                  |
-      |    |    | Encrypt         \/ 
-      |    |    |          +-+-+-+-+-+-+-+-+-+
-      |    |    ---------->|        XOR      |
-      |    |               +-+-+-+-+-+-+-+-+-+
-      |    |                       |
-      |    |                      \/
-      |    |               +-+-+-+-+-+-+-+-+-+
-      |    |               |      right_1    |
-      |    |               +-+-+-+-+-+-+-+-+-+
-      |    \/                   |          |
-      |  +-+-+-+-+-+-+-+-+-+    | Encrypt  |
-      |  |      XOR        |<----          |
-      |  +-+-+-+-+-+-+-+-+-+               |
-      |          |                         |
-      |          \/                        |
-      |  +-+-+-+-+-+-+-+-+-+               |
-      |  |      left_1     |               |
-      |  +-+-+-+-+-+-+-+-+-+               |
-      |    |    |                          |
-      |    |    | Encrypt                 \/
-      |    |    |          +-+-+-+-+-+-+-+-+-+
-      |    |    ---------->|        XOR      |
-      |    |               +-+-+-+-+-+-+-+-+-+
-      |    |                       |
-      |    |                      \/
-      |    |               +-+-+-+-+-+-+-+-+-+
-      |    |               |      right_2    |
-      |    |               +-+-+-+-+-+-+-+-+-+
-      |    \/                   |          |
-      |  +-+-+-+-+-+-+-+-+-+    | Encrypt  |
-      |  |      XOR        |<----          |
-      |  +-+-+-+-+-+-+-+-+-+               |
-      |          |                         |
-      |          \/                        |
-      |  +-+-+-+-+-+-+-+-+-+               |
-      |  |      left_2     |               |
-      |  +-+-+-+-+-+-+-+-+-+               |
-      |          |                         |
-      \/         \/                        \/
+      |    |    |                      |
+      |    |    \/                     |
+      |    |  +-+-+-+-+-+              \/
+      |    |  | AES-ECB |------------>(+)
+      |    |  +-+-+-+-+-+              |
+      |    \/         +-+-+-+-+-+      | right_1
+      |   (+)<--------| AES-ECB |<-----|
+      |    |          +-+-+-+-+-+      |
+      |    | left_1   +-+-+-+-+-+      \/
+      |    |--------->| AES-ECB |---->(+)
+      |    |          +-+-+-+-+-+      |
+      |    \/         +-+-+-+-+-+      | right_2
+      |   (+)<--------| AES-ECB |------|
+      |    |          +-+-+-+-+-+      |
+      |    \/                          \/
+      |  +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+      |  |      left_2     |      right_2    |
+      |  +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+      |          |                  |
+      \/         \/                 \/
    +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
    | FO  |            Ciphertext             |
    +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-```
+~~~
 
 #### Useful functions
 
 Two functions are useful to define:
 
 The expand(length, pass, input_bytes) function concatenates three arguments and
-outputs 16 zero-padded octets. The first argument 'length' is an 8-bit integer
-that reports the sum of the configured nonce length and server id length, and
-forms the most significant octet of the output. It MUST NOT exceed 28. The
-second argument is an 8-bit integer that is the 'pass' of the algorithm, and
-forms the second-most significant octet of the output. The third argument is a
-variable-length stream of octets, which is copied into third-most significant
-octet of the output and beyond. The length of this octet stream is half the
-'length', rounded up. All remaining octets of the output are zero.
+outputs 16 zero-padded octets.
+
+The first argument 'length' is an 8-bit integer that reports the sum of the
+configured nonce length and server id length in octets, and forms the most
+significant octet of the output. The 'length' argument MUST NOT exceed 28.
+
+The second argument is an 8-bit integer that is the 'pass' of the algorithm, and
+forms the second-most significant octet of the output.
+
+The third argument is a variable-length stream of octets, which is copied into
+the third-most significant octet of the output and beyond. The length of this
+octet stream is half the 'length', rounded up. All remaining octets of the
+output are zero.
 
 For example,
 
@@ -528,10 +513,10 @@ For example,
 expand(0x06, 0x02, 0xaaba3c) = 0x0602aaba3c0000000000000000000000
 ~~~
 
-Similarly, truncate(input, n) returns the n most significant octets of 'input'.
+Similarly, truncate(input, n) returns the first n octets of 'input'.
 
 ~~~pseudocode
-truncate(0x2094842ca49256198c2deaa0ba53caa0, 28) = 0x2094842
+truncate(0x2094842ca49256198c2deaa0ba53caa0, 4) = 0x2094842c
 ~~~
 
 Let 'half_len' be equal to 'plaintext_len' / 2, rounded up.
@@ -545,63 +530,56 @@ below.
 length of the result in octets is plaintext_len.
 
 2. The server splits plaintext_CID into components left_0 and right_0 of equal
-length half_len. If plaintext_len is odd, right_0 clears its four most
-significant bits, and left_0 clears its four least significant bits. For
-example, 0x7040b81b55ccf3 would split into a left_0 of 0x7040b810 and right_0 of
-0x0b55ccf3.
+length half_len. If plaintext_len is odd, right_0 clears its first four bits,
+and left_0 clears its last four bits. For example, 0x7040b81b55ccf3 would split
+into a left_0 of 0x7040b810 and right_0 of 0x0b55ccf3.
 
 3. Encrypt the result of expand(plaintext_len, 1, left_0) using an AES-ECB-128
 cipher to obtain a ciphertext.
 
-4. XOR the most significant bits of the ciphertext with right_0 to form
-right_1. If plaintext_len is odd, clear the four most significant bits. Steps 3
-and 4 can be summarized as
-  
-```
-   right_1 = XOR(right_0,
-                truncate(AES_ECB(key, expand(plaintext_len, 1, left_0)),
-                         half_len)
-```
+4. XOR the first half_len octets of the ciphertext with right_0 to form right_1.
+Steps 3 and 4 can be summarized as
 
-5. If the plaintext_len is odd, clear the four most significant bits of
-right_1.
+~~~psuedocode
+    result = AES_ECB(key, expand(plaintext_len, 1, left_0))
+    right_1 = XOR(right_0, truncate(result, half_len))
+~~~
+
+{:start="5"}
+5. If the plaintext_len is odd, clear the first four bits of right_1.
 
 6. Repeat steps 3 and 4, but use them to compute left_1 by expanding and
 encrypting right_1 with pass = 2, and XOR the results with left_0.
 
-```
-   left_1 = XOR(left_0,
-                truncate(AES_ECB(key, expand(plaintext_len, 2, right_1)),
-                         half_len)
-```
+~~~psuedocode
+    result = AES_ECB(key, expand(plaintext_len, 2, right_1))
+    left_1 = XOR(left_0, truncate(result, half_len))
+~~~
 
-7. If the plaintext_len is odd, clear the four least significant bits of
-left_1.
-
+{:start="7"}
+7. If the plaintext_len is odd, clear the last four bits of left_1.
 
 8. Repeat steps 3 and 4, but use them to compute right_2 by expanding and
 encrypting left_1 with pass = 3, and XOR the results with right_1.
 
-```
-   right_2 = XOR(right_1,
-                 truncate(AES_ECB(key, expand(plaintext_len, 3, left_1)),
-                          half_len)
-```
+~~~pseudocode
+    result = AES_ECB(key, expand(plaintext_len, 3, left_1))
+    right_2 = XOR(right_1, truncate(result, half_len))
+~~~
 
-9. If the plaintext_len is odd, clear the four most significant bits of
-right_2.
+{:start="9"}
+9. If the plaintext_len is odd, clear the first four bits of right_2.
 
 10. Repeat steps 3 and 4, but use them to compute left_2 by expanding and
 encrypting right_2 with pass = 4, and XOR the results with left_1.
 
-```
-   left_2 = XOR(left_1,
-                truncate(AES_ECB(key, expand(plaintext_len, 3, left_1)),
-                         half_len)
-```
+~~~psuedocode
+    result = AES_ECB(key, expand(plaintext_len, 4, right_2))
+    left_2 = XOR(left_1, truncate(result, half_len))
+~~~
 
-11. If the plaintext_len is odd, clear the four least significant bits of
-left_2.
+{:start="11"}
+11. If the plaintext_len is odd, clear the last four bits of left_2.
 
 12. The server concatenates left_2 with right_2 to form the ciphertext CID,
 which it appends to the first octet. If plaintext_len is odd, the four
@@ -675,18 +653,17 @@ First, split the ciphertext CID (excluding the first octet) into its equal-
 length components left_2 and right_2. Then follow the process below:
 
 ~~~pseudocode
-    left_1 = XOR(left_2,
-                 truncate(AES_ECB(key, expand(plaintext_len, 4, right_2)),
-                          half_len)
-    if (plaintext_len_is_odd()) clear_least_significant_bits(left_1, 4)
-    right_1 = XOR(right_2,
-                  truncate(AES_ECB(key, expand(plaintext_len, 3, left_1),
-                           half_len)
-    if (plaintext_len_is_odd()) clear_most_significant_bits(left_1, 4)
-    left_0 = XOR(left_1,
-                 truncate(AES_ECB(key, expand(plaintext_len, 2, right_1)),
-                          half_len)
-    if (plaintext_len_is_odd()) clear_least_significant_bits(left_0, 4)
+    result = AES_ECB(key, expand(plaintext_len, 4, right_2))
+    left_1 = XOR(left_2, truncate(result, half_len))
+    if (plaintext_len_is_odd()) clear_last_bits(left_1, 4)
+
+    result = AES_ECB(key, expand(plaintext_len, 3, left_1))
+    right_1 = XOR(right_2, truncate(result, half_len))
+    if (plaintext_len_is_odd()) clear_first_bits(left_1, 4)
+
+    result = AES_ECB(key, expand(plaintext_len, 2, right_1))
+    left_0 = XOR(left_1, truncate(result, half_len))
+    if (plaintext_len_is_odd()) clear_last_bits(left_0, 4)
 ~~~
 
 As the load balancer has no need for the nonce, it can conclude after 3 passes
@@ -694,12 +671,11 @@ as long as the server ID is entirely contained in left_0 (i.e., the nonce is at
 least as large as the server ID). If the server ID is longer, a fourth pass
 is necessary:
 
-```
-    right_0 = XOR(right_1,
-                  truncate(AES_ECB(key, expand(plaintext_len, 1, left_0),
-                           half_len)
-    if (plaintext_len_is_odd()) clear_most_significant_bits(right_0, 4)
-```
+~~~pseudocode
+    result = AES_ECB(key, expand(plaintext_len, 1, left_0))
+    right_0 = XOR(right_1, truncate(result, half_len))
+    if (plaintext_len_is_odd()) clear_first_bits(right_0, 4)
+~~~
 
 and the load balancer has to concatenate left_0 and right_0 to obtain the
 complete server ID.
