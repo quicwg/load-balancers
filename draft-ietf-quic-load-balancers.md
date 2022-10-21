@@ -641,7 +641,7 @@ left_2 = 0x028e1b50 ^ 0x8c148aa7 = 0x8e9a91f7
 // step 11 (clear bits)
 left_2 = 0x8e9a91f0
 
-// step 8
+// step 12
 cid = first_octet || left_2 || right_2 = 0x078e9a91f4949762
 ~~~
 
