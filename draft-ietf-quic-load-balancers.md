@@ -600,36 +600,49 @@ key = 0xfdf726a9893ec05c0632d3956680baf0
 
 // step 1
 plaintext_CID = 0x31441a9c69c275
+plaintext_len = 7
 
 // step 2
-left_0 = 0x31441a9
-right_0 = 0xc69c275
+hash_len = 4
+left_0 = 0x31441a90
+right_0 = 0x0c69c275
 
 // step 3
-cid_len = 8
-aes_input = 0x31441a90000000000000000000000108
-ciphertext = 0xa60469a0a97d565da383af820e3b689a
+aes_input = 0x070131441a9000000000000000000000
+ciphertext = 0x6373991e1d6d5d284f3d015da31d343d
 
 // step 4
-right_1 = 0xc69c275 ^ 0xe3b689a = 0x252aaef
+right_1 = 0x0c69c275 ^ 0x6373991e = 0x6f1a5b6b
 
-// step 5
-aes_input = 0x0802000000000000000000000252aaef
-aes_output = 0xd7e5202ae06026c25d5f4d14d5ead17b
-left_1 = 0x31441a9 ^ 0xd7e5202 = 0xe6a13ab
+// step 5 (clear bits)
+right_1 = 0x0f1a5b6b
 
 // step 6
-aes_input = 0xe6a13ab0000000000000000000000308
-aes_output = 0x9b6d9e6777cfc4bfb8bbdc63beb34a3d
-right_2 = 0x252aaef ^ 0xeb34a3d = 0xce1e0d2
+aes_input = 0x07020f1a5b6b00000000000000000000
+aes_output = 0x33ca01c065da4c66e27a990967272dca
+left_1 = 0x31441a90 ^ 0x33ca01c0 = 0x028e1b50
 
-// step 7
-aes_input = 0x0804000000000000000000000ce1e0d2
-aes_output = 0xd462594b30327d88117ac542c8c33b52
-left_2 = 0xe6a13ab ^ 0xd462594 = 0x32c363f
+// step 7 (clear bits)
+left_1 = 0x028e1b50
 
 // step 8
-cid = first_octet || left_2 || right_2 = 0x0732c363fce1e0d2
+aes_input = 0x0703028e1b5000000000000000000000
+aes_output = 0x6b8ecc0905bab0a3a96273cc50f4eee1
+right_2 = 0x0f1a5b6b ^ 0x6b8ecc09 = 0x64949762
+
+// step 9 (clear bits)
+right_2 = 0x04949762
+
+// step 10
+aes_input = 0x07040494976200000000000000000000
+aes_output = 0x8c148aa72244e4b46ae2f019dcfc8a64
+left_2 = 0x028e1b50 ^ 0x8c148aa7 = 0x8e9a91f7
+
+// step 11 (clear bits)
+left_2 = 0x8e9a91f0
+
+// step 8
+cid = first_octet || left_2 || right_2 = 0x078e9a91f4949762
 ~~~
 
 ## Load Balancer Actions
@@ -1350,13 +1363,13 @@ length, requiring a fourth decryption pass.
 
 ~~~pseudocode
 cr_bits sid nonce cid
-0 ed793a ee080dbf 0727edaa37e7fac8
+0 ed793a ee080dbf 074126ee38bf5454
 1 ed793a51d49b8f5fab65 ee080dbf48
-                         4f22614a97ceee84341ed7fbfeb1e6e2
+                         4fcd3f572d4eefb046fdb51d164efccc
 2 ed793a51d49b8f5f ee080dbf48c0d1e5
                          904dd2d05a7b0de9b2b9907afb5ecf8cc3
 0 ed793a51d49b8f5fab ee080dbf48c0d1e55d
-                         125e3b00aa5fcfd1a9a58102a89a19a1e4a10e
+                         12124d1eb8fbb21e4a490ca53cfe21d04ae63a
 ~~~
 
 # Interoperability with DTLS over UDP
