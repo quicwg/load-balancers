@@ -18,6 +18,8 @@ report.xml
 .targets.mk
 *.txt
 *.upload
+node_modules/
+package-lock.json
 venv/
 lib
 draft-ietf-quic-load-balancers.xml
