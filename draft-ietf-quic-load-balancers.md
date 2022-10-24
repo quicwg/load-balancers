@@ -764,8 +764,9 @@ QUIC servers might have QUIC running on multiple processes listening on the same
 address, and have a need to demultiplex between them. In principle, this
 demultiplexer is a Layer 4 load balancer, and the guidance in {{lb-chains}}
 applies. However, in many deployments the demultiplexer lacks the capability to
-perform decryption operations. There are some other techniques that might work,
-depending on the capabilities of the server architecture.
+perform decryption operations. Internal server coordination is out of scope of
+this specification, but this non-normative section proposes some approaches
+that could work given certain server capabilities:
 
 * Some bytes of the server ID are reserved to encode the process ID. The
 demultiplexer might operate based on the 4-tuple or other legacy indicator, but
@@ -776,16 +777,20 @@ destination process.
 * Each process could register the connection IDs it generates with the
 demultiplexer, which routes those connection IDs accordingly.
 
-* Some bytes of the server ID are reserved to encode the process ID. The load
-balancer writes the decrypted connection ID into the packet. The demultiplexer
-reads the process ID from the relevant bytes and routes it accordingly. The
-receiving server process immediately re-encrypts the connection ID in deliver
-the packet to the correct connection and successfully authenticate the packet.
-While this requires coordination between load balancer and server, this document
-does not standardize the technique because it is unsafe to use unless the path
-between load balancer and server is fully secure. An observer at that point can
-determine the server mapping via the IP address of the destination server, but
-the process ID provides additional linkability information.
+* In a combination of the two approaches above, the demultiplexer generally
+routes by 4-tuple. After a migration, the process tosses the first flight of
+packets and registers the new connection ID with the demultiplexer. This
+alternative limits the bandwidth consumption of tossing and the memory footprint
+of a full connection ID table.
+
+* When generating a connection ID, the server writes the process ID to the
+random field of the first octet, or if this is being used for length encoding,
+in an octet it appends after the ciphertext. It then applies a keyed hash (with
+a key locally generated for the sole use of that server). The hash result is
+used as a bitmask to XOR with the bits encoding the process ID. On packet
+receipt, the demultiplexer applies the same keyed hash to generate the same
+mask and recoversthe process ID. (Note that this approach is conceptually
+similar to QUIC header protection).
 
 ## Moving connections between servers
 
@@ -1017,12 +1022,11 @@ The attacks described in [Patarin2008] rely on known plain text. In a normal
 deployment, the plain text is only known by the server that generates the ID
 and by the load balancer that decrypts the content of the CID. Attackers
 would have to compensate by guesses about the allocation of server identifiers
-or the generation of nonces. The these attacks are thus mitigated by making
-nonces hard to guess, as specified in {{cid-entropy}}, and by rules related
-to mixed deployments that use both clear text CID and encrypted CID, for
-example when transitioning from clear text to encryption. Such deployments
-MUST use different server ID allocations for the clear text and the
-encrypted versions.
+or the generation of nonces. These attacks are thus mitigated by making nonces
+hard to guess, as specified in {{cid-entropy}}, and by rules related to mixed
+deployments that use both clear text CID and encrypted CID, for example when
+transitioning from clear text to encryption. Such deployments MUST use different
+server ID allocations for the clear text and the encrypted versions.
 
 These attacks cannot be mounted against the Single Pass Encryption algorithm.
 
