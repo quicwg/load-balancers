@@ -759,6 +759,7 @@ module: retry-offload-config
         +--rw key-sequence-number    uint8
         +--rw token-key              quic-lb-key
         +--rw token-iv               yang:hex-string
+~~~
 
 ## Shared State Retry Token Test Vectors
 
