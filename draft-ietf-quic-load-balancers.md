@@ -1479,6 +1479,10 @@ Vasiliev, and William Zeng Ke all provided useful input to this document.
 > **RFC Editor's Note:**  Please remove this section prior to
 > publication of a final version of this document.
 
+## since draft-ietf-quic-load-balancers-15
+
+- aasvg fixes.
+
 ## since draft-ietf-quic-load-balancers-14
 
 - Revised process demultiplexing text
