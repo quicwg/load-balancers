@@ -146,7 +146,7 @@ Subsequent sections of this document refer to the contents of this octet as the
 
 ## Config Rotation {#config-rotation}
 
-The first two bits of any connection ID MUST encode an identifier for the
+The first three bits of any connection ID MUST encode an identifier for the
 configuration that the connection ID uses. This enables incremental deployment
 of new QUIC-LB settings (e.g., keys).
 
@@ -177,20 +177,20 @@ configurations, but this has privacy implications (see {{multiple-configs}}).
 A server that is configured to use QUIC-LB might be forced to accept new
 connections without having received a current configuration.  A server without
 QUIC-LB configuration can accept connections, but it SHOULD generate initial
-connection IDs with the config rotation bits set to 0b11 and avoid sending the
+connection IDs with the config rotation bits set to 0b111 and avoid sending the
 client connection IDs in NEW_CONNECTION_ID frames or the preferred_address
 transport parameter.  Servers in this state SHOULD use the
 "disable_active_migration" transport parameter until a valid configuration is
 received.
 
 A load balancer that sees a connection ID with config rotation bits set to
-0b11 MUST route using an algorithm based solely on the address/port 4-tuple,
+0b111 MUST route using an algorithm based solely on the address/port 4-tuple,
 which is consistent well beyond the QUIC handshake. However, a load balancer MAY
 observe the connection IDs used during the handshake and populate a connection
 ID table that allows the connection to survive a NAT rebinding, and reduces the
 probability of connection failure due to a change in the number of servers.
 
-When using codepoint 0b11, all bytes but the first SHOULD have no larger of a
+When using codepoint 0b111, all bytes but the first SHOULD have no larger of a
 chance of collision as random bytes. The connection ID SHOULD be of at least
 length 8 to provide 7 bytes of entropy after the first octet with a low chance
 of collision. Furthermore, servers in a pool SHOULD also use a consistent
@@ -207,11 +207,11 @@ does not self-encode its own length.
 
 Note that this is a function of particular server devices and is irrelevant to
 load balancers. As such, load balancers MAY omit this from their configuration.
-However, the remaining 6 bits in the first octet of the Connection ID are
+However, the remaining 5 bits in the first octet of the Connection ID are
 reserved to express the length of the following connection ID, not including
 the first octet.
 
-A server not using this functionality SHOULD choose the six bits so as to have
+A server not using this functionality SHOULD choose the five bits so as to have
 no observable relationship to previous connection IDs issued for that
 connection.
 
@@ -219,8 +219,8 @@ connection.
 
 ~~~
 First Octet {
-  Config Rotation (2),
-  CID Len or Random Bits (6),
+  Config Rotation (3),
+  CID Len or Random Bits (5),
 }
 ~~~
 {: #first-octet-format title="First Octet Format"}
@@ -268,7 +268,7 @@ are not routable are "unroutable DCIDs" and receive similar treatment
 regardless of why they're unroutable:
 
 * The config rotation bits ({{config-rotation}}) may not correspond to an active
-configuration. Note: a packet with a DCID with config ID codepoint 0b11 (see
+configuration. Note: a packet with a DCID with config ID codepoint 0b111 (see
 {{config-failover}}) is always routable.
 * The DCID might not be long enough for the decoder to process.
 * The extracted server mapping might not correspond to an active server.
@@ -936,7 +936,7 @@ mapping to each other as described above;
 the config rotation bits ({{config-rotation}}), exposing information about the
 target domain to the entire network; or
 
-* tenants can use the 0b11 codepoint in their CIDs (in which case they SHOULD
+* tenants can use the 0b111 codepoint in their CIDs (in which case they SHOULD
 disable migration in their connections), which neutralizes the value of
 QUIC-LB but preserves privacy.
 
@@ -1096,9 +1096,9 @@ module ietf-quic-lb-server {
      described in BCP 14 (RFC 2119) (RFC 8174) when, and only when,
      they appear in all capitals, as shown here.";
 
-  revision "2022-02-11" {
+  revision "2023-07-14" {
     description
-      "Updated to design in version 13 of the draft";
+      "Updated to design in version 17 of the draft";
     reference
       "RFC XXXX, QUIC-LB: Generating Routable QUIC Connection IDs";
   }
@@ -1119,7 +1119,7 @@ module ietf-quic-lb-server {
 
     leaf config-id {
       type uint8 {
-        range "0..2";
+        range "0..6";
       }
       mandatory true;
       description
@@ -1367,7 +1367,7 @@ In all cases, the server is configured to encode the CID length.
 ~~~pseudocode
 cr_bits sid nonce cid
 0 c4605e 4504cc4f 07c4605e4504cc4f
-1 350d28b420 3487d970b 40a350d28b4203487d970b
+1 350d28b420 3487d970b 20a350d28b4203487d970b
 ~~~
 
 ## Encrypted CIDs
@@ -1381,11 +1381,11 @@ length, requiring a fourth decryption pass.
 cr_bits sid nonce cid
 0 ed793a ee080dbf 074126ee38bf5454
 1 ed793a51d49b8f5fab65 ee080dbf48
-                         4fcd3f572d4eefb046fdb51d164efccc
+                         2fcd3f572d4eefb046fdb51d164efccc
 2 ed793a51d49b8f5f ee080dbf48c0d1e5
-                         904dd2d05a7b0de9b2b9907afb5ecf8cc3
-0 ed793a51d49b8f5fab ee080dbf48c0d1e55d
-                         12124d1eb8fbb21e4a490ca53cfe21d04ae63a
+                         504dd2d05a7b0de9b2b9907afb5ecf8cc3
+3 ed793a51d49b8f5fab ee080dbf48c0d1e55d
+                         72124d1eb8fbb21e4a490ca53cfe21d04ae63a
 ~~~
 
 # Interoperability with DTLS over UDP
@@ -1478,6 +1478,10 @@ Vasiliev, and William Zeng Ke all provided useful input to this document.
 
 > **RFC Editor's Note:**  Please remove this section prior to
 > publication of a final version of this document.
+
+## since draft-ietf-quic-load-balancers-16
+
+- added a config ID bit (now there are 3).
 
 ## since draft-ietf-quic-load-balancers-15
 
