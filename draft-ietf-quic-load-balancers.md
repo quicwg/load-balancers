@@ -840,21 +840,21 @@ first packet, there are three ways to route subsequent packets:
 * all co-tenants can use the same QUIC-LB configuration, leaking the server
 mapping to each other as described above;
 
-* co-tenants can be issued one of up to three configurations distinguished by
+* co-tenants can be issued one of up to seven configurations distinguished by
 the config rotation bits ({{config-rotation}}), exposing information about the
 target domain to the entire network; or
 
-* tenants can use the 0b11 codepoint in their CIDs (in which case they SHOULD
+* tenants can use the 0b111 codepoint in their CIDs (in which case they SHOULD
 disable migration in their connections), which neutralizes the value of
 QUIC-LB but preserves privacy.
 
-When configuring QUIC-LB, administrators must evaluate the privacy tradeoff
+When configuring QUIC-LB, administrators evaluate the privacy tradeoff by
 considering the relative value of each of these properties, given the trust
 model between tenants, the presence of methods to obscure the domain name, and
 value of address migration in the tenant use cases.
 
 As the plaintext algorithm makes no attempt to conceal the server mapping,
-these deployments SHOULD simply use a common configuration.
+these deployments MAY simply use a common configuration.
 
 ## Stateless Reset Oracle
 
