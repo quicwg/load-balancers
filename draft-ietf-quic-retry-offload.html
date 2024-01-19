@@ -17,26 +17,23 @@ hardware accelerator. "Retry Offload" is a mechanism for coordination between
 a server and an external generator of Retry packets that can succeed despite
 the anti-tampering mechanism. 
     ' name="description">
-<meta content="xml2rfc 3.12.10" name="generator">
+<meta content="xml2rfc 3.19.0" name="generator">
 <meta content="draft-ietf-quic-retry-offload-latest" name="ietf.draft">
 <!-- Generator version information:
-  xml2rfc 3.12.10
-    Python 3.10.4
-    appdirs 1.4.4
-    ConfigArgParse 1.5.3
-    google-i18n-address 2.5.1
-    html5lib 1.1
+  xml2rfc 3.19.0
+    Python 3.11.6
+    ConfigArgParse 1.7
+    google-i18n-address 3.1.0
     intervaltree 3.1.0
-    Jinja2 2.11.3
-    kitchen 1.2.6
-    lxml 4.8.0
-    MarkupSafe 2.0.1
-    pycountry 20.7.3
-    pyflakes 2.4.0
-    PyYAML 6.0
-    requests 2.27.1
-    setuptools 59.4.0
+    Jinja2 3.1.2
+    lxml 4.9.3
+    platformdirs 4.1.0
+    pycountry 22.3.5
+    PyYAML 6.0.1
+    requests 2.31.0
+    setuptools 68.2.2
     six 1.16.0
+    wcwidth 0.2.12
 -->
 <link href="draft-ietf-quic-retry-offload.xml" rel="alternate" type="application/rfc+xml">
 <link href="#copyright" rel="license">
@@ -1030,16 +1027,16 @@ svg :is([fill="white"], [fill^="#fff"]) {
 </style>
 
 </head>
-<body>
+<body class="xml2rfc">
 <table class="ears">
 <thead><tr>
 <td class="left">Internet-Draft</td>
 <td class="center">QUIC Retry Offload</td>
-<td class="right">September 2023</td>
+<td class="right">January 2024</td>
 </tr></thead>
 <tfoot><tr>
 <td class="left">Duke &amp; Banks</td>
-<td class="center">Expires 31 March 2024</td>
+<td class="center">Expires 22 July 2024</td>
 <td class="right">[Page]</td>
 </tr></tfoot>
 </table>
@@ -1052,12 +1049,12 @@ svg :is([fill="white"], [fill^="#fff"]) {
 <dd class="internet-draft">draft-ietf-quic-retry-offload-latest</dd>
 <dt class="label-published">Published:</dt>
 <dd class="published">
-<time datetime="2023-09-28" class="published">28 September 2023</time>
+<time datetime="2024-01-19" class="published">19 January 2024</time>
     </dd>
 <dt class="label-intended-status">Intended Status:</dt>
 <dd class="intended-status">Standards Track</dd>
 <dt class="label-expires">Expires:</dt>
-<dd class="expires"><time datetime="2024-03-31">31 March 2024</time></dd>
+<dd class="expires"><time datetime="2024-07-22">22 July 2024</time></dd>
 <dt class="label-authors">Authors:</dt>
 <dd class="authors">
 <div class="author">
@@ -1112,7 +1109,7 @@ the anti-tampering mechanism.<a href="#section-abstract-1" class="pilcrow">¶</a
         time. It is inappropriate to use Internet-Drafts as reference
         material or to cite them other than as "work in progress."<a href="#section-boilerplate.1-3" class="pilcrow">¶</a></p>
 <p id="section-boilerplate.1-4">
-        This Internet-Draft will expire on 31 March 2024.<a href="#section-boilerplate.1-4" class="pilcrow">¶</a></p>
+        This Internet-Draft will expire on 22 July 2024.<a href="#section-boilerplate.1-4" class="pilcrow">¶</a></p>
 </section>
 </div>
 <div id="copyright">
@@ -1121,7 +1118,7 @@ the anti-tampering mechanism.<a href="#section-abstract-1" class="pilcrow">¶</a
 <a href="#name-copyright-notice" class="section-name selfRef">Copyright Notice</a>
         </h2>
 <p id="section-boilerplate.2-1">
-            Copyright (c) 2023 IETF Trust and the persons identified as the
+            Copyright (c) 2024 IETF Trust and the persons identified as the
             document authors. All rights reserved.<a href="#section-boilerplate.2-1" class="pilcrow">¶</a></p>
 <p id="section-boilerplate.2-2">
             This document is subject to BCP 78 and the IETF Trust's Legal
@@ -1142,175 +1139,175 @@ the anti-tampering mechanism.<a href="#section-abstract-1" class="pilcrow">¶</a
         </h2>
 <nav class="toc"><ul class="compact toc ulBare ulEmpty">
 <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.1">
-            <p id="section-toc.1-1.1.1" class="keepWithNext"><a href="#section-1" class="xref">1</a>.  <a href="#name-introduction" class="xref">Introduction</a></p>
+            <p id="section-toc.1-1.1.1" class="keepWithNext"><a href="#section-1" class="auto internal xref">1</a>.  <a href="#name-introduction" class="internal xref">Introduction</a></p>
 <ul class="compact toc ulBare ulEmpty">
 <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.1.2.1">
-                <p id="section-toc.1-1.1.2.1.1" class="keepWithNext"><a href="#section-1.1" class="xref">1.1</a>.  <a href="#name-terminology" class="xref">Terminology</a></p>
+                <p id="section-toc.1-1.1.2.1.1" class="keepWithNext"><a href="#section-1.1" class="auto internal xref">1.1</a>.  <a href="#name-terminology" class="internal xref">Terminology</a></p>
 </li>
               <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.1.2.2">
-                <p id="section-toc.1-1.1.2.2.1" class="keepWithNext"><a href="#section-1.2" class="xref">1.2</a>.  <a href="#name-notation" class="xref">Notation</a></p>
+                <p id="section-toc.1-1.1.2.2.1" class="keepWithNext"><a href="#section-1.2" class="auto internal xref">1.2</a>.  <a href="#name-notation" class="internal xref">Notation</a></p>
 </li>
             </ul>
 </li>
           <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.2">
-            <p id="section-toc.1-1.2.1"><a href="#section-2" class="xref">2</a>.  <a href="#name-common-requirements" class="xref">Common Requirements</a></p>
+            <p id="section-toc.1-1.2.1"><a href="#section-2" class="auto internal xref">2</a>.  <a href="#name-common-requirements" class="internal xref">Common Requirements</a></p>
 <ul class="compact toc ulBare ulEmpty">
 <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.2.2.1">
-                <p id="section-toc.1-1.2.2.1.1"><a href="#section-2.1" class="xref">2.1</a>.  <a href="#name-consistent-treatment-of-ini" class="xref">Consistent Treatment of Initials</a></p>
+                <p id="section-toc.1-1.2.2.1.1"><a href="#section-2.1" class="auto internal xref">2.1</a>.  <a href="#name-consistent-treatment-of-ini" class="internal xref">Consistent Treatment of Initials</a></p>
 </li>
               <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.2.2.2">
-                <p id="section-toc.1-1.2.2.2.1"><a href="#section-2.2" class="xref">2.2</a>.  <a href="#name-considerations-for-non-init" class="xref">Considerations for Non-Initial Packets</a></p>
+                <p id="section-toc.1-1.2.2.2.1"><a href="#section-2.2" class="auto internal xref">2.2</a>.  <a href="#name-considerations-for-non-init" class="internal xref">Considerations for Non-Initial Packets</a></p>
 </li>
             </ul>
 </li>
           <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.3">
-            <p id="section-toc.1-1.3.1"><a href="#section-3" class="xref">3</a>.  <a href="#name-no-shared-state-retry-offlo" class="xref">No-Shared-State Retry Offload</a></p>
+            <p id="section-toc.1-1.3.1"><a href="#section-3" class="auto internal xref">3</a>.  <a href="#name-no-shared-state-retry-offlo" class="internal xref">No-Shared-State Retry Offload</a></p>
 <ul class="compact toc ulBare ulEmpty">
 <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.3.2.1">
-                <p id="section-toc.1-1.3.2.1.1"><a href="#section-3.1" class="xref">3.1</a>.  <a href="#name-configuration-agent-actions" class="xref">Configuration Agent Actions</a></p>
+                <p id="section-toc.1-1.3.2.1.1"><a href="#section-3.1" class="auto internal xref">3.1</a>.  <a href="#name-configuration-agent-actions" class="internal xref">Configuration Agent Actions</a></p>
 </li>
               <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.3.2.2">
-                <p id="section-toc.1-1.3.2.2.1"><a href="#section-3.2" class="xref">3.2</a>.  <a href="#name-offload-requirements" class="xref">Offload Requirements</a></p>
+                <p id="section-toc.1-1.3.2.2.1"><a href="#section-3.2" class="auto internal xref">3.2</a>.  <a href="#name-offload-requirements" class="internal xref">Offload Requirements</a></p>
 </li>
               <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.3.2.3">
-                <p id="section-toc.1-1.3.2.3.1"><a href="#section-3.3" class="xref">3.3</a>.  <a href="#name-server-requirements" class="xref">Server Requirements</a></p>
+                <p id="section-toc.1-1.3.2.3.1"><a href="#section-3.3" class="auto internal xref">3.3</a>.  <a href="#name-server-requirements" class="internal xref">Server Requirements</a></p>
 </li>
             </ul>
 </li>
           <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.4">
-            <p id="section-toc.1-1.4.1"><a href="#section-4" class="xref">4</a>.  <a href="#name-shared-state-retry-offload" class="xref">Shared-State Retry Offload</a></p>
+            <p id="section-toc.1-1.4.1"><a href="#section-4" class="auto internal xref">4</a>.  <a href="#name-shared-state-retry-offload" class="internal xref">Shared-State Retry Offload</a></p>
 <ul class="compact toc ulBare ulEmpty">
 <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.4.2.1">
-                <p id="section-toc.1-1.4.2.1.1"><a href="#section-4.1" class="xref">4.1</a>.  <a href="#name-token-protection-with-aead" class="xref">Token Protection with AEAD</a></p>
+                <p id="section-toc.1-1.4.2.1.1"><a href="#section-4.1" class="auto internal xref">4.1</a>.  <a href="#name-token-protection-with-aead" class="internal xref">Token Protection with AEAD</a></p>
 </li>
               <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.4.2.2">
-                <p id="section-toc.1-1.4.2.2.1"><a href="#section-4.2" class="xref">4.2</a>.  <a href="#name-configuration-agent-actions-2" class="xref">Configuration Agent Actions</a></p>
+                <p id="section-toc.1-1.4.2.2.1"><a href="#section-4.2" class="auto internal xref">4.2</a>.  <a href="#name-configuration-agent-actions-2" class="internal xref">Configuration Agent Actions</a></p>
 </li>
               <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.4.2.3">
-                <p id="section-toc.1-1.4.2.3.1"><a href="#section-4.3" class="xref">4.3</a>.  <a href="#name-offload-requirements-2" class="xref">Offload Requirements</a></p>
+                <p id="section-toc.1-1.4.2.3.1"><a href="#section-4.3" class="auto internal xref">4.3</a>.  <a href="#name-offload-requirements-2" class="internal xref">Offload Requirements</a></p>
 </li>
               <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.4.2.4">
-                <p id="section-toc.1-1.4.2.4.1"><a href="#section-4.4" class="xref">4.4</a>.  <a href="#name-server-requirements-2" class="xref">Server Requirements</a></p>
+                <p id="section-toc.1-1.4.2.4.1"><a href="#section-4.4" class="auto internal xref">4.4</a>.  <a href="#name-server-requirements-2" class="internal xref">Server Requirements</a></p>
 </li>
             </ul>
 </li>
           <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.5">
-            <p id="section-toc.1-1.5.1"><a href="#section-5" class="xref">5</a>.  <a href="#name-security-considerations" class="xref">Security Considerations</a></p>
+            <p id="section-toc.1-1.5.1"><a href="#section-5" class="auto internal xref">5</a>.  <a href="#name-security-considerations" class="internal xref">Security Considerations</a></p>
 <ul class="compact toc ulBare ulEmpty">
 <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.5.2.1">
-                <p id="section-toc.1-1.5.2.1.1"><a href="#section-5.1" class="xref">5.1</a>.  <a href="#name-shared-state-retry-keys" class="xref">Shared-State Retry Keys</a></p>
+                <p id="section-toc.1-1.5.2.1.1"><a href="#section-5.1" class="auto internal xref">5.1</a>.  <a href="#name-shared-state-retry-keys" class="internal xref">Shared-State Retry Keys</a></p>
 </li>
             </ul>
 </li>
           <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.6">
-            <p id="section-toc.1-1.6.1"><a href="#section-6" class="xref">6</a>.  <a href="#name-iana-considerations" class="xref">IANA Considerations</a></p>
+            <p id="section-toc.1-1.6.1"><a href="#section-6" class="auto internal xref">6</a>.  <a href="#name-iana-considerations" class="internal xref">IANA Considerations</a></p>
 </li>
           <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.7">
-            <p id="section-toc.1-1.7.1"><a href="#section-7" class="xref">7</a>.  <a href="#name-references" class="xref">References</a></p>
+            <p id="section-toc.1-1.7.1"><a href="#section-7" class="auto internal xref">7</a>.  <a href="#name-references" class="internal xref">References</a></p>
 <ul class="compact toc ulBare ulEmpty">
 <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.7.2.1">
-                <p id="section-toc.1-1.7.2.1.1"><a href="#section-7.1" class="xref">7.1</a>.  <a href="#name-normative-references" class="xref">Normative References</a></p>
+                <p id="section-toc.1-1.7.2.1.1"><a href="#section-7.1" class="auto internal xref">7.1</a>.  <a href="#name-normative-references" class="internal xref">Normative References</a></p>
 </li>
               <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.7.2.2">
-                <p id="section-toc.1-1.7.2.2.1"><a href="#section-7.2" class="xref">7.2</a>.  <a href="#name-informative-references" class="xref">Informative References</a></p>
+                <p id="section-toc.1-1.7.2.2.1"><a href="#section-7.2" class="auto internal xref">7.2</a>.  <a href="#name-informative-references" class="internal xref">Informative References</a></p>
 </li>
             </ul>
 </li>
           <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.8">
-            <p id="section-toc.1-1.8.1"><a href="#appendix-A" class="xref">Appendix A</a>.  <a href="#name-retry-offload-yang-model" class="xref">Retry Offload YANG Model</a></p>
+            <p id="section-toc.1-1.8.1"><a href="#appendix-A" class="auto internal xref">Appendix A</a>.  <a href="#name-retry-offload-yang-model" class="internal xref">Retry Offload YANG Model</a></p>
 <ul class="compact toc ulBare ulEmpty">
 <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.8.2.1">
-                <p id="section-toc.1-1.8.2.1.1"><a href="#appendix-A.1" class="xref">A.1</a>.  <a href="#name-tree-diagram" class="xref">Tree Diagram</a></p>
+                <p id="section-toc.1-1.8.2.1.1"><a href="#appendix-A.1" class="auto internal xref">A.1</a>.  <a href="#name-tree-diagram" class="internal xref">Tree Diagram</a></p>
 </li>
               <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.8.2.2">
-                <p id="section-toc.1-1.8.2.2.1"><a href="#appendix-A.2" class="xref">A.2</a>.  <a href="#name-shared-state-retry-token-te" class="xref">Shared State Retry Token Test Vectors</a></p>
+                <p id="section-toc.1-1.8.2.2.1"><a href="#appendix-A.2" class="auto internal xref">A.2</a>.  <a href="#name-shared-state-retry-token-te" class="internal xref">Shared State Retry Token Test Vectors</a></p>
 </li>
             </ul>
 </li>
           <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.9">
-            <p id="section-toc.1-1.9.1"><a href="#appendix-B" class="xref">Appendix B</a>.  <a href="#name-transition-mode-scenarios" class="xref">Transition Mode Scenarios</a></p>
+            <p id="section-toc.1-1.9.1"><a href="#appendix-B" class="auto internal xref">Appendix B</a>.  <a href="#name-transition-mode-scenarios" class="internal xref">Transition Mode Scenarios</a></p>
 <ul class="compact toc ulBare ulEmpty">
 <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.9.2.1">
-                <p id="section-toc.1-1.9.2.1.1"><a href="#appendix-B.1" class="xref">B.1</a>.  <a href="#name-handshakes-in-progress" class="xref">Handshakes in Progress</a></p>
+                <p id="section-toc.1-1.9.2.1.1"><a href="#appendix-B.1" class="auto internal xref">B.1</a>.  <a href="#name-handshakes-in-progress" class="internal xref">Handshakes in Progress</a></p>
 </li>
               <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.9.2.2">
-                <p id="section-toc.1-1.9.2.2.1"><a href="#appendix-B.2" class="xref">B.2</a>.  <a href="#name-new-connections" class="xref">New Connections</a></p>
+                <p id="section-toc.1-1.9.2.2.1"><a href="#appendix-B.2" class="auto internal xref">B.2</a>.  <a href="#name-new-connections" class="internal xref">New Connections</a></p>
 </li>
             </ul>
 </li>
           <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.10">
-            <p id="section-toc.1-1.10.1"><a href="#appendix-C" class="xref">Appendix C</a>.  <a href="#name-acknowledgments" class="xref">Acknowledgments</a></p>
+            <p id="section-toc.1-1.10.1"><a href="#appendix-C" class="auto internal xref">Appendix C</a>.  <a href="#name-acknowledgments" class="internal xref">Acknowledgments</a></p>
 </li>
           <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.11">
-            <p id="section-toc.1-1.11.1"><a href="#appendix-D" class="xref">Appendix D</a>.  <a href="#name-change-log" class="xref">Change Log</a></p>
+            <p id="section-toc.1-1.11.1"><a href="#appendix-D" class="auto internal xref">Appendix D</a>.  <a href="#name-change-log" class="internal xref">Change Log</a></p>
 <ul class="compact toc ulBare ulEmpty">
 <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.11.2.1">
-                <p id="section-toc.1-1.11.2.1.1"><a href="#appendix-D.1" class="xref">D.1</a>.  <a href="#name-since-draft-duke-quic-retry" class="xref">since draft-duke-quic-retry-offload-00</a></p>
+                <p id="section-toc.1-1.11.2.1.1"><a href="#appendix-D.1" class="auto internal xref">D.1</a>.  <a href="#name-since-draft-duke-quic-retry" class="internal xref">since draft-duke-quic-retry-offload-00</a></p>
 </li>
               <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.11.2.2">
-                <p id="section-toc.1-1.11.2.2.1"><a href="#appendix-D.2" class="xref">D.2</a>.  <a href="#name-since-draft-ietf-quic-load-" class="xref">since draft-ietf-quic-load-balancers-12</a></p>
+                <p id="section-toc.1-1.11.2.2.1"><a href="#appendix-D.2" class="auto internal xref">D.2</a>.  <a href="#name-since-draft-ietf-quic-load-" class="internal xref">since draft-ietf-quic-load-balancers-12</a></p>
 </li>
               <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.11.2.3">
-                <p id="section-toc.1-1.11.2.3.1"><a href="#appendix-D.3" class="xref">D.3</a>.  <a href="#name-since-draft-ietf-quic-load-b" class="xref">since draft-ietf-quic-load-balancers-11</a></p>
+                <p id="section-toc.1-1.11.2.3.1"><a href="#appendix-D.3" class="auto internal xref">D.3</a>.  <a href="#name-since-draft-ietf-quic-load-b" class="internal xref">since draft-ietf-quic-load-balancers-11</a></p>
 </li>
               <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.11.2.4">
-                <p id="section-toc.1-1.11.2.4.1"><a href="#appendix-D.4" class="xref">D.4</a>.  <a href="#name-since-draft-ietf-quic-load-ba" class="xref">since draft-ietf-quic-load-balancers-10</a></p>
+                <p id="section-toc.1-1.11.2.4.1"><a href="#appendix-D.4" class="auto internal xref">D.4</a>.  <a href="#name-since-draft-ietf-quic-load-ba" class="internal xref">since draft-ietf-quic-load-balancers-10</a></p>
 </li>
               <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.11.2.5">
-                <p id="section-toc.1-1.11.2.5.1"><a href="#appendix-D.5" class="xref">D.5</a>.  <a href="#name-since-draft-ietf-quic-load-bal" class="xref">since draft-ietf-quic-load-balancers-09</a></p>
+                <p id="section-toc.1-1.11.2.5.1"><a href="#appendix-D.5" class="auto internal xref">D.5</a>.  <a href="#name-since-draft-ietf-quic-load-bal" class="internal xref">since draft-ietf-quic-load-balancers-09</a></p>
 </li>
               <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.11.2.6">
-                <p id="section-toc.1-1.11.2.6.1"><a href="#appendix-D.6" class="xref">D.6</a>.  <a href="#name-since-draft-ietf-quic-load-bala" class="xref">since draft-ietf-quic-load-balancers-08</a></p>
+                <p id="section-toc.1-1.11.2.6.1"><a href="#appendix-D.6" class="auto internal xref">D.6</a>.  <a href="#name-since-draft-ietf-quic-load-bala" class="internal xref">since draft-ietf-quic-load-balancers-08</a></p>
 </li>
               <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.11.2.7">
-                <p id="section-toc.1-1.11.2.7.1"><a href="#appendix-D.7" class="xref">D.7</a>.  <a href="#name-since-draft-ietf-quic-load-balan" class="xref">since draft-ietf-quic-load-balancers-07</a></p>
+                <p id="section-toc.1-1.11.2.7.1"><a href="#appendix-D.7" class="auto internal xref">D.7</a>.  <a href="#name-since-draft-ietf-quic-load-balan" class="internal xref">since draft-ietf-quic-load-balancers-07</a></p>
 </li>
               <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.11.2.8">
-                <p id="section-toc.1-1.11.2.8.1"><a href="#appendix-D.8" class="xref">D.8</a>.  <a href="#name-since-draft-ietf-quic-load-balanc" class="xref">since draft-ietf-quic-load-balancers-06</a></p>
+                <p id="section-toc.1-1.11.2.8.1"><a href="#appendix-D.8" class="auto internal xref">D.8</a>.  <a href="#name-since-draft-ietf-quic-load-balanc" class="internal xref">since draft-ietf-quic-load-balancers-06</a></p>
 </li>
               <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.11.2.9">
-                <p id="section-toc.1-1.11.2.9.1"><a href="#appendix-D.9" class="xref">D.9</a>.  <a href="#name-since-draft-ietf-quic-load-balance" class="xref">since draft-ietf-quic-load-balancers-05</a></p>
+                <p id="section-toc.1-1.11.2.9.1"><a href="#appendix-D.9" class="auto internal xref">D.9</a>.  <a href="#name-since-draft-ietf-quic-load-balance" class="internal xref">since draft-ietf-quic-load-balancers-05</a></p>
 </li>
               <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.11.2.10">
-                <p id="section-toc.1-1.11.2.10.1"><a href="#appendix-D.10" class="xref">D.10</a>. <a href="#name-since-draft-ietf-quic-load-balancer" class="xref">since draft-ietf-quic-load-balancers-04</a></p>
+                <p id="section-toc.1-1.11.2.10.1"><a href="#appendix-D.10" class="auto internal xref">D.10</a>. <a href="#name-since-draft-ietf-quic-load-balancer" class="internal xref">since draft-ietf-quic-load-balancers-04</a></p>
 </li>
               <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.11.2.11">
-                <p id="section-toc.1-1.11.2.11.1"><a href="#appendix-D.11" class="xref">D.11</a>. <a href="#name-since-draft-ietf-quic-load-balancer-2" class="xref">since-draft-ietf-quic-load-balancers-03</a></p>
+                <p id="section-toc.1-1.11.2.11.1"><a href="#appendix-D.11" class="auto internal xref">D.11</a>. <a href="#name-since-draft-ietf-quic-load-balancer-2" class="internal xref">since-draft-ietf-quic-load-balancers-03</a></p>
 </li>
               <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.11.2.12">
-                <p id="section-toc.1-1.11.2.12.1"><a href="#appendix-D.12" class="xref">D.12</a>. <a href="#name-since-draft-ietf-quic-load-balancer-3" class="xref">since-draft-ietf-quic-load-balancers-02</a></p>
+                <p id="section-toc.1-1.11.2.12.1"><a href="#appendix-D.12" class="auto internal xref">D.12</a>. <a href="#name-since-draft-ietf-quic-load-balancer-3" class="internal xref">since-draft-ietf-quic-load-balancers-02</a></p>
 </li>
               <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.11.2.13">
-                <p id="section-toc.1-1.11.2.13.1"><a href="#appendix-D.13" class="xref">D.13</a>. <a href="#name-since-draft-ietf-quic-load-balancer-4" class="xref">since-draft-ietf-quic-load-balancers-01</a></p>
+                <p id="section-toc.1-1.11.2.13.1"><a href="#appendix-D.13" class="auto internal xref">D.13</a>. <a href="#name-since-draft-ietf-quic-load-balancer-4" class="internal xref">since-draft-ietf-quic-load-balancers-01</a></p>
 </li>
               <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.11.2.14">
-                <p id="section-toc.1-1.11.2.14.1"><a href="#appendix-D.14" class="xref">D.14</a>. <a href="#name-since-draft-ietf-quic-load-balancer-5" class="xref">since-draft-ietf-quic-load-balancers-00</a></p>
+                <p id="section-toc.1-1.11.2.14.1"><a href="#appendix-D.14" class="auto internal xref">D.14</a>. <a href="#name-since-draft-ietf-quic-load-balancer-5" class="internal xref">since-draft-ietf-quic-load-balancers-00</a></p>
 </li>
               <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.11.2.15">
-                <p id="section-toc.1-1.11.2.15.1"><a href="#appendix-D.15" class="xref">D.15</a>. <a href="#name-since-draft-duke-quic-load-" class="xref">Since draft-duke-quic-load-balancers-06</a></p>
+                <p id="section-toc.1-1.11.2.15.1"><a href="#appendix-D.15" class="auto internal xref">D.15</a>. <a href="#name-since-draft-duke-quic-load-" class="internal xref">Since draft-duke-quic-load-balancers-06</a></p>
 </li>
               <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.11.2.16">
-                <p id="section-toc.1-1.11.2.16.1"><a href="#appendix-D.16" class="xref">D.16</a>. <a href="#name-since-draft-duke-quic-load-b" class="xref">Since draft-duke-quic-load-balancers-05</a></p>
+                <p id="section-toc.1-1.11.2.16.1"><a href="#appendix-D.16" class="auto internal xref">D.16</a>. <a href="#name-since-draft-duke-quic-load-b" class="internal xref">Since draft-duke-quic-load-balancers-05</a></p>
 </li>
               <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.11.2.17">
-                <p id="section-toc.1-1.11.2.17.1"><a href="#appendix-D.17" class="xref">D.17</a>. <a href="#name-since-draft-duke-quic-load-ba" class="xref">Since draft-duke-quic-load-balancers-04</a></p>
+                <p id="section-toc.1-1.11.2.17.1"><a href="#appendix-D.17" class="auto internal xref">D.17</a>. <a href="#name-since-draft-duke-quic-load-ba" class="internal xref">Since draft-duke-quic-load-balancers-04</a></p>
 </li>
               <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.11.2.18">
-                <p id="section-toc.1-1.11.2.18.1"><a href="#appendix-D.18" class="xref">D.18</a>. <a href="#name-since-draft-duke-quic-load-bal" class="xref">Since draft-duke-quic-load-balancers-03</a></p>
+                <p id="section-toc.1-1.11.2.18.1"><a href="#appendix-D.18" class="auto internal xref">D.18</a>. <a href="#name-since-draft-duke-quic-load-bal" class="internal xref">Since draft-duke-quic-load-balancers-03</a></p>
 </li>
               <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.11.2.19">
-                <p id="section-toc.1-1.11.2.19.1"><a href="#appendix-D.19" class="xref">D.19</a>. <a href="#name-since-draft-duke-quic-load-bala" class="xref">Since draft-duke-quic-load-balancers-02</a></p>
+                <p id="section-toc.1-1.11.2.19.1"><a href="#appendix-D.19" class="auto internal xref">D.19</a>. <a href="#name-since-draft-duke-quic-load-bala" class="internal xref">Since draft-duke-quic-load-balancers-02</a></p>
 </li>
               <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.11.2.20">
-                <p id="section-toc.1-1.11.2.20.1"><a href="#appendix-D.20" class="xref">D.20</a>. <a href="#name-since-draft-duke-quic-load-balan" class="xref">Since draft-duke-quic-load-balancers-01</a></p>
+                <p id="section-toc.1-1.11.2.20.1"><a href="#appendix-D.20" class="auto internal xref">D.20</a>. <a href="#name-since-draft-duke-quic-load-balan" class="internal xref">Since draft-duke-quic-load-balancers-01</a></p>
 </li>
               <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.11.2.21">
-                <p id="section-toc.1-1.11.2.21.1"><a href="#appendix-D.21" class="xref">D.21</a>. <a href="#name-since-draft-duke-quic-load-balanc" class="xref">Since draft-duke-quic-load-balancers-00</a></p>
+                <p id="section-toc.1-1.11.2.21.1"><a href="#appendix-D.21" class="auto internal xref">D.21</a>. <a href="#name-since-draft-duke-quic-load-balanc" class="internal xref">Since draft-duke-quic-load-balancers-00</a></p>
 </li>
             </ul>
 </li>
           <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.12">
-            <p id="section-toc.1-1.12.1"><a href="#appendix-E" class="xref"></a><a href="#name-authors-addresses" class="xref">Authors' Addresses</a></p>
+            <p id="section-toc.1-1.12.1"><a href="#appendix-E" class="auto internal xref"></a><a href="#name-authors-addresses" class="internal xref">Authors' Addresses</a></p>
 </li>
         </ul>
 </nav>
@@ -1321,7 +1318,7 @@ the anti-tampering mechanism.<a href="#section-abstract-1" class="pilcrow">¶</a
       <h2 id="name-introduction">
 <a href="#section-1" class="section-number selfRef">1. </a><a href="#name-introduction" class="section-name selfRef">Introduction</a>
       </h2>
-<p id="section-1-1">QUIC <span>[<a href="#RFC9000" class="xref">RFC9000</a>]</span> servers send Retry packets to avoid prematurely allocating
+<p id="section-1-1">QUIC <span>[<a href="#RFC9000" class="cite xref">RFC9000</a>]</span> servers send Retry packets to avoid prematurely allocating
 resources when under stress, such as during a Denial of Service (DoS) attack.
 Because both Initial packets and Retry packets have weak authentication
 properties, the Retry packet contains an encrypted token that helps the client
@@ -1329,7 +1326,7 @@ and server to validate, via transport parameters, that an attacker did not
 inject or modify a packet of either type for this connection attempt.<a href="#section-1-1" class="pilcrow">¶</a></p>
 <p id="section-1-2">However, a server under stress is less inclined to process incoming Initial
 packets and compute the Retry token in the first place. An analogous mechanism
-for TCP is syncookies <span>[<a href="#RFC4987" class="xref">RFC4987</a>]</span>. As TCP has weaker authentication properties
+for TCP is syncookies <span>[<a href="#RFC4987" class="cite xref">RFC4987</a>]</span>. As TCP has weaker authentication properties
 to QUIC, syncookie generation can often be offloaded to a hardware device, or
 to a anti-Denial-of-Service provider that is topologically far from the
 protected server. As such an offload would behave exactly like an attacker,
@@ -1354,7 +1351,7 @@ fields.<a href="#section-1-6" class="pilcrow">¶</a></p>
         </h3>
 <p id="section-1.1-1">The key words "MUST", "MUST NOT", "REQUIRED", "SHALL", "SHALL NOT", "SHOULD",
 "SHOULD NOT", "RECOMMENDED", "MAY", and "OPTIONAL" in this document are to be
-interpreted as described in RFC 2119 <span>[<a href="#RFC2119" class="xref">RFC2119</a>]</span>.<a href="#section-1.1-1" class="pilcrow">¶</a></p>
+interpreted as described in RFC 2119 <span>[<a href="#RFC2119" class="cite xref">RFC2119</a>]</span>.<a href="#section-1.1-1" class="pilcrow">¶</a></p>
 <p id="section-1.1-2">In this document, these words will appear with that interpretation only when in
 ALL CAPS.  Lower case uses of these words are not to be interpreted as carrying
 significance described in RFC 2119.<a href="#section-1.1-2" class="pilcrow">¶</a></p>
@@ -1366,10 +1363,10 @@ them to accept common configuation.<a href="#section-1.1-4" class="pilcrow">¶</
 <p id="section-1.1-5">A "configuration agent" is some entity that determines the common configuration
 to be distributed to the servers and the Retry Offload.<a href="#section-1.1-5" class="pilcrow">¶</a></p>
 <p id="section-1.1-6">This document uses "QUIC" to refer to the protocol in QUIC version 1
-<span>[<a href="#RFC9000" class="xref">RFC9000</a>]</span>. Retry offloads can be applied to other versions of QUIC that use
+<span>[<a href="#RFC9000" class="cite xref">RFC9000</a>]</span>. Retry offloads can be applied to other versions of QUIC that use
 Retry packets and have identical information requirements for Retry validation.
 However, note that source and destination connection IDs are the only relevant
-data fields that are invariant across QUIC versions <span>[<a href="#RFC8999" class="xref">RFC8999</a>]</span>.<a href="#section-1.1-6" class="pilcrow">¶</a></p>
+data fields that are invariant across QUIC versions <span>[<a href="#RFC8999" class="cite xref">RFC8999</a>]</span>.<a href="#section-1.1-6" class="pilcrow">¶</a></p>
 </section>
 </div>
 <div id="notation">
@@ -1378,7 +1375,7 @@ data fields that are invariant across QUIC versions <span>[<a href="#RFC8999" cl
 <a href="#section-1.2" class="section-number selfRef">1.2. </a><a href="#name-notation" class="section-name selfRef">Notation</a>
         </h3>
 <p id="section-1.2-1">All wire formats will be depicted using the notation defined in Section 1.3 of
-<span>[<a href="#RFC9000" class="xref">RFC9000</a>]</span>.<a href="#section-1.2-1" class="pilcrow">¶</a></p>
+<span>[<a href="#RFC9000" class="cite xref">RFC9000</a>]</span>.<a href="#section-1.2-1" class="pilcrow">¶</a></p>
 <p id="section-1.2-2">The example below illustrates the basic framework:<a href="#section-1.2-2" class="pilcrow">¶</a></p>
 <span id="name-example-format"></span><div id="fig-ex-format">
 <figure id="figure-1">
@@ -1481,7 +1478,7 @@ has already received a packet from the server, it will ignore the Retry and the
 connection will progress normally. If not, the client will reconnect based on
 the Retry, the server's response to the first initial will be discarded, and
 the connection will progress normally based on the client's second Initial.
-<a href="#mid-handshake" class="xref">Appendix B</a> explores the various possible packet sequences in
+<a href="#mid-handshake" class="auto internal xref">Appendix B</a> explores the various possible packet sequences in
 transition mode.<a href="#section-2.1-5" class="pilcrow">¶</a></p>
 <p id="section-2.1-6">Note that transition mode provides no actual DDoS relief to the server, so its
 duration should be as short as possible. The Retry Offload can choose not to
@@ -1491,7 +1488,7 @@ operates whenever a client Initial arrives with a valid Retry token. If there
 is another connection with identical client Connection ID, IP, and Port, but
 with an unvalidated address, that connection is immediately and silently
 terminated. This mechanism eliminates incorrect connection state that is an
-artifact of transition mode, as explained in <a href="#mid-handshake" class="xref">Appendix B</a>.<a href="#section-2.1-7" class="pilcrow">¶</a></p>
+artifact of transition mode, as explained in <a href="#mid-handshake" class="auto internal xref">Appendix B</a>.<a href="#section-2.1-7" class="pilcrow">¶</a></p>
 </section>
 </div>
 <div id="considerations-for-non-initial-packets">
@@ -1508,27 +1505,31 @@ an unknown Connection ID: simply dropping it and/or sending a Stateless Reset.<a
 from non-Initial packets that do not correspond to a previously admitted
 Initial Packet. This has a number of considerations.<a href="#section-2.2-2" class="pilcrow">¶</a></p>
 <ul class="normal">
-<li class="normal" id="section-2.2-3.1">If a Retry Offload maintains no per-flow state, it cannot distinguish between
+<li class="normal" id="section-2.2-3.1">
+            <p id="section-2.2-3.1.1">If a Retry Offload maintains no per-flow state, it cannot distinguish between
 valid and invalid non-Initial packets and MUST forward all non-Initial Packets
-to the server.<a href="#section-2.2-3.1" class="pilcrow">¶</a>
+to the server.<a href="#section-2.2-3.1.1" class="pilcrow">¶</a></p>
 </li>
-          <li class="normal" id="section-2.2-3.2">For QUIC versions the Retry Offload does not support and are present on the
+          <li class="normal" id="section-2.2-3.2">
+            <p id="section-2.2-3.2.1">For QUIC versions the Retry Offload does not support and are present on the
 Allow-List (or absent from the Deny-List), the Retry Offload cannot distinguish
 Initial Packets from other long headers and therefore MUST admit all long
-headers.<a href="#section-2.2-3.2" class="pilcrow">¶</a>
+headers.<a href="#section-2.2-3.2.1" class="pilcrow">¶</a></p>
 </li>
-          <li class="normal" id="section-2.2-3.3">If a Retry Offload keeps per-flow state, it can identify 4-tuples that have
+          <li class="normal" id="section-2.2-3.3">
+            <p id="section-2.2-3.3.1">If a Retry Offload keeps per-flow state, it can identify 4-tuples that have
 been previously approved, admit non-Initial packets from those flows, and
 drop all others. However, dropping short headers will effectively break Address
 Migration and NAT Rebinding when in Active Mode, as post-migration packets will
 arrive with a previously unknown 4-tuple. This policy will also break connection
-attempts using any new QUIC versions that begin connections with a short header.<a href="#section-2.2-3.3" class="pilcrow">¶</a>
+attempts using any new QUIC versions that begin connections with a short header.<a href="#section-2.2-3.3.1" class="pilcrow">¶</a></p>
 </li>
-          <li class="normal" id="section-2.2-3.4">If a Retry Offload is integrated with a QUIC-LB routable load balancer
-<span>[<a href="#I-D.ietf-quic-load-balancers" class="xref">I-D.ietf-quic-load-balancers</a>]</span>, it can verify that the Destination Connection
+          <li class="normal" id="section-2.2-3.4">
+            <p id="section-2.2-3.4.1">If a Retry Offload is integrated with a QUIC-LB routable load balancer
+<span>[<a href="#I-D.ietf-quic-load-balancers" class="cite xref">I-D.ietf-quic-load-balancers</a>]</span>, it can verify that the Destination Connection
 ID is routable, and only admit non-Initial packets with routable DCIDs. As the
 Connection ID encoding is invariant across QUIC versions, the Retry Offload can
-do this for all short headers.<a href="#section-2.2-3.4" class="pilcrow">¶</a>
+do this for all short headers.<a href="#section-2.2-3.4.1" class="pilcrow">¶</a></p>
 </li>
         </ul>
 <p id="section-2.2-4">Nothing in this section prevents Retry Offloads from making basic syntax
@@ -1553,7 +1554,7 @@ NEW_TOKEN frames (codepoint '1').<a href="#section-3-1" class="pilcrow">¶</a></
         <h3 id="name-configuration-agent-actions">
 <a href="#section-3.1" class="section-number selfRef">3.1. </a><a href="#name-configuration-agent-actions" class="section-name selfRef">Configuration Agent Actions</a>
         </h3>
-<p id="section-3.1-1">See <a href="#common-requirements" class="xref">Section 2</a>.<a href="#section-3.1-1" class="pilcrow">¶</a></p>
+<p id="section-3.1-1">See <a href="#common-requirements" class="auto internal xref">Section 2</a>.<a href="#section-3.1-1" class="pilcrow">¶</a></p>
 </section>
 </div>
 <div id="nss-offload-requirements">
@@ -1653,18 +1654,22 @@ packets without a valid token.<a href="#section-4-1" class="pilcrow">¶</a></p>
 <p id="section-4-2">Both server and offload MUST have time synchronized within two seconds of each
 other to prevent tokens being incorrectly marked as expired.<a href="#section-4-2" class="pilcrow">¶</a></p>
 <p id="section-4-3">The tokens are protected using AES128-GCM AEAD, as explained in
-<a href="#token-protection-with-aead" class="xref">Section 4.1</a>. All tokens, generated by either the server or
+<a href="#token-protection-with-aead" class="auto internal xref">Section 4.1</a>. All tokens, generated by either the server or
 Retry Offload, MUST use the following format, which includes:<a href="#section-4-3" class="pilcrow">¶</a></p>
 <ul class="normal">
-<li class="normal" id="section-4-4.1">A 1 bit token type identifier.<a href="#section-4-4.1" class="pilcrow">¶</a>
+<li class="normal" id="section-4-4.1">
+          <p id="section-4-4.1.1">A 1 bit token type identifier.<a href="#section-4-4.1.1" class="pilcrow">¶</a></p>
 </li>
-        <li class="normal" id="section-4-4.2">A 7 bit token key identifier.<a href="#section-4-4.2" class="pilcrow">¶</a>
+        <li class="normal" id="section-4-4.2">
+          <p id="section-4-4.2.1">A 7 bit token key identifier.<a href="#section-4-4.2.1" class="pilcrow">¶</a></p>
 </li>
-        <li class="normal" id="section-4-4.3">A 96 bit unique token number transmitted in clear text, but protected as part
-of the AEAD associated data.<a href="#section-4-4.3" class="pilcrow">¶</a>
+        <li class="normal" id="section-4-4.3">
+          <p id="section-4-4.3.1">A 96 bit unique token number transmitted in clear text, but protected as part
+of the AEAD associated data.<a href="#section-4-4.3.1" class="pilcrow">¶</a></p>
 </li>
-        <li class="normal" id="section-4-4.4">A token body, encoding the Original Destination Connection ID and the
-Timestamp, optionally followed by server specific Opaque Data.<a href="#section-4-4.4" class="pilcrow">¶</a>
+        <li class="normal" id="section-4-4.4">
+          <p id="section-4-4.4.1">A token body, encoding the Original Destination Connection ID and the
+Timestamp, optionally followed by server specific Opaque Data.<a href="#section-4-4.4.1" class="pilcrow">¶</a></p>
 </li>
       </ul>
 <p id="section-4-5">The token protection uses an 128 bit representation of the source IP address
@@ -1703,7 +1708,7 @@ Shared-State Retry Offload Token Body {
 <p id="section-4-11">The token body has the following fields:<a href="#section-4-11" class="pilcrow">¶</a></p>
 <p id="section-4-12">Timestamp: The Timestamp is a 64-bit integer, in network order, that expresses
 the expiration time of the token as a number of seconds in POSIX time (see Sec.
-4.16 of <span>[<a href="#TIME_T" class="xref">TIME_T</a>]</span>).<a href="#section-4-12" class="pilcrow">¶</a></p>
+4.16 of <span>[<a href="#TIME_T" class="cite xref">TIME_T</a>]</span>).<a href="#section-4-12" class="pilcrow">¶</a></p>
 <p id="section-4-13">ODCIL: The original destination connection ID length. Tokens in NEW_TOKEN frames
 do not have this field.<a href="#section-4-13" class="pilcrow">¶</a></p>
 <p id="section-4-14">Original Destination Connection ID: The server or Retry Offload copies this
@@ -1723,7 +1728,7 @@ generated by the Service, servers MUST NOT reject tokens because they lack
 opaque data and therefore the packet number.<a href="#section-4-17" class="pilcrow">¶</a></p>
 <p id="section-4-18">Shared-state Retry Offloads use the AES-128-ECB cipher. Future standards could
 add new algorithms that use other ciphers to provide cryptographic agility in
-accordance with <span>[<a href="#RFC7696" class="xref">RFC7696</a>]</span>. Retry Offload and server implementations SHOULD be
+accordance with <span>[<a href="#RFC7696" class="cite xref">RFC7696</a>]</span>. Retry Offload and server implementations SHOULD be
 extensible to support new algorithms.<a href="#section-4-18" class="pilcrow">¶</a></p>
 <div id="token-protection-with-aead">
 <section id="section-4.1">
@@ -1750,17 +1755,21 @@ Shared-State Retry Offload Token {
 </div>
 <p id="section-4.1-3">The tokens are protected using AES128-GCM as follows:<a href="#section-4.1-3" class="pilcrow">¶</a></p>
 <ul class="normal">
-<li class="normal" id="section-4.1-4.1">The Key Sequence is the 7 bit identifier to retrieve the token key and IV.<a href="#section-4.1-4.1" class="pilcrow">¶</a>
+<li class="normal" id="section-4.1-4.1">
+            <p id="section-4.1-4.1.1">The Key Sequence is the 7 bit identifier to retrieve the token key and IV.<a href="#section-4.1-4.1.1" class="pilcrow">¶</a></p>
 </li>
-          <li class="normal" id="section-4.1-4.2">The AEAD IV, is 96 bits generated by the configuration agent.<a href="#section-4.1-4.2" class="pilcrow">¶</a>
+          <li class="normal" id="section-4.1-4.2">
+            <p id="section-4.1-4.2.1">The AEAD IV, is 96 bits generated by the configuration agent.<a href="#section-4.1-4.2.1" class="pilcrow">¶</a></p>
 </li>
-          <li class="normal" id="section-4.1-4.3">The AEAD nonce, N, is formed by XORing the AEAD IV with the 96 bit unique
-token number.<a href="#section-4.1-4.3" class="pilcrow">¶</a>
+          <li class="normal" id="section-4.1-4.3">
+            <p id="section-4.1-4.3.1">The AEAD nonce, N, is formed by XORing the AEAD IV with the 96 bit unique
+token number.<a href="#section-4.1-4.3.1" class="pilcrow">¶</a></p>
 </li>
-          <li class="normal" id="section-4.1-4.4">The associated data is a formatted as a pseudo header by combining the
+          <li class="normal" id="section-4.1-4.4">
+            <p id="section-4.1-4.4.1">The associated data is a formatted as a pseudo header by combining the
 cleartext part of the token with the IP address of the client. The format of
 the pseudoheader depends on whether the Token Type bit is '1' (a NEW_TOKEN
-token) or '0' (a Retry token).<a href="#section-4.1-4.4" class="pilcrow">¶</a>
+token) or '0' (a Retry token).<a href="#section-4.1-4.4.1" class="pilcrow">¶</a></p>
 </li>
         </ul>
 <span id="name-psuedoheader-for-shared-sta"></span><div id="ss-retry-offload-token-pseudoheader">
@@ -1788,12 +1797,14 @@ the Source Connection ID the Retry packet will use. To validate a Retry token,
 populate it with the Destination Connection ID of the Initial packet that
 carries the token. This field is only present when the Token Type is '0'.<a href="#section-4.1-7" class="pilcrow">¶</a></p>
 <ul class="normal">
-<li class="normal" id="section-4.1-8.1">The input plaintext for the AEAD is the token body. The output ciphertext of
-the AEAD is transmitted in place of the token body.<a href="#section-4.1-8.1" class="pilcrow">¶</a>
+<li class="normal" id="section-4.1-8.1">
+            <p id="section-4.1-8.1.1">The input plaintext for the AEAD is the token body. The output ciphertext of
+the AEAD is transmitted in place of the token body.<a href="#section-4.1-8.1.1" class="pilcrow">¶</a></p>
 </li>
-          <li class="normal" id="section-4.1-8.2">The AEAD Integrity Check Value(ICV), defined in Section 6 of <span>[<a href="#RFC4106" class="xref">RFC4106</a>]</span>, is
+          <li class="normal" id="section-4.1-8.2">
+            <p id="section-4.1-8.2.1">The AEAD Integrity Check Value(ICV), defined in Section 6 of <span>[<a href="#RFC4106" class="cite xref">RFC4106</a>]</span>, is
 computed as part of the AEAD encryption process, and is verified during
-decryption.<a href="#section-4.1-8.2" class="pilcrow">¶</a>
+decryption.<a href="#section-4.1-8.2.1" class="pilcrow">¶</a></p>
 </li>
         </ul>
 </section>
@@ -1804,7 +1815,7 @@ decryption.<a href="#section-4.1-8.2" class="pilcrow">¶</a>
 <a href="#section-4.2" class="section-number selfRef">4.2. </a><a href="#name-configuration-agent-actions-2" class="section-name selfRef">Configuration Agent Actions</a>
         </h3>
 <p id="section-4.2-1">The configuration agent generates and distributes a "token key", a "token IV",
-a key sequence, and the information described in <a href="#common-requirements" class="xref">Section 2</a>.<a href="#section-4.2-1" class="pilcrow">¶</a></p>
+a key sequence, and the information described in <a href="#common-requirements" class="auto internal xref">Section 2</a>.<a href="#section-4.2-1" class="pilcrow">¶</a></p>
 </section>
 </div>
 <div id="ss-offload">
@@ -1826,21 +1837,26 @@ packet's Destination Connection ID to populate the Retry Source Connection ID
 field, if any.<a href="#section-4.3-5" class="pilcrow">¶</a></p>
 <p id="section-4.3-6">A token is invalid if:<a href="#section-4.3-6" class="pilcrow">¶</a></p>
 <ul class="normal">
-<li class="normal" id="section-4.3-7.1">it uses an unknown key sequence,<a href="#section-4.3-7.1" class="pilcrow">¶</a>
+<li class="normal" id="section-4.3-7.1">
+            <p id="section-4.3-7.1.1">it uses an unknown key sequence,<a href="#section-4.3-7.1.1" class="pilcrow">¶</a></p>
 </li>
-          <li class="normal" id="section-4.3-7.2">the AEAD ICV does not match the expected value (By construction, it will only
+          <li class="normal" id="section-4.3-7.2">
+            <p id="section-4.3-7.2.1">the AEAD ICV does not match the expected value (By construction, it will only
 match if the client IP Address, and any Retry Source Connection ID, also
-matches),<a href="#section-4.3-7.2" class="pilcrow">¶</a>
+matches),<a href="#section-4.3-7.2.1" class="pilcrow">¶</a></p>
 </li>
-          <li class="normal" id="section-4.3-7.3">the ODCIL, if present, is invalid for a client-generated CID (less than 8 or
-more than 20 in QUIC version 1),<a href="#section-4.3-7.3" class="pilcrow">¶</a>
+          <li class="normal" id="section-4.3-7.3">
+            <p id="section-4.3-7.3.1">the ODCIL, if present, is invalid for a client-generated CID (less than 8 or
+more than 20 in QUIC version 1),<a href="#section-4.3-7.3.1" class="pilcrow">¶</a></p>
 </li>
-          <li class="normal" id="section-4.3-7.4">the Timestamp of a token points to time in the past (however, in order to
+          <li class="normal" id="section-4.3-7.4">
+            <p id="section-4.3-7.4.1">the Timestamp of a token points to time in the past (however, in order to
 allow for clock skew, it SHOULD NOT consider tokens to be expired if the
-Timestamp encodes less than two seconds in the past), or<a href="#section-4.3-7.4" class="pilcrow">¶</a>
+Timestamp encodes less than two seconds in the past), or<a href="#section-4.3-7.4.1" class="pilcrow">¶</a></p>
 </li>
-          <li class="normal" id="section-4.3-7.5">the port number, if present, does not match the source port in the
-encapsulating UDP header.<a href="#section-4.3-7.5" class="pilcrow">¶</a>
+          <li class="normal" id="section-4.3-7.5">
+            <p id="section-4.3-7.5.1">the port number, if present, does not match the source port in the
+encapsulating UDP header.<a href="#section-4.3-7.5.1" class="pilcrow">¶</a></p>
 </li>
         </ul>
 <p id="section-4.3-8">Packets with valid tokens MUST be forwarded to the server.<a href="#section-4.3-8" class="pilcrow">¶</a></p>
@@ -1854,17 +1870,17 @@ respond with a Retry packet.<a href="#section-4.3-9" class="pilcrow">¶</a></p>
         <h3 id="name-server-requirements-2">
 <a href="#section-4.4" class="section-number selfRef">4.4. </a><a href="#name-server-requirements-2" class="section-name selfRef">Server Requirements</a>
         </h3>
-<p id="section-4.4-1">The server MAY issue Retry or NEW_TOKEN tokens in accordance with <span>[<a href="#RFC9000" class="xref">RFC9000</a>]</span>.
+<p id="section-4.4-1">The server MAY issue Retry or NEW_TOKEN tokens in accordance with <span>[<a href="#RFC9000" class="cite xref">RFC9000</a>]</span>.
 When doing so, it MUST follow the format above.<a href="#section-4.4-1" class="pilcrow">¶</a></p>
 <p id="section-4.4-2">The server MUST validate all tokens that arrive in Initial packets, as they may
 have bypassed the Retry Offload. It determines validity using the procedure
-in <a href="#ss-offload" class="xref">Section 4.3</a>.<a href="#section-4.4-2" class="pilcrow">¶</a></p>
+in <a href="#ss-offload" class="auto internal xref">Section 4.3</a>.<a href="#section-4.4-2" class="pilcrow">¶</a></p>
 <p id="section-4.4-3">If a valid Retry token, the server populates the
 original_destination_connection_id transport parameter using the
 corresponding token field. It populates the retry_source_connection_id transport
 parameter with the Destination Connection ID of the packet bearing the token.<a href="#section-4.4-3" class="pilcrow">¶</a></p>
 <p id="section-4.4-4">In all other respects, the server processes both valid and invalid tokens in
-accordance with <span>[<a href="#RFC9000" class="xref">RFC9000</a>]</span>.<a href="#section-4.4-4" class="pilcrow">¶</a></p>
+accordance with <span>[<a href="#RFC9000" class="cite xref">RFC9000</a>]</span>.<a href="#section-4.4-4" class="pilcrow">¶</a></p>
 <p id="section-4.4-5">For QUIC versions the offload does not support, the server MAY use any token
 format.<a href="#section-4.4-5" class="pilcrow">¶</a></p>
 </section>
@@ -1881,27 +1897,30 @@ format.<a href="#section-4.4-5" class="pilcrow">¶</a></p>
         <h3 id="name-shared-state-retry-keys">
 <a href="#section-5.1" class="section-number selfRef">5.1. </a><a href="#name-shared-state-retry-keys" class="section-name selfRef">Shared-State Retry Keys</a>
         </h3>
-<p id="section-5.1-1">The Shared-State Retry Offload defined in <a href="#shared-state-retry" class="xref">Section 4</a> describes the
+<p id="section-5.1-1">The Shared-State Retry Offload defined in <a href="#shared-state-retry" class="auto internal xref">Section 4</a> describes the
 format of retry tokens or new tokens protected and encrypted using AES128-GCM.
 Each token includes a 96 bit randomly generated unique token number, and an 8
 bit identifier used to get the AES-GCM encryption context. The AES-GCM
 encryption context contains a 128 bit key and an AEAD IV. There are three
 important security considerations for these tokens:<a href="#section-5.1-1" class="pilcrow">¶</a></p>
 <ul class="normal">
-<li class="normal" id="section-5.1-2.1">An attacker that obtains a copy of the encryption key will be able to decrypt
-and forge tokens.<a href="#section-5.1-2.1" class="pilcrow">¶</a>
+<li class="normal" id="section-5.1-2.1">
+            <p id="section-5.1-2.1.1">An attacker that obtains a copy of the encryption key will be able to decrypt
+and forge tokens.<a href="#section-5.1-2.1.1" class="pilcrow">¶</a></p>
 </li>
-          <li class="normal" id="section-5.1-2.2">Attackers may be able to retrieve the key if they capture a sufficently large
-number of retry tokens encrypted with a given key.<a href="#section-5.1-2.2" class="pilcrow">¶</a>
+          <li class="normal" id="section-5.1-2.2">
+            <p id="section-5.1-2.2.1">Attackers may be able to retrieve the key if they capture a sufficently large
+number of retry tokens encrypted with a given key.<a href="#section-5.1-2.2.1" class="pilcrow">¶</a></p>
 </li>
-          <li class="normal" id="section-5.1-2.3">Confidentiality of the token data will fail if separate tokens reuse the
-same 96 bit unique token number and the same key.<a href="#section-5.1-2.3" class="pilcrow">¶</a>
+          <li class="normal" id="section-5.1-2.3">
+            <p id="section-5.1-2.3.1">Confidentiality of the token data will fail if separate tokens reuse the
+same 96 bit unique token number and the same key.<a href="#section-5.1-2.3.1" class="pilcrow">¶</a></p>
 </li>
         </ul>
 <p id="section-5.1-3">To protect against disclosure of keys to attackers, offload and servers MUST
 ensure that the keys are stored securely. To limit the consequences of potential
 exposures, the lifetime of any given key should be limited.<a href="#section-5.1-3" class="pilcrow">¶</a></p>
-<p id="section-5.1-4">Section 6.6 of <span>[<a href="#RFC9001" class="xref">RFC9001</a>]</span> states that "Endpoints MUST count the number of
+<p id="section-5.1-4">Section 6.6 of <span>[<a href="#RFC9001" class="cite xref">RFC9001</a>]</span> states that "Endpoints MUST count the number of
 encrypted packets for each set of keys. If the total number of encrypted packets
 with the same key exceeds the confidentiality limit for the selected AEAD, the
 endpoint MUST stop using those keys." It goes on with the specific limit: "For
@@ -1912,7 +1931,7 @@ generated with the same key.<a href="#section-5.1-4" class="pilcrow">¶</a></p>
 <p id="section-5.1-5">In order to protect against collisions, the 96 bit unique token numbers should
 be generated using a cryptographically secure pseudorandom number generator
 (CSPRNG), as specified in Appendix C.1 of the TLS 1.3 specification
-<span>[<a href="#RFC8446" class="xref">RFC8446</a>]</span>. With proper random numbers, if fewer than 2^40 tokens are
+<span>[<a href="#RFC8446" class="cite xref">RFC8446</a>]</span>. With proper random numbers, if fewer than 2^40 tokens are
 generated with a single key, the risk of collisions is lower than 0.001%.<a href="#section-5.1-5" class="pilcrow">¶</a></p>
 </section>
 </div>
@@ -1930,6 +1949,7 @@ generated with a single key, the risk of collisions is lower than 0.001%.<a href
       <h2 id="name-references">
 <a href="#section-7" class="section-number selfRef">7. </a><a href="#name-references" class="section-name selfRef">References</a>
       </h2>
+<div id="sec-normative-references">
 <section id="section-7.1">
         <h3 id="name-normative-references">
 <a href="#section-7.1" class="section-number selfRef">7.1. </a><a href="#name-normative-references" class="section-name selfRef">Normative References</a>
@@ -1949,6 +1969,8 @@ generated with a single key, the risk of collisions is lower than 0.001%.<a href
 <dd class="break"></dd>
 </dl>
 </section>
+</div>
+<div id="sec-informative-references">
 <section id="section-7.2">
         <h3 id="name-informative-references">
 <a href="#section-7.2" class="section-number selfRef">7.2. </a><a href="#name-informative-references" class="section-name selfRef">Informative References</a>
@@ -1992,13 +2014,14 @@ generated with a single key, the risk of collisions is lower than 0.001%.<a href
 <dd class="break"></dd>
 </dl>
 </section>
+</div>
 </section>
 <div id="yang-model">
 <section id="appendix-A">
       <h2 id="name-retry-offload-yang-model">
 <a href="#appendix-A" class="section-number selfRef">Appendix A. </a><a href="#name-retry-offload-yang-model" class="section-name selfRef">Retry Offload YANG Model</a>
       </h2>
-<p id="appendix-A-1">These YANG models conform to <span>[<a href="#RFC6020" class="xref">RFC6020</a>]</span> and express a complete Retry Offload
+<p id="appendix-A-1">These YANG models conform to <span>[<a href="#RFC6020" class="cite xref">RFC6020</a>]</span> and express a complete Retry Offload
 configuration.<a href="#appendix-A-1" class="pilcrow">¶</a></p>
 <div class="alignLeft art-text artwork" id="appendix-A-2">
 <pre>
@@ -2136,7 +2159,7 @@ module ietf-retry-offload {
         <h3 id="name-tree-diagram">
 <a href="#appendix-A.1" class="section-number selfRef">A.1. </a><a href="#name-tree-diagram" class="section-name selfRef">Tree Diagram</a>
         </h3>
-<p id="appendix-A.1-1">This summary of the YANG models uses the notation in <span>[<a href="#RFC8340" class="xref">RFC8340</a>]</span>.<a href="#appendix-A.1-1" class="pilcrow">¶</a></p>
+<p id="appendix-A.1-1">This summary of the YANG models uses the notation in <span>[<a href="#RFC8340" class="cite xref">RFC8340</a>]</span>.<a href="#appendix-A.1-1" class="pilcrow">¶</a></p>
 <div class="alignLeft art-text artwork" id="appendix-A.1-2">
 <pre>
 module: retry-offload-config
@@ -2159,7 +2182,7 @@ module: retry-offload-config
         </h3>
 <p id="appendix-A.2-1">In this case, the shared-state retry token is issued by Retry Offload, so the
 opaque data of shared-state retry token body would be null
-(<a href="#shared-state-retry" class="xref">Section 4</a>).<a href="#appendix-A.2-1" class="pilcrow">¶</a></p>
+(<a href="#shared-state-retry" class="auto internal xref">Section 4</a>).<a href="#appendix-A.2-1" class="pilcrow">¶</a></p>
 <div class="alignLeft art-text artwork" id="appendix-A.2-2">
 <pre>
 Configuration:
@@ -2275,9 +2298,11 @@ publication of a final version of this document.<a href="#appendix-D-1.1.1" clas
 <a href="#appendix-D.1" class="section-number selfRef">D.1. </a><a href="#name-since-draft-duke-quic-retry" class="section-name selfRef">since draft-duke-quic-retry-offload-00</a>
         </h3>
 <ul class="normal">
-<li class="normal" id="appendix-D.1-1.1">Converted to adopted IETF draft<a href="#appendix-D.1-1.1" class="pilcrow">¶</a>
+<li class="normal" id="appendix-D.1-1.1">
+            <p id="appendix-D.1-1.1.1">Converted to adopted IETF draft<a href="#appendix-D.1-1.1.1" class="pilcrow">¶</a></p>
 </li>
-          <li class="normal" id="appendix-D.1-1.2">Cleaner transition from inactive to active mode<a href="#appendix-D.1-1.2" class="pilcrow">¶</a>
+          <li class="normal" id="appendix-D.1-1.2">
+            <p id="appendix-D.1-1.2.1">Cleaner transition from inactive to active mode<a href="#appendix-D.1-1.2.1" class="pilcrow">¶</a></p>
 </li>
         </ul>
 </section>
@@ -2288,9 +2313,11 @@ publication of a final version of this document.<a href="#appendix-D-1.1.1" clas
 <a href="#appendix-D.2" class="section-number selfRef">D.2. </a><a href="#name-since-draft-ietf-quic-load-" class="section-name selfRef">since draft-ietf-quic-load-balancers-12</a>
         </h3>
 <ul class="normal">
-<li class="normal" id="appendix-D.2-1.1">Separated from the QUIC-LB draft<a href="#appendix-D.2-1.1" class="pilcrow">¶</a>
+<li class="normal" id="appendix-D.2-1.1">
+            <p id="appendix-D.2-1.1.1">Separated from the QUIC-LB draft<a href="#appendix-D.2-1.1.1" class="pilcrow">¶</a></p>
 </li>
-          <li class="normal" id="appendix-D.2-1.2">Renamed "Retry Service" to "Retry Offload"<a href="#appendix-D.2-1.2" class="pilcrow">¶</a>
+          <li class="normal" id="appendix-D.2-1.2">
+            <p id="appendix-D.2-1.2.1">Renamed "Retry Service" to "Retry Offload"<a href="#appendix-D.2-1.2.1" class="pilcrow">¶</a></p>
 </li>
         </ul>
 </section>
@@ -2301,7 +2328,8 @@ publication of a final version of this document.<a href="#appendix-D-1.1.1" clas
 <a href="#appendix-D.3" class="section-number selfRef">D.3. </a><a href="#name-since-draft-ietf-quic-load-b" class="section-name selfRef">since draft-ietf-quic-load-balancers-11</a>
         </h3>
 <ul class="normal">
-<li class="normal" id="appendix-D.3-1.1">Fixed mistakes in test vectors<a href="#appendix-D.3-1.1" class="pilcrow">¶</a>
+<li class="normal" id="appendix-D.3-1.1">
+            <p id="appendix-D.3-1.1.1">Fixed mistakes in test vectors<a href="#appendix-D.3-1.1.1" class="pilcrow">¶</a></p>
 </li>
         </ul>
 </section>
@@ -2312,12 +2340,15 @@ publication of a final version of this document.<a href="#appendix-D-1.1.1" clas
 <a href="#appendix-D.4" class="section-number selfRef">D.4. </a><a href="#name-since-draft-ietf-quic-load-ba" class="section-name selfRef">since draft-ietf-quic-load-balancers-10</a>
         </h3>
 <ul class="normal">
-<li class="normal" id="appendix-D.4-1.1">Refactored algorithm descriptions; made the 4-pass algorithm easier to
-implement<a href="#appendix-D.4-1.1" class="pilcrow">¶</a>
+<li class="normal" id="appendix-D.4-1.1">
+            <p id="appendix-D.4-1.1.1">Refactored algorithm descriptions; made the 4-pass algorithm easier to
+implement<a href="#appendix-D.4-1.1.1" class="pilcrow">¶</a></p>
 </li>
-          <li class="normal" id="appendix-D.4-1.2">Revised test vectors<a href="#appendix-D.4-1.2" class="pilcrow">¶</a>
+          <li class="normal" id="appendix-D.4-1.2">
+            <p id="appendix-D.4-1.2.1">Revised test vectors<a href="#appendix-D.4-1.2.1" class="pilcrow">¶</a></p>
 </li>
-          <li class="normal" id="appendix-D.4-1.3">Split YANG model into a server and middlebox version<a href="#appendix-D.4-1.3" class="pilcrow">¶</a>
+          <li class="normal" id="appendix-D.4-1.3">
+            <p id="appendix-D.4-1.3.1">Split YANG model into a server and middlebox version<a href="#appendix-D.4-1.3.1" class="pilcrow">¶</a></p>
 </li>
         </ul>
 </section>
@@ -2328,16 +2359,21 @@ implement<a href="#appendix-D.4-1.1" class="pilcrow">¶</a>
 <a href="#appendix-D.5" class="section-number selfRef">D.5. </a><a href="#name-since-draft-ietf-quic-load-bal" class="section-name selfRef">since draft-ietf-quic-load-balancers-09</a>
         </h3>
 <ul class="normal">
-<li class="normal" id="appendix-D.5-1.1">Renamed "Stream Cipher" and "Block Cipher" to "Encrypted Short" and
-"Encrypted Long"<a href="#appendix-D.5-1.1" class="pilcrow">¶</a>
+<li class="normal" id="appendix-D.5-1.1">
+            <p id="appendix-D.5-1.1.1">Renamed "Stream Cipher" and "Block Cipher" to "Encrypted Short" and
+"Encrypted Long"<a href="#appendix-D.5-1.1.1" class="pilcrow">¶</a></p>
 </li>
-          <li class="normal" id="appendix-D.5-1.2">Added section on per-connection state<a href="#appendix-D.5-1.2" class="pilcrow">¶</a>
+          <li class="normal" id="appendix-D.5-1.2">
+            <p id="appendix-D.5-1.2.1">Added section on per-connection state<a href="#appendix-D.5-1.2.1" class="pilcrow">¶</a></p>
 </li>
-          <li class="normal" id="appendix-D.5-1.3">Changed "Encrypted Short" to a 4-pass algorithm.<a href="#appendix-D.5-1.3" class="pilcrow">¶</a>
+          <li class="normal" id="appendix-D.5-1.3">
+            <p id="appendix-D.5-1.3.1">Changed "Encrypted Short" to a 4-pass algorithm.<a href="#appendix-D.5-1.3.1" class="pilcrow">¶</a></p>
 </li>
-          <li class="normal" id="appendix-D.5-1.4">Recommended a random initial nonce when incrementing.<a href="#appendix-D.5-1.4" class="pilcrow">¶</a>
+          <li class="normal" id="appendix-D.5-1.4">
+            <p id="appendix-D.5-1.4.1">Recommended a random initial nonce when incrementing.<a href="#appendix-D.5-1.4.1" class="pilcrow">¶</a></p>
 </li>
-          <li class="normal" id="appendix-D.5-1.5">Clarified what SNI LBs should do with unknown QUIC versions.<a href="#appendix-D.5-1.5" class="pilcrow">¶</a>
+          <li class="normal" id="appendix-D.5-1.5">
+            <p id="appendix-D.5-1.5.1">Clarified what SNI LBs should do with unknown QUIC versions.<a href="#appendix-D.5-1.5.1" class="pilcrow">¶</a></p>
 </li>
         </ul>
 </section>
@@ -2348,9 +2384,11 @@ implement<a href="#appendix-D.4-1.1" class="pilcrow">¶</a>
 <a href="#appendix-D.6" class="section-number selfRef">D.6. </a><a href="#name-since-draft-ietf-quic-load-bala" class="section-name selfRef">since draft-ietf-quic-load-balancers-08</a>
         </h3>
 <ul class="normal">
-<li class="normal" id="appendix-D.6-1.1">Eliminate Dynamic SID allocation<a href="#appendix-D.6-1.1" class="pilcrow">¶</a>
+<li class="normal" id="appendix-D.6-1.1">
+            <p id="appendix-D.6-1.1.1">Eliminate Dynamic SID allocation<a href="#appendix-D.6-1.1.1" class="pilcrow">¶</a></p>
 </li>
-          <li class="normal" id="appendix-D.6-1.2">Eliminated server use bytes<a href="#appendix-D.6-1.2" class="pilcrow">¶</a>
+          <li class="normal" id="appendix-D.6-1.2">
+            <p id="appendix-D.6-1.2.1">Eliminated server use bytes<a href="#appendix-D.6-1.2.1" class="pilcrow">¶</a></p>
 </li>
         </ul>
 </section>
@@ -2361,13 +2399,17 @@ implement<a href="#appendix-D.4-1.1" class="pilcrow">¶</a>
 <a href="#appendix-D.7" class="section-number selfRef">D.7. </a><a href="#name-since-draft-ietf-quic-load-balan" class="section-name selfRef">since draft-ietf-quic-load-balancers-07</a>
         </h3>
 <ul class="normal">
-<li class="normal" id="appendix-D.7-1.1">Shortened SSCID nonce minimum length to 4 bytes<a href="#appendix-D.7-1.1" class="pilcrow">¶</a>
+<li class="normal" id="appendix-D.7-1.1">
+            <p id="appendix-D.7-1.1.1">Shortened SSCID nonce minimum length to 4 bytes<a href="#appendix-D.7-1.1.1" class="pilcrow">¶</a></p>
 </li>
-          <li class="normal" id="appendix-D.7-1.2">Removed RSCID from Retry token body<a href="#appendix-D.7-1.2" class="pilcrow">¶</a>
+          <li class="normal" id="appendix-D.7-1.2">
+            <p id="appendix-D.7-1.2.1">Removed RSCID from Retry token body<a href="#appendix-D.7-1.2.1" class="pilcrow">¶</a></p>
 </li>
-          <li class="normal" id="appendix-D.7-1.3">Simplified CID formats<a href="#appendix-D.7-1.3" class="pilcrow">¶</a>
+          <li class="normal" id="appendix-D.7-1.3">
+            <p id="appendix-D.7-1.3.1">Simplified CID formats<a href="#appendix-D.7-1.3.1" class="pilcrow">¶</a></p>
 </li>
-          <li class="normal" id="appendix-D.7-1.4">Shrunk size of SID table<a href="#appendix-D.7-1.4" class="pilcrow">¶</a>
+          <li class="normal" id="appendix-D.7-1.4">
+            <p id="appendix-D.7-1.4.1">Shrunk size of SID table<a href="#appendix-D.7-1.4.1" class="pilcrow">¶</a></p>
 </li>
         </ul>
 </section>
@@ -2378,15 +2420,20 @@ implement<a href="#appendix-D.4-1.1" class="pilcrow">¶</a>
 <a href="#appendix-D.8" class="section-number selfRef">D.8. </a><a href="#name-since-draft-ietf-quic-load-balanc" class="section-name selfRef">since draft-ietf-quic-load-balancers-06</a>
         </h3>
 <ul class="normal">
-<li class="normal" id="appendix-D.8-1.1">Added interoperability with DTLS<a href="#appendix-D.8-1.1" class="pilcrow">¶</a>
+<li class="normal" id="appendix-D.8-1.1">
+            <p id="appendix-D.8-1.1.1">Added interoperability with DTLS<a href="#appendix-D.8-1.1.1" class="pilcrow">¶</a></p>
 </li>
-          <li class="normal" id="appendix-D.8-1.2">Changed "non-compliant" to "unroutable"<a href="#appendix-D.8-1.2" class="pilcrow">¶</a>
+          <li class="normal" id="appendix-D.8-1.2">
+            <p id="appendix-D.8-1.2.1">Changed "non-compliant" to "unroutable"<a href="#appendix-D.8-1.2.1" class="pilcrow">¶</a></p>
 </li>
-          <li class="normal" id="appendix-D.8-1.3">Changed "arbitrary" algorithm to "fallback"<a href="#appendix-D.8-1.3" class="pilcrow">¶</a>
+          <li class="normal" id="appendix-D.8-1.3">
+            <p id="appendix-D.8-1.3.1">Changed "arbitrary" algorithm to "fallback"<a href="#appendix-D.8-1.3.1" class="pilcrow">¶</a></p>
 </li>
-          <li class="normal" id="appendix-D.8-1.4">Revised security considerations for mistrustful tenants<a href="#appendix-D.8-1.4" class="pilcrow">¶</a>
+          <li class="normal" id="appendix-D.8-1.4">
+            <p id="appendix-D.8-1.4.1">Revised security considerations for mistrustful tenants<a href="#appendix-D.8-1.4.1" class="pilcrow">¶</a></p>
 </li>
-          <li class="normal" id="appendix-D.8-1.5">Added Retry Offload considerations for non-Initial packets<a href="#appendix-D.8-1.5" class="pilcrow">¶</a>
+          <li class="normal" id="appendix-D.8-1.5">
+            <p id="appendix-D.8-1.5.1">Added Retry Offload considerations for non-Initial packets<a href="#appendix-D.8-1.5.1" class="pilcrow">¶</a></p>
 </li>
         </ul>
 </section>
@@ -2397,15 +2444,20 @@ implement<a href="#appendix-D.4-1.1" class="pilcrow">¶</a>
 <a href="#appendix-D.9" class="section-number selfRef">D.9. </a><a href="#name-since-draft-ietf-quic-load-balance" class="section-name selfRef">since draft-ietf-quic-load-balancers-05</a>
         </h3>
 <ul class="normal">
-<li class="normal" id="appendix-D.9-1.1">Added low-config CID for further discussion<a href="#appendix-D.9-1.1" class="pilcrow">¶</a>
+<li class="normal" id="appendix-D.9-1.1">
+            <p id="appendix-D.9-1.1.1">Added low-config CID for further discussion<a href="#appendix-D.9-1.1.1" class="pilcrow">¶</a></p>
 </li>
-          <li class="normal" id="appendix-D.9-1.2">Complete revision of shared-state Retry Token<a href="#appendix-D.9-1.2" class="pilcrow">¶</a>
+          <li class="normal" id="appendix-D.9-1.2">
+            <p id="appendix-D.9-1.2.1">Complete revision of shared-state Retry Token<a href="#appendix-D.9-1.2.1" class="pilcrow">¶</a></p>
 </li>
-          <li class="normal" id="appendix-D.9-1.3">Added YANG model<a href="#appendix-D.9-1.3" class="pilcrow">¶</a>
+          <li class="normal" id="appendix-D.9-1.3">
+            <p id="appendix-D.9-1.3.1">Added YANG model<a href="#appendix-D.9-1.3.1" class="pilcrow">¶</a></p>
 </li>
-          <li class="normal" id="appendix-D.9-1.4">Updated configuration limits to ensure CID entropy<a href="#appendix-D.9-1.4" class="pilcrow">¶</a>
+          <li class="normal" id="appendix-D.9-1.4">
+            <p id="appendix-D.9-1.4.1">Updated configuration limits to ensure CID entropy<a href="#appendix-D.9-1.4.1" class="pilcrow">¶</a></p>
 </li>
-          <li class="normal" id="appendix-D.9-1.5">Switched to notation from quic-transport<a href="#appendix-D.9-1.5" class="pilcrow">¶</a>
+          <li class="normal" id="appendix-D.9-1.5">
+            <p id="appendix-D.9-1.5.1">Switched to notation from quic-transport<a href="#appendix-D.9-1.5.1" class="pilcrow">¶</a></p>
 </li>
         </ul>
 </section>
@@ -2416,17 +2468,23 @@ implement<a href="#appendix-D.4-1.1" class="pilcrow">¶</a>
 <a href="#appendix-D.10" class="section-number selfRef">D.10. </a><a href="#name-since-draft-ietf-quic-load-balancer" class="section-name selfRef">since draft-ietf-quic-load-balancers-04</a>
         </h3>
 <ul class="normal">
-<li class="normal" id="appendix-D.10-1.1">Rearranged the shared-state retry token to simplify token processing<a href="#appendix-D.10-1.1" class="pilcrow">¶</a>
+<li class="normal" id="appendix-D.10-1.1">
+            <p id="appendix-D.10-1.1.1">Rearranged the shared-state retry token to simplify token processing<a href="#appendix-D.10-1.1.1" class="pilcrow">¶</a></p>
 </li>
-          <li class="normal" id="appendix-D.10-1.2">More compact timestamp in shared-state retry token<a href="#appendix-D.10-1.2" class="pilcrow">¶</a>
+          <li class="normal" id="appendix-D.10-1.2">
+            <p id="appendix-D.10-1.2.1">More compact timestamp in shared-state retry token<a href="#appendix-D.10-1.2.1" class="pilcrow">¶</a></p>
 </li>
-          <li class="normal" id="appendix-D.10-1.3">Revised server requirements for shared-state retries<a href="#appendix-D.10-1.3" class="pilcrow">¶</a>
+          <li class="normal" id="appendix-D.10-1.3">
+            <p id="appendix-D.10-1.3.1">Revised server requirements for shared-state retries<a href="#appendix-D.10-1.3.1" class="pilcrow">¶</a></p>
 </li>
-          <li class="normal" id="appendix-D.10-1.4">Eliminated zero padding from the test vectors<a href="#appendix-D.10-1.4" class="pilcrow">¶</a>
+          <li class="normal" id="appendix-D.10-1.4">
+            <p id="appendix-D.10-1.4.1">Eliminated zero padding from the test vectors<a href="#appendix-D.10-1.4.1" class="pilcrow">¶</a></p>
 </li>
-          <li class="normal" id="appendix-D.10-1.5">Added server use bytes to the test vectors<a href="#appendix-D.10-1.5" class="pilcrow">¶</a>
+          <li class="normal" id="appendix-D.10-1.5">
+            <p id="appendix-D.10-1.5.1">Added server use bytes to the test vectors<a href="#appendix-D.10-1.5.1" class="pilcrow">¶</a></p>
 </li>
-          <li class="normal" id="appendix-D.10-1.6">Additional compliant DCID criteria<a href="#appendix-D.10-1.6" class="pilcrow">¶</a>
+          <li class="normal" id="appendix-D.10-1.6">
+            <p id="appendix-D.10-1.6.1">Additional compliant DCID criteria<a href="#appendix-D.10-1.6.1" class="pilcrow">¶</a></p>
 </li>
         </ul>
 </section>
@@ -2437,11 +2495,14 @@ implement<a href="#appendix-D.4-1.1" class="pilcrow">¶</a>
 <a href="#appendix-D.11" class="section-number selfRef">D.11. </a><a href="#name-since-draft-ietf-quic-load-balancer-2" class="section-name selfRef">since-draft-ietf-quic-load-balancers-03</a>
         </h3>
 <ul class="normal">
-<li class="normal" id="appendix-D.11-1.1">Improved Config Rotation text<a href="#appendix-D.11-1.1" class="pilcrow">¶</a>
+<li class="normal" id="appendix-D.11-1.1">
+            <p id="appendix-D.11-1.1.1">Improved Config Rotation text<a href="#appendix-D.11-1.1.1" class="pilcrow">¶</a></p>
 </li>
-          <li class="normal" id="appendix-D.11-1.2">Added stream cipher test vectors<a href="#appendix-D.11-1.2" class="pilcrow">¶</a>
+          <li class="normal" id="appendix-D.11-1.2">
+            <p id="appendix-D.11-1.2.1">Added stream cipher test vectors<a href="#appendix-D.11-1.2.1" class="pilcrow">¶</a></p>
 </li>
-          <li class="normal" id="appendix-D.11-1.3">Deleted the Obfuscated CID algorithm<a href="#appendix-D.11-1.3" class="pilcrow">¶</a>
+          <li class="normal" id="appendix-D.11-1.3">
+            <p id="appendix-D.11-1.3.1">Deleted the Obfuscated CID algorithm<a href="#appendix-D.11-1.3.1" class="pilcrow">¶</a></p>
 </li>
         </ul>
 </section>
@@ -2452,17 +2513,23 @@ implement<a href="#appendix-D.4-1.1" class="pilcrow">¶</a>
 <a href="#appendix-D.12" class="section-number selfRef">D.12. </a><a href="#name-since-draft-ietf-quic-load-balancer-3" class="section-name selfRef">since-draft-ietf-quic-load-balancers-02</a>
         </h3>
 <ul class="normal">
-<li class="normal" id="appendix-D.12-1.1">Replaced stream cipher algorithm with three-pass version<a href="#appendix-D.12-1.1" class="pilcrow">¶</a>
+<li class="normal" id="appendix-D.12-1.1">
+            <p id="appendix-D.12-1.1.1">Replaced stream cipher algorithm with three-pass version<a href="#appendix-D.12-1.1.1" class="pilcrow">¶</a></p>
 </li>
-          <li class="normal" id="appendix-D.12-1.2">Updated Retry format to encode info for required TPs<a href="#appendix-D.12-1.2" class="pilcrow">¶</a>
+          <li class="normal" id="appendix-D.12-1.2">
+            <p id="appendix-D.12-1.2.1">Updated Retry format to encode info for required TPs<a href="#appendix-D.12-1.2.1" class="pilcrow">¶</a></p>
 </li>
-          <li class="normal" id="appendix-D.12-1.3">Added discussion of version invariance<a href="#appendix-D.12-1.3" class="pilcrow">¶</a>
+          <li class="normal" id="appendix-D.12-1.3">
+            <p id="appendix-D.12-1.3.1">Added discussion of version invariance<a href="#appendix-D.12-1.3.1" class="pilcrow">¶</a></p>
 </li>
-          <li class="normal" id="appendix-D.12-1.4">Cleaned up text about config rotation<a href="#appendix-D.12-1.4" class="pilcrow">¶</a>
+          <li class="normal" id="appendix-D.12-1.4">
+            <p id="appendix-D.12-1.4.1">Cleaned up text about config rotation<a href="#appendix-D.12-1.4.1" class="pilcrow">¶</a></p>
 </li>
-          <li class="normal" id="appendix-D.12-1.5">Added Reset Oracle and limited configuration considerations<a href="#appendix-D.12-1.5" class="pilcrow">¶</a>
+          <li class="normal" id="appendix-D.12-1.5">
+            <p id="appendix-D.12-1.5.1">Added Reset Oracle and limited configuration considerations<a href="#appendix-D.12-1.5.1" class="pilcrow">¶</a></p>
 </li>
-          <li class="normal" id="appendix-D.12-1.6">Allow dropped long-header packets for known QUIC versions<a href="#appendix-D.12-1.6" class="pilcrow">¶</a>
+          <li class="normal" id="appendix-D.12-1.6">
+            <p id="appendix-D.12-1.6.1">Allow dropped long-header packets for known QUIC versions<a href="#appendix-D.12-1.6.1" class="pilcrow">¶</a></p>
 </li>
         </ul>
 </section>
@@ -2473,13 +2540,17 @@ implement<a href="#appendix-D.4-1.1" class="pilcrow">¶</a>
 <a href="#appendix-D.13" class="section-number selfRef">D.13. </a><a href="#name-since-draft-ietf-quic-load-balancer-4" class="section-name selfRef">since-draft-ietf-quic-load-balancers-01</a>
         </h3>
 <ul class="normal">
-<li class="normal" id="appendix-D.13-1.1">Test vectors for load balancer decoding<a href="#appendix-D.13-1.1" class="pilcrow">¶</a>
+<li class="normal" id="appendix-D.13-1.1">
+            <p id="appendix-D.13-1.1.1">Test vectors for load balancer decoding<a href="#appendix-D.13-1.1.1" class="pilcrow">¶</a></p>
 </li>
-          <li class="normal" id="appendix-D.13-1.2">Deleted remnants of in-band protocol<a href="#appendix-D.13-1.2" class="pilcrow">¶</a>
+          <li class="normal" id="appendix-D.13-1.2">
+            <p id="appendix-D.13-1.2.1">Deleted remnants of in-band protocol<a href="#appendix-D.13-1.2.1" class="pilcrow">¶</a></p>
 </li>
-          <li class="normal" id="appendix-D.13-1.3">Light edit of Retry Offloads section<a href="#appendix-D.13-1.3" class="pilcrow">¶</a>
+          <li class="normal" id="appendix-D.13-1.3">
+            <p id="appendix-D.13-1.3.1">Light edit of Retry Offloads section<a href="#appendix-D.13-1.3.1" class="pilcrow">¶</a></p>
 </li>
-          <li class="normal" id="appendix-D.13-1.4">Discussed load balancer chains<a href="#appendix-D.13-1.4" class="pilcrow">¶</a>
+          <li class="normal" id="appendix-D.13-1.4">
+            <p id="appendix-D.13-1.4.1">Discussed load balancer chains<a href="#appendix-D.13-1.4.1" class="pilcrow">¶</a></p>
 </li>
         </ul>
 </section>
@@ -2490,7 +2561,8 @@ implement<a href="#appendix-D.4-1.1" class="pilcrow">¶</a>
 <a href="#appendix-D.14" class="section-number selfRef">D.14. </a><a href="#name-since-draft-ietf-quic-load-balancer-5" class="section-name selfRef">since-draft-ietf-quic-load-balancers-00</a>
         </h3>
 <ul class="normal">
-<li class="normal" id="appendix-D.14-1.1">Removed in-band protocol from the document<a href="#appendix-D.14-1.1" class="pilcrow">¶</a>
+<li class="normal" id="appendix-D.14-1.1">
+            <p id="appendix-D.14-1.1.1">Removed in-band protocol from the document<a href="#appendix-D.14-1.1.1" class="pilcrow">¶</a></p>
 </li>
         </ul>
 </section>
@@ -2501,7 +2573,8 @@ implement<a href="#appendix-D.4-1.1" class="pilcrow">¶</a>
 <a href="#appendix-D.15" class="section-number selfRef">D.15. </a><a href="#name-since-draft-duke-quic-load-" class="section-name selfRef">Since draft-duke-quic-load-balancers-06</a>
         </h3>
 <ul class="normal">
-<li class="normal" id="appendix-D.15-1.1">Switch to IETF WG draft.<a href="#appendix-D.15-1.1" class="pilcrow">¶</a>
+<li class="normal" id="appendix-D.15-1.1">
+            <p id="appendix-D.15-1.1.1">Switch to IETF WG draft.<a href="#appendix-D.15-1.1.1" class="pilcrow">¶</a></p>
 </li>
         </ul>
 </section>
@@ -2512,15 +2585,20 @@ implement<a href="#appendix-D.4-1.1" class="pilcrow">¶</a>
 <a href="#appendix-D.16" class="section-number selfRef">D.16. </a><a href="#name-since-draft-duke-quic-load-b" class="section-name selfRef">Since draft-duke-quic-load-balancers-05</a>
         </h3>
 <ul class="normal">
-<li class="normal" id="appendix-D.16-1.1">Editorial changes<a href="#appendix-D.16-1.1" class="pilcrow">¶</a>
+<li class="normal" id="appendix-D.16-1.1">
+            <p id="appendix-D.16-1.1.1">Editorial changes<a href="#appendix-D.16-1.1.1" class="pilcrow">¶</a></p>
 </li>
-          <li class="normal" id="appendix-D.16-1.2">Made load balancer behavior independent of QUIC version<a href="#appendix-D.16-1.2" class="pilcrow">¶</a>
+          <li class="normal" id="appendix-D.16-1.2">
+            <p id="appendix-D.16-1.2.1">Made load balancer behavior independent of QUIC version<a href="#appendix-D.16-1.2.1" class="pilcrow">¶</a></p>
 </li>
-          <li class="normal" id="appendix-D.16-1.3">Got rid of token in stream cipher encoding, because server might not have it<a href="#appendix-D.16-1.3" class="pilcrow">¶</a>
+          <li class="normal" id="appendix-D.16-1.3">
+            <p id="appendix-D.16-1.3.1">Got rid of token in stream cipher encoding, because server might not have it<a href="#appendix-D.16-1.3.1" class="pilcrow">¶</a></p>
 </li>
-          <li class="normal" id="appendix-D.16-1.4">Defined "non-compliant DCID" and specified rules for handling them.<a href="#appendix-D.16-1.4" class="pilcrow">¶</a>
+          <li class="normal" id="appendix-D.16-1.4">
+            <p id="appendix-D.16-1.4.1">Defined "non-compliant DCID" and specified rules for handling them.<a href="#appendix-D.16-1.4.1" class="pilcrow">¶</a></p>
 </li>
-          <li class="normal" id="appendix-D.16-1.5">Added psuedocode for config schema<a href="#appendix-D.16-1.5" class="pilcrow">¶</a>
+          <li class="normal" id="appendix-D.16-1.5">
+            <p id="appendix-D.16-1.5.1">Added psuedocode for config schema<a href="#appendix-D.16-1.5.1" class="pilcrow">¶</a></p>
 </li>
         </ul>
 </section>
@@ -2531,7 +2609,8 @@ implement<a href="#appendix-D.4-1.1" class="pilcrow">¶</a>
 <a href="#appendix-D.17" class="section-number selfRef">D.17. </a><a href="#name-since-draft-duke-quic-load-ba" class="section-name selfRef">Since draft-duke-quic-load-balancers-04</a>
         </h3>
 <ul class="normal">
-<li class="normal" id="appendix-D.17-1.1">Added standard for Retry Offloads<a href="#appendix-D.17-1.1" class="pilcrow">¶</a>
+<li class="normal" id="appendix-D.17-1.1">
+            <p id="appendix-D.17-1.1.1">Added standard for Retry Offloads<a href="#appendix-D.17-1.1.1" class="pilcrow">¶</a></p>
 </li>
         </ul>
 </section>
@@ -2542,13 +2621,17 @@ implement<a href="#appendix-D.4-1.1" class="pilcrow">¶</a>
 <a href="#appendix-D.18" class="section-number selfRef">D.18. </a><a href="#name-since-draft-duke-quic-load-bal" class="section-name selfRef">Since draft-duke-quic-load-balancers-03</a>
         </h3>
 <ul class="normal">
-<li class="normal" id="appendix-D.18-1.1">Renamed Plaintext CID algorithm as Obfuscated CID<a href="#appendix-D.18-1.1" class="pilcrow">¶</a>
+<li class="normal" id="appendix-D.18-1.1">
+            <p id="appendix-D.18-1.1.1">Renamed Plaintext CID algorithm as Obfuscated CID<a href="#appendix-D.18-1.1.1" class="pilcrow">¶</a></p>
 </li>
-          <li class="normal" id="appendix-D.18-1.2">Added new Plaintext CID algorithm<a href="#appendix-D.18-1.2" class="pilcrow">¶</a>
+          <li class="normal" id="appendix-D.18-1.2">
+            <p id="appendix-D.18-1.2.1">Added new Plaintext CID algorithm<a href="#appendix-D.18-1.2.1" class="pilcrow">¶</a></p>
 </li>
-          <li class="normal" id="appendix-D.18-1.3">Updated to allow 20B CIDs<a href="#appendix-D.18-1.3" class="pilcrow">¶</a>
+          <li class="normal" id="appendix-D.18-1.3">
+            <p id="appendix-D.18-1.3.1">Updated to allow 20B CIDs<a href="#appendix-D.18-1.3.1" class="pilcrow">¶</a></p>
 </li>
-          <li class="normal" id="appendix-D.18-1.4">Added self-encoding of CID length<a href="#appendix-D.18-1.4" class="pilcrow">¶</a>
+          <li class="normal" id="appendix-D.18-1.4">
+            <p id="appendix-D.18-1.4.1">Added self-encoding of CID length<a href="#appendix-D.18-1.4.1" class="pilcrow">¶</a></p>
 </li>
         </ul>
 </section>
@@ -2559,15 +2642,20 @@ implement<a href="#appendix-D.4-1.1" class="pilcrow">¶</a>
 <a href="#appendix-D.19" class="section-number selfRef">D.19. </a><a href="#name-since-draft-duke-quic-load-bala" class="section-name selfRef">Since draft-duke-quic-load-balancers-02</a>
         </h3>
 <ul class="normal">
-<li class="normal" id="appendix-D.19-1.1">Added Config Rotation<a href="#appendix-D.19-1.1" class="pilcrow">¶</a>
+<li class="normal" id="appendix-D.19-1.1">
+            <p id="appendix-D.19-1.1.1">Added Config Rotation<a href="#appendix-D.19-1.1.1" class="pilcrow">¶</a></p>
 </li>
-          <li class="normal" id="appendix-D.19-1.2">Added failover mode<a href="#appendix-D.19-1.2" class="pilcrow">¶</a>
+          <li class="normal" id="appendix-D.19-1.2">
+            <p id="appendix-D.19-1.2.1">Added failover mode<a href="#appendix-D.19-1.2.1" class="pilcrow">¶</a></p>
 </li>
-          <li class="normal" id="appendix-D.19-1.3">Tweaks to existing CID algorithms<a href="#appendix-D.19-1.3" class="pilcrow">¶</a>
+          <li class="normal" id="appendix-D.19-1.3">
+            <p id="appendix-D.19-1.3.1">Tweaks to existing CID algorithms<a href="#appendix-D.19-1.3.1" class="pilcrow">¶</a></p>
 </li>
-          <li class="normal" id="appendix-D.19-1.4">Added Block Cipher CID algorithm<a href="#appendix-D.19-1.4" class="pilcrow">¶</a>
+          <li class="normal" id="appendix-D.19-1.4">
+            <p id="appendix-D.19-1.4.1">Added Block Cipher CID algorithm<a href="#appendix-D.19-1.4.1" class="pilcrow">¶</a></p>
 </li>
-          <li class="normal" id="appendix-D.19-1.5">Reformatted QUIC-LB packets<a href="#appendix-D.19-1.5" class="pilcrow">¶</a>
+          <li class="normal" id="appendix-D.19-1.5">
+            <p id="appendix-D.19-1.5.1">Reformatted QUIC-LB packets<a href="#appendix-D.19-1.5.1" class="pilcrow">¶</a></p>
 </li>
         </ul>
 </section>
@@ -2578,11 +2666,14 @@ implement<a href="#appendix-D.4-1.1" class="pilcrow">¶</a>
 <a href="#appendix-D.20" class="section-number selfRef">D.20. </a><a href="#name-since-draft-duke-quic-load-balan" class="section-name selfRef">Since draft-duke-quic-load-balancers-01</a>
         </h3>
 <ul class="normal">
-<li class="normal" id="appendix-D.20-1.1">Complete rewrite<a href="#appendix-D.20-1.1" class="pilcrow">¶</a>
+<li class="normal" id="appendix-D.20-1.1">
+            <p id="appendix-D.20-1.1.1">Complete rewrite<a href="#appendix-D.20-1.1.1" class="pilcrow">¶</a></p>
 </li>
-          <li class="normal" id="appendix-D.20-1.2">Supports multiple security levels<a href="#appendix-D.20-1.2" class="pilcrow">¶</a>
+          <li class="normal" id="appendix-D.20-1.2">
+            <p id="appendix-D.20-1.2.1">Supports multiple security levels<a href="#appendix-D.20-1.2.1" class="pilcrow">¶</a></p>
 </li>
-          <li class="normal" id="appendix-D.20-1.3">Lightweight messages<a href="#appendix-D.20-1.3" class="pilcrow">¶</a>
+          <li class="normal" id="appendix-D.20-1.3">
+            <p id="appendix-D.20-1.3.1">Lightweight messages<a href="#appendix-D.20-1.3.1" class="pilcrow">¶</a></p>
 </li>
         </ul>
 </section>
@@ -2593,9 +2684,11 @@ implement<a href="#appendix-D.4-1.1" class="pilcrow">¶</a>
 <a href="#appendix-D.21" class="section-number selfRef">D.21. </a><a href="#name-since-draft-duke-quic-load-balanc" class="section-name selfRef">Since draft-duke-quic-load-balancers-00</a>
         </h3>
 <ul class="normal">
-<li class="normal" id="appendix-D.21-1.1">Converted to markdown<a href="#appendix-D.21-1.1" class="pilcrow">¶</a>
+<li class="normal" id="appendix-D.21-1.1">
+            <p id="appendix-D.21-1.1.1">Converted to markdown<a href="#appendix-D.21-1.1.1" class="pilcrow">¶</a></p>
 </li>
-          <li class="normal" id="appendix-D.21-1.2">Added variable length connection IDs<a href="#appendix-D.21-1.2" class="pilcrow">¶</a>
+          <li class="normal" id="appendix-D.21-1.2">
+            <p id="appendix-D.21-1.2.1">Added variable length connection IDs<a href="#appendix-D.21-1.2.1" class="pilcrow">¶</a></p>
 </li>
         </ul>
 </section>
