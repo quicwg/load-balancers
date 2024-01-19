@@ -497,21 +497,20 @@ The expand(length, pass, input_bytes) function concatenates three arguments and
 outputs 16 zero-padded octets.
 
 The first argument 'length' is an 8-bit integer that reports the sum of the
-configured nonce length and server id length in octets, and forms the most
-significant octet of the output. The 'length' argument MUST NOT exceed 28.
+configured nonce length and server id length in octets, and forms the fifteenth
+octet of the output. The 'length' argument MUST NOT exceed 28.
 
 The second argument is an 8-bit integer that is the 'pass' of the algorithm, and
-forms the second-most significant octet of the output.
+forms the sixteenth (least significant) octet of the output.
 
 The third argument is a variable-length stream of octets, which is copied into
-the third-most significant octet of the output and beyond. The length of this
-octet stream is half the 'length', rounded up. All remaining octets of the
-output are zero.
+the most significant octets of the output. The length of this octet stream is
+half the 'length', rounded up. All remaining octets of the output are zero.
 
 For example,
 
 ~~~pseudocode
-expand(0x06, 0x02, 0xaaba3c) = 0x0602aaba3c0000000000000000000000
+expand(0x06, 0x02, 0xaaba3c) = 0xaaba3c00000000000000000000000602
 ~~~
 
 Similarly, truncate(input, n) returns the first n octets of 'input'.
@@ -609,41 +608,41 @@ left_0 = 0x31441a90
 right_0 = 0x0c69c275
 
 // step 3
-aes_input = 0x070131441a9000000000000000000000
-ciphertext = 0x6373991e1d6d5d284f3d015da31d343d
+aes_input = 0x31441a90000000000000000000000701
+aes_output = 0xa255dd8cdacf01948d3a848c3c7fee23
 
 // step 4
-right_1 = 0x0c69c275 ^ 0x6373991e = 0x6f1a5b6b
+right_1 = 0x0c69c275 ^ 0xa255dd8c = 0xae3c1ff9
 
 // step 5 (clear bits)
-right_1 = 0x0f1a5b6b
+right_1 = 0x0e8c1ff9
 
 // step 6
-aes_input = 0x07020f1a5b6b00000000000000000000
-aes_output = 0x33ca01c065da4c66e27a990967272dca
-left_1 = 0x31441a90 ^ 0x33ca01c0 = 0x028e1b50
+aes_input = 0x0e8c1ff9000000000000000000000702
+aes_output = 0xe5e452cb9e1bedb0b2bf830506bf4c4e
+left_1 = 0x31441a90 ^ 0xe5e452cb = 0xd4a0485b
 
 // step 7 (clear bits)
-left_1 = 0x028e1b50
+left_1 = 0xd4a04850
 
 // step 8
-aes_input = 0x0703028e1b5000000000000000000000
-aes_output = 0x6b8ecc0905bab0a3a96273cc50f4eee1
-right_2 = 0x0f1a5b6b ^ 0x6b8ecc09 = 0x64949762
+aes_input = 0xd4a04850000000000000000000000703
+aes_output = 0xb7821ab3024fed0913b6a04d18e3216f
+right_2 = 0x0e8c1ff9 ^ 0xb7821ab3 = 0xb9be054a
 
 // step 9 (clear bits)
-right_2 = 0x04949762
+right_2 = 0x09be054a
 
 // step 10
-aes_input = 0x07040494976200000000000000000000
-aes_output = 0x8c148aa72244e4b46ae2f019dcfc8a64
-left_2 = 0x028e1b50 ^ 0x8c148aa7 = 0x8e9a91f7
+aes_input = 0x09be054a000000000000000000000704
+aes_output = 0xb334357cfdf81e3fafe180154eaf7378
+left_2 = 0xd4a04850 ^ 0xb3e4357c = 0x67947d2c
 
 // step 11 (clear bits)
-left_2 = 0x8e9a91f0
+left_2 = 0x67947d20
 
 // step 12
-cid = first_octet || left_2 || right_2 = 0x078e9a91f4949762
+cid = first_octet || left_2 || right_2 = 0x0767947d29be054a
 ~~~
 
 ## Load Balancer Actions
@@ -1379,13 +1378,13 @@ length, requiring a fourth decryption pass.
 
 ~~~pseudocode
 cr_bits sid nonce cid
-0 ed793a ee080dbf 074126ee38bf5454
+0 ed793a ee080dbf 0720b1d07b359d3c
 1 ed793a51d49b8f5fab65 ee080dbf48
-                         2fcd3f572d4eefb046fdb51d164efccc
+                         2fcc381bc74cb4fbad2823a3d1f8fed2
 2 ed793a51d49b8f5f ee080dbf48c0d1e5
                          504dd2d05a7b0de9b2b9907afb5ecf8cc3
 3 ed793a51d49b8f5fab ee080dbf48c0d1e55d
-                         72124d1eb8fbb21e4a490ca53cfe21d04ae63a
+			 125779c9cc86beb3a3a4a3ca96fce4bfe0cdbc
 ~~~
 
 # Interoperability with DTLS over UDP
@@ -1478,6 +1477,10 @@ Victor Vasiliev, and William Zeng Ke all provided useful input to this document.
 
 > **RFC Editor's Note:**  Please remove this section prior to
 > publication of a final version of this document.
+
+## since draft-ietf-quic-load-balancers-18
+
+- Rearranged the output of the expand function to reduce CPU load of decrypt
 
 ## since draft-ietf-quic-load-balancers-17
 
