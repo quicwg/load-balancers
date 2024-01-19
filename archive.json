@@ -1,6 +1,6 @@
 {
   "magic": "E!vIA5L86J2I",
-  "timestamp": "2023-09-28T20:30:06.384575+00:00",
+  "timestamp": "2024-01-19T18:03:36.774430+00:00",
   "repo": "quicwg/load-balancers",
   "labels": [
     {
@@ -491,7 +491,7 @@
         },
         {
           "author": "huitema",
-          "authorAssociation": "NONE",
+          "authorAssociation": "CONTRIBUTOR",
           "body": "In V1, we do assume that the addresses and ports will remain constant during the handshake. That means we can hash or route long header messages with the \"non-compliant DCID\" based on the combination of addresses, ports, SCID and DCID. This has an interesting robustness property: Initial packets sent by different parties will be routed to different contexts, even if the SCID and DCIDs collide -- either by mistake or intentionally. We may think of relaxing the rule in a future version and allow addresses to change during handshake, but I would not like losing the current robustness.",
           "createdAt": "2020-05-08T01:38:58Z",
           "updatedAt": "2020-05-08T01:39:43Z"
@@ -621,7 +621,7 @@
       "url": "https://github.com/quicwg/load-balancers/issues/34",
       "state": "CLOSED",
       "author": "huitema",
-      "authorAssociation": "NONE",
+      "authorAssociation": "CONTRIBUTOR",
       "assignees": [],
       "labels": [],
       "body": "Since draft 28, the retry mechanism includes a requirement that the client DCID in the retried connection matches the server SCID in the retry packet. I do not see a discussion of mechanisms to verify the retried DCID in section 5 of the draft.",
@@ -638,7 +638,7 @@
         },
         {
           "author": "huitema",
-          "authorAssociation": "NONE",
+          "authorAssociation": "CONTRIBUTOR",
           "body": "Yes of course, this is addressed in the editor's draft. Let's close this issue.",
           "createdAt": "2020-07-03T01:09:27Z",
           "updatedAt": "2020-07-03T01:09:27Z"
@@ -785,8 +785,8 @@
       "title": "A little confused about configuration agent",
       "url": "https://github.com/quicwg/load-balancers/issues/46",
       "state": "CLOSED",
-      "author": "william-zk",
-      "authorAssociation": "NONE",
+      "author": "Neo-ZK",
+      "authorAssociation": "CONTRIBUTOR",
       "assignees": [],
       "labels": [
         "editorial"
@@ -804,8 +804,8 @@
           "updatedAt": "2020-07-29T20:14:56Z"
         },
         {
-          "author": "william-zk",
-          "authorAssociation": "NONE",
+          "author": "Neo-ZK",
+          "authorAssociation": "CONTRIBUTOR",
           "body": "Um...I got it. My question comes from that we want to do an implementation about quic-lb, and contribute it to the nginx community, but for nginx, there are not any uniform centralized component to generate and distribute server ID, so we are confused with that if we should do a 'configuration agent' implementation. From your answer, we think that we can just open source quic-lb route ability, and provide a uniform server id usage api. ",
           "createdAt": "2020-07-30T02:54:04Z",
           "updatedAt": "2020-07-30T02:54:04Z"
@@ -818,8 +818,8 @@
           "updatedAt": "2020-07-30T03:14:53Z"
         },
         {
-          "author": "william-zk",
-          "authorAssociation": "NONE",
+          "author": "Neo-ZK",
+          "authorAssociation": "CONTRIBUTOR",
           "body": "> I would suspect that open source QUIC servers would have a check box that says \"accept QUIC-LB configuration\" or something and then it would open a REST interface or whatever to accept it. I would love to hear from cloud providers to understand what config frameworks there are, but I suspect we're going to write something down in a draft somewhere.\r\n\r\nAh,  maybe a brief introduction can be write into `1.1.  Terminology`\r\n\r\n\r\n",
           "createdAt": "2020-07-30T03:29:05Z",
           "updatedAt": "2020-07-30T03:29:05Z"
@@ -832,8 +832,8 @@
           "updatedAt": "2020-08-13T19:48:52Z"
         },
         {
-          "author": "william-zk",
-          "authorAssociation": "NONE",
+          "author": "Neo-ZK",
+          "authorAssociation": "CONTRIBUTOR",
           "body": "> so this is already there:\r\n> Sec 1:\r\n> While this document describes a small set of configuration parameters to make\r\n> the server mapping intelligible, the means of distributing these parameters\r\n> between load balancers, servers, and other trusted intermediaries is out of its\r\n> scope. There are numerous well-known infrastructures for distribution of\r\n> configuration.\r\n> \r\n> Sec 1.1\r\n> A \"configuration agent\" is\r\n> the entity that determines the QUIC-LB configuration parameters for the network\r\n> and leverages some system to distribute that configuration.\r\n> \r\n> Is this what you're looking for?\r\n\r\nOK, thanks for answering, I'd close this issue soon",
           "createdAt": "2020-08-14T02:10:00Z",
           "updatedAt": "2020-08-14T02:10:00Z"
@@ -864,7 +864,7 @@
         },
         {
           "author": "ianswett",
-          "authorAssociation": "NONE",
+          "authorAssociation": "CONTRIBUTOR",
           "body": "Removing this seems fine to me.",
           "createdAt": "2020-07-29T19:16:23Z",
           "updatedAt": "2020-07-29T19:16:23Z"
@@ -971,8 +971,8 @@
       "title": "Any suggestion about transmit client ip from quic-lb to quic-server?",
       "url": "https://github.com/quicwg/load-balancers/issues/51",
       "state": "CLOSED",
-      "author": "william-zk",
-      "authorAssociation": "NONE",
+      "author": "Neo-ZK",
+      "authorAssociation": "CONTRIBUTOR",
       "assignees": [],
       "labels": [],
       "body": "Dear author:\r\n    As you know, in many production scenarios, quic-server need to know the real ip/port of client. But when there is a quic-lb in the middle(a fullnat quic-lb), there are not any standard way to implement this function. Actually this function is not difficult to implement, will quic-lb-draft suggest or define a standard way for this function later?",
@@ -988,15 +988,15 @@
           "updatedAt": "2020-08-28T17:59:35Z"
         },
         {
-          "author": "william-zk",
-          "authorAssociation": "NONE",
+          "author": "Neo-ZK",
+          "authorAssociation": "CONTRIBUTOR",
           "body": "Ah, I got it",
           "createdAt": "2020-08-31T11:38:02Z",
           "updatedAt": "2020-08-31T11:38:02Z"
         },
         {
-          "author": "william-zk",
-          "authorAssociation": "NONE",
+          "author": "Neo-ZK",
+          "authorAssociation": "CONTRIBUTOR",
           "body": "Um...I reconsider the situation, can UDP-PROXY-protocol cover all UDP-based transport protocol? Consider this, for QUIC, we may send client ip to quic-server when receive initial packet. For RTP, we may send client ip to real-server when receive first packet...\r\nThere are so much UDP-based protocol, can all situation be covered in one draft?",
           "createdAt": "2020-09-02T14:41:20Z",
           "updatedAt": "2020-09-02T14:41:20Z"
@@ -1009,8 +1009,8 @@
           "updatedAt": "2020-09-02T16:08:24Z"
         },
         {
-          "author": "william-zk",
-          "authorAssociation": "NONE",
+          "author": "Neo-ZK",
+          "authorAssociation": "CONTRIBUTOR",
           "body": "\ud83d\udc4c Looking forward to your draft, by the way, could you please tell me when will you start writing this draft?",
           "createdAt": "2020-09-04T02:35:00Z",
           "updatedAt": "2020-09-04T02:35:00Z"
@@ -1023,15 +1023,15 @@
           "updatedAt": "2020-09-04T03:16:02Z"
         },
         {
-          "author": "william-zk",
-          "authorAssociation": "NONE",
+          "author": "Neo-ZK",
+          "authorAssociation": "CONTRIBUTOR",
           "body": "> I'm not sure I volunteered to write it!\r\n\r\nAh, if you have any interests to do this, I would like to do some contribution about it",
           "createdAt": "2020-09-04T03:21:02Z",
           "updatedAt": "2020-09-04T03:21:02Z"
         },
         {
-          "author": "william-zk",
-          "authorAssociation": "NONE",
+          "author": "Neo-ZK",
+          "authorAssociation": "CONTRIBUTOR",
           "body": "Furthermore, I think it's a very important function for production environment",
           "createdAt": "2020-09-04T03:22:44Z",
           "updatedAt": "2020-09-04T03:22:44Z"
@@ -1065,8 +1065,8 @@
       "title": "Keepalive design discussion",
       "url": "https://github.com/quicwg/load-balancers/issues/53",
       "state": "CLOSED",
-      "author": "william-zk",
-      "authorAssociation": "NONE",
+      "author": "Neo-ZK",
+      "authorAssociation": "CONTRIBUTOR",
       "assignees": [],
       "labels": [],
       "body": "Hi author:\r\n    Will quic-lb design Keepalive mechanism next? Surely it's a very important mechanism in load balancer.",
@@ -1089,8 +1089,8 @@
           "updatedAt": "2020-11-03T19:15:49Z"
         },
         {
-          "author": "william-zk",
-          "authorAssociation": "NONE",
+          "author": "Neo-ZK",
+          "authorAssociation": "CONTRIBUTOR",
           "body": "Thanks for answering",
           "createdAt": "2020-11-04T02:16:47Z",
           "updatedAt": "2020-11-04T02:16:47Z"
@@ -1194,8 +1194,8 @@
           "updatedAt": "2020-11-18T00:53:09Z"
         },
         {
-          "author": "william-zk",
-          "authorAssociation": "NONE",
+          "author": "Neo-ZK",
+          "authorAssociation": "CONTRIBUTOR",
           "body": "Maybe encrypt sni will be the real standard later(see https://tools.ietf.org/html/draft-ietf-tls-esni-08), I just think that there is no need for quic lb considering sni",
           "createdAt": "2020-12-11T03:08:42Z",
           "updatedAt": "2020-12-11T03:09:30Z"
@@ -1529,7 +1529,7 @@
       "url": "https://github.com/quicwg/load-balancers/issues/81",
       "state": "CLOSED",
       "author": "dtikhonov",
-      "authorAssociation": "CONTRIBUTOR",
+      "authorAssociation": "MEMBER",
       "assignees": [],
       "labels": [],
       "body": "This part is unclear to me:\r\n\r\n> A server SHOULD have a mechanism to stop using some server IDs if the list gets large relative to its share of the codepoint space, so that these allocations time out and are freed for reuse by servers that have recently joined the pool.\r\n\r\nIt is not obvious why these server IDs would be used by new server instances.",
@@ -1546,7 +1546,7 @@
         },
         {
           "author": "dtikhonov",
-          "authorAssociation": "CONTRIBUTOR",
+          "authorAssociation": "MEMBER",
           "body": "I see!  Thank you for the explanation.",
           "createdAt": "2021-01-13T14:27:44Z",
           "updatedAt": "2021-01-13T14:27:44Z"
@@ -1921,8 +1921,8 @@
       "title": "Confused about `AEAD Checksum` in retry token",
       "url": "https://github.com/quicwg/load-balancers/issues/108",
       "state": "CLOSED",
-      "author": "william-zk",
-      "authorAssociation": "NONE",
+      "author": "Neo-ZK",
+      "authorAssociation": "CONTRIBUTOR",
       "assignees": [],
       "labels": [
         "editorial"
@@ -1940,8 +1940,8 @@
           "updatedAt": "2021-04-02T21:55:41Z"
         },
         {
-          "author": "william-zk",
-          "authorAssociation": "NONE",
+          "author": "Neo-ZK",
+          "authorAssociation": "CONTRIBUTOR",
           "body": "> 2\\. Like for QUIC packets themselves, there is an authentication tag that AES-GCM generates and we append it to the token. I am not a crypto expert, but I believe this is how the decoder detects if the AAD was changed or there's a problem with the ciphertext.\r\n\r\nYou means that `checksum ` is something just like `Retry Integrity Tag` in `Retry packet`? If so, I think it's a redundant design,  the design of `Retry packet` can ensure that the data can not be tampered with. Moreover, if we must need this, maybe we should have an alternative name of `checksum`, and give a more detail description of it ",
           "createdAt": "2021-04-06T03:41:23Z",
           "updatedAt": "2021-04-06T03:41:23Z"
@@ -1954,7 +1954,7 @@
       "title": "Consider an alternative name of `AEAD checksum`",
       "url": "https://github.com/quicwg/load-balancers/issues/111",
       "state": "CLOSED",
-      "author": "william-zk",
+      "author": "Neo-ZK",
       "authorAssociation": "CONTRIBUTOR",
       "assignees": [],
       "labels": [],
@@ -1970,7 +1970,7 @@
       "title": "Consider giving more information about `AEAD IV`",
       "url": "https://github.com/quicwg/load-balancers/issues/113",
       "state": "CLOSED",
-      "author": "william-zk",
+      "author": "Neo-ZK",
       "authorAssociation": "CONTRIBUTOR",
       "assignees": [],
       "labels": [
@@ -1982,14 +1982,14 @@
       "closedAt": "2021-07-09T19:45:31Z",
       "comments": [
         {
-          "author": "william-zk",
+          "author": "Neo-ZK",
           "authorAssociation": "CONTRIBUTOR",
           "body": "Additional, it's no need to make the length of `AEAD IV`(current draft define)  variable, just 96 bit is sufficient. Current aes-128-gcm related cipher suites all use this value",
           "createdAt": "2021-04-16T08:02:26Z",
           "updatedAt": "2021-04-16T08:02:26Z"
         },
         {
-          "author": "william-zk",
+          "author": "Neo-ZK",
           "authorAssociation": "CONTRIBUTOR",
           "body": "We can also add some illustration of `Key Sequence`, draft use `identifier` in other place",
           "createdAt": "2021-04-16T09:36:22Z",
@@ -2003,7 +2003,7 @@
       "title": "Consider giving a test vector of shared-state-retry-token?",
       "url": "https://github.com/quicwg/load-balancers/issues/114",
       "state": "CLOSED",
-      "author": "william-zk",
+      "author": "Neo-ZK",
       "authorAssociation": "CONTRIBUTOR",
       "assignees": [],
       "labels": [],
@@ -2276,7 +2276,7 @@
       "url": "https://github.com/quicwg/load-balancers/issues/126",
       "state": "CLOSED",
       "author": "nqv",
-      "authorAssociation": "NONE",
+      "authorAssociation": "CONTRIBUTOR",
       "assignees": [],
       "labels": [],
       "body": "At the moment, the token body of those are a bit different:\r\n```\r\nNon-Shared-State Retry Service Token {\r\n  Token Type (1) = 0,\r\n  ODCIL (7) = 8..20,\r\n  RSCIL (8) = 0..20,\r\n  Original Destination Connection ID (64..160),\r\n  Retry Source Connection ID (0..160),\r\n  Opaque Data (..),\r\n}\r\n\r\nShared-State Retry Service Token Body {\r\n   ODCIL (8) = 0..20,\r\n   RSCIL (8) = 0..20,\r\n   [Port (16)],\r\n   Original Destination Connection ID (0..160),\r\n   Retry Source Connection ID (0..160),\r\n   Timestamp (64),\r\n   Opaque Data (..),\r\n}\r\n```\r\nI wonder if we can unify them into one, something like\r\n```\r\nToken Body {\r\n   Token Type (1) = 0,\r\n   ODCIL (7) = 8..20,\r\n   RSCIL (8) = 0..20,\r\n   Original Destination Connection ID (0..160),\r\n   Retry Source Connection ID (0..160),\r\n   Timestamp (64),\r\n   Opaque Data (..),\r\n}\r\n```\r\nI think timestamp should be included for both and Port can be included in Opaque Data if needed?",
@@ -2300,7 +2300,7 @@
       "url": "https://github.com/quicwg/load-balancers/issues/127",
       "state": "CLOSED",
       "author": "nqv",
-      "authorAssociation": "NONE",
+      "authorAssociation": "CONTRIBUTOR",
       "assignees": [],
       "labels": [],
       "body": "> The AEAD nonce, N, is formed by combining the AEAD IV with the 96 bit unique token number. The 96 bits of the unique token number are left-padded with zeros to the size of the IV. The exclusive OR of the padded unique token number and the AEAD IV forms the AEAD nonce.\r\n\r\nWhy do we need to XOR IV to build nonce? I'd thought a nonce ideally would be used only once and having XOR operator here reduce the confidence? I haven't found where suggesting that using IV to build nonce so including a reference here would be great. ",
@@ -2317,7 +2317,7 @@
         },
         {
           "author": "nqv",
-          "authorAssociation": "NONE",
+          "authorAssociation": "CONTRIBUTOR",
           "body": "But isn't the IV already used for decrypting/authenticating with AEAD? My question is why is it different to AEAD in QUIC packets which nonce is purely packet number?",
           "createdAt": "2021-07-27T02:33:18Z",
           "updatedAt": "2021-07-27T02:33:18Z"
@@ -2331,7 +2331,7 @@
         },
         {
           "author": "nqv",
-          "authorAssociation": "NONE",
+          "authorAssociation": "CONTRIBUTOR",
           "body": "Thank you.",
           "createdAt": "2021-07-30T01:03:23Z",
           "updatedAt": "2021-07-30T01:03:23Z"
@@ -2344,8 +2344,8 @@
       "title": "Shorten nonce length for SCID",
       "url": "https://github.com/quicwg/load-balancers/issues/129",
       "state": "CLOSED",
-      "author": "mdukef5",
-      "authorAssociation": "CONTRIBUTOR",
+      "author": null,
+      "authorAssociation": "NONE",
       "assignees": [],
       "labels": [],
       "body": "Way back in #33 , @huitema said that his three-pass algorithm meant that\r\n\r\n> ...it should also be possible to make the nonce bit shorter than the original spec, because we are no more relying on the randomness of the nonce value. Each server could set the nonce to some kind of sequence number, incremented at each CID allocation. The size of the number should be enough to cover all allocations during a CID encryption key epoch, instead of twice that to cover the birthday paradox if using random allocations.\r\n\r\nBut we never really did that: the nonce is in the range 8..16 octets, which is inherited from the original single-pass algorithm.\r\n\r\n@ianswett asked if we could shorten the minimum nonce to 32 bits to reduce overall CID length; if it were, we could support 2^24 servers with an 8-byte CID!\r\n\r\nThis is compelling and we should definitely shorten the nonce to some value. But 32 bits means you need to roll over the keys for every 4 billion CIDs a server issues; given that some QUIC implementations are quite profligate issuing CIDs, is that enough?\r\n\r\nEven another byte would get us to a trillion CIDs while supporting up to 2^16 servers in 8 octets. On the other hand, the config agent can always pick a longer nonce length if the key lifetime is too short. This is how much we want to allow people to do something potentially dumb, so it's a good spot for discussion.",
@@ -2618,7 +2618,7 @@
           "updatedAt": "2021-10-12T01:52:53Z"
         },
         {
-          "author": "william-zk",
+          "author": "Neo-ZK",
           "authorAssociation": "CONTRIBUTOR",
           "body": "> I strongly suspect that real LBs will keep some per-4tuple state, as they do today; if so, this crypto operation only needs to occur once per packet where the 4-tuple is new\r\n\r\nIt's unfortunately that routing by `per-4tuple state` will meet some problems, image this scenario: \r\n```\r\n1. client A setup a connection with quic-server through quic-lb, and a `4tuple state` was set up in quic-lb\r\n2. client A close connection, and `4tuple state` in quic-lb won't be remove immediately\r\n3. A connection migrate happens in client B, and client B use the same ip/port as clientA\r\n4. If quic-lb route packets of client B through `4tuple state`, then connection migration of client B would failed \r\n```\r\n\r\nThe right way SHOULD be that quic-lb route all packets through CID, then the cpu cost can't be avoid, but I still\r\napprove the usage of stream cipher, from a safety point of view.",
           "createdAt": "2021-10-28T08:23:05Z",
@@ -2691,7 +2691,7 @@
       "title": "Mismatch the test vector of stream cipher",
       "url": "https://github.com/quicwg/load-balancers/issues/143",
       "state": "CLOSED",
-      "author": "william-zk",
+      "author": "Neo-ZK",
       "authorAssociation": "CONTRIBUTOR",
       "assignees": [],
       "labels": [],
@@ -2701,14 +2701,14 @@
       "closedAt": "2022-02-10T18:39:14Z",
       "comments": [
         {
-          "author": "william-zk",
+          "author": "Neo-ZK",
           "authorAssociation": "CONTRIBUTOR",
           "body": "To avoid encryption library problem, I have tried c implementation with OpenSSL and python implementation with inner crypto library, all get the same result",
           "createdAt": "2021-10-27T07:51:18Z",
           "updatedAt": "2021-10-27T07:51:18Z"
         },
         {
-          "author": "william-zk",
+          "author": "Neo-ZK",
           "authorAssociation": "CONTRIBUTOR",
           "body": "Actually, I strongly suggest that we should not use zero-padding, but use #PKCS7(see RFC2315) instead, for reasons below:\r\n1. Zero-padding has never been a standard way in crypto, only some test case will use this way.\r\n2. For some common crypto libraries(such as OpenSSL), #PKCS7 is the default padding mode of AES encryption, implementers have to explicitly disable the internal padding mechanism, and do zero-padding by themselves, which may bring puzzles to implementers",
           "createdAt": "2021-10-27T08:02:34Z",
@@ -2729,7 +2729,7 @@
           "updatedAt": "2021-10-28T22:08:41Z"
         },
         {
-          "author": "william-zk",
+          "author": "Neo-ZK",
           "authorAssociation": "CONTRIBUTOR",
           "body": "Ah, I got it, pr is coming, moreover, I'd like to also give another pr about the test vector of stream cipher",
           "createdAt": "2021-10-29T02:23:58Z",
@@ -2743,14 +2743,14 @@
           "updatedAt": "2021-10-29T02:29:42Z"
         },
         {
-          "author": "william-zk",
+          "author": "Neo-ZK",
           "authorAssociation": "CONTRIBUTOR",
           "body": "> Don't bother with test vectors; the Stream Cipher design is not locked right now\r\n\r\nOK",
           "createdAt": "2021-10-29T02:30:59Z",
           "updatedAt": "2021-10-29T02:30:59Z"
         },
         {
-          "author": "william-zk",
+          "author": "Neo-ZK",
           "authorAssociation": "CONTRIBUTOR",
           "body": "I have just make a pr, which almost renew the introduction of stream cipher, please have a look ;-)",
           "createdAt": "2021-10-29T09:59:07Z",
@@ -2788,14 +2788,14 @@
           "updatedAt": "2021-12-07T23:50:44Z"
         },
         {
-          "author": "william-zk",
+          "author": "Neo-ZK",
           "authorAssociation": "CONTRIBUTOR",
           "body": "> (1) If the Initial CID is routable, they can't just take that as good; they have to assume that it was random and inspect the SNI to make a decision. Section 4.1 doesn't allow this, and it should.\r\n\r\nMaybe specify a unique quic transport param is a better choice?  For a web service, all requests just have same SNI,  help nothing for distinguishing the Initial CID\r\n\r\n",
           "createdAt": "2021-12-08T07:08:14Z",
           "updatedAt": "2021-12-08T07:08:14Z"
         },
         {
-          "author": "william-zk",
+          "author": "Neo-ZK",
           "authorAssociation": "CONTRIBUTOR",
           "body": "Further more, there is a draft about encrypted client hello(https://datatracker.ietf.org/doc/html/draft-ietf-tls-esni-13)\uff0cif it becomes RFC, maybe LB cannot get information about clientHello or there must be some ways to synchronize the server private-key to LB",
           "createdAt": "2021-12-08T07:11:01Z",
@@ -2816,7 +2816,7 @@
           "updatedAt": "2021-12-08T16:26:02Z"
         },
         {
-          "author": "william-zk",
+          "author": "Neo-ZK",
           "authorAssociation": "CONTRIBUTOR",
           "body": "> I'm not sure what you're proposing here. My hope is not introduce a regression relative to current capabilities, but it sounds like you're talking about an L7 load balancer that's doing deep packet inspection. If so, that's out of scope for this document.\r\n\r\nOK, I got it",
           "createdAt": "2021-12-09T02:21:51Z",
@@ -3625,6 +3625,38 @@
           "updatedAt": "2023-07-25T18:12:48Z"
         }
       ]
+    },
+    {
+      "number": 221,
+      "id": "I_kwDODoD6yc55tGah",
+      "title": "Version 17 on datatracker.ietf.org seems old",
+      "url": "https://github.com/quicwg/load-balancers/issues/221",
+      "state": "CLOSED",
+      "author": "nemethf",
+      "authorAssociation": "NONE",
+      "assignees": [],
+      "labels": [],
+      "body": "Looking at https://datatracker.ietf.org/doc/html/draft-ietf-quic-load-balancers it seems the current version (draft-ietf-quic-load-balancers-17) is old.  I.e., the [Change Log](https://datatracker.ietf.org/doc/html/draft-ietf-quic-load-balancers#name-change-log) of  [Appendix E. ](https://datatracker.ietf.org/doc/html/draft-ietf-quic-load-balancers#appendix-E)  lists changes only from  v13, whereas v16 lists changes compared to v15 and v14 as well.   V17 does not contain the ascii figure either.  \r\n\r\nThanks",
+      "createdAt": "2023-12-14T14:51:58Z",
+      "updatedAt": "2024-01-19T18:02:08Z",
+      "closedAt": "2024-01-19T18:02:08Z",
+      "comments": []
+    },
+    {
+      "number": 222,
+      "id": "I_kwDODoD6yc57tLjv",
+      "title": "Tweak the expand() function again to reduce copying",
+      "url": "https://github.com/quicwg/load-balancers/issues/222",
+      "state": "OPEN",
+      "author": "martinduke",
+      "authorAssociation": "CONTRIBUTOR",
+      "assignees": [],
+      "labels": [],
+      "body": "I've discovered that the copying involved in the 4-pass algorithm may be a non-negligible part of the total decrypt time.\r\n\r\nWe can eliminate some of the copying in 4 pass by putting the length and index fields at the end of the output of expand, e.g.\r\n\r\nOLD\r\nexpand(0x484848, 7, 1) = (0x07, 0x01, 0x48, 0x48, 0x48, ....)\r\nNEW\r\nexpand(0x484848, 7, 1) = (0x48, 0x48, 0x48, .... 0x07, 0x01)\r\n\r\nin the likely case where server_id_len < nonce_len, this means that the decoder can just pass server_id_len bytes of left_1 to the caller, rather then copying it into a new buffer.",
+      "createdAt": "2024-01-11T00:11:30Z",
+      "updatedAt": "2024-01-11T00:11:30Z",
+      "closedAt": null,
+      "comments": []
     }
   ],
   "pulls": [
@@ -3641,9 +3673,18 @@
       "body": "This fixes an issue from the private repo:\r\nhttps://github.com/martinduke/draft-duke-quic-load-balancers/issues/63\r\n",
       "createdAt": "2020-02-26T22:11:23Z",
       "updatedAt": "2020-02-28T20:30:42Z",
+      "baseRepository": "quicwg/load-balancers",
+      "baseRefName": "master",
+      "baseRefOid": "568bfa12852a731f9c757ec6878f52e2c8319774",
+      "headRepository": "quicwg/load-balancers",
+      "headRefName": "mduke-cleanup-config-method",
+      "headRefOid": "c4292b9a5a13b4474678860eb24c30bc7c6b0bea",
       "closedAt": "2020-02-28T20:30:41Z",
       "mergedAt": "2020-02-28T20:30:41Z",
       "mergedBy": "martinduke",
+      "mergeCommit": {
+        "oid": "ee1de5bcac2628e6bef279e0cfff5475f6d6a39f"
+      },
       "comments": [],
       "reviews": [
         {
@@ -3659,16 +3700,7 @@
           "updatedAt": "2020-02-27T02:52:35Z",
           "comments": []
         }
-      ],
-      "baseRepository": "quicwg/load-balancers",
-      "baseRefName": "master",
-      "baseRefOid": "568bfa12852a731f9c757ec6878f52e2c8319774",
-      "headRepository": "quicwg/load-balancers",
-      "headRefName": "mduke-cleanup-config-method",
-      "headRefOid": "c4292b9a5a13b4474678860eb24c30bc7c6b0bea",
-      "mergeCommit": {
-        "oid": "ee1de5bcac2628e6bef279e0cfff5475f6d6a39f"
-      }
+      ]
     },
     {
       "number": 2,
@@ -3683,9 +3715,18 @@
       "body": "Fixes https://github.com/martinduke/draft-duke-quic-load-balancers/issues/60",
       "createdAt": "2020-02-27T01:49:16Z",
       "updatedAt": "2020-03-02T16:01:06Z",
+      "baseRepository": "quicwg/load-balancers",
+      "baseRefName": "master",
+      "baseRefOid": "568bfa12852a731f9c757ec6878f52e2c8319774",
+      "headRepository": "quicwg/load-balancers",
+      "headRefName": "mduke-new-retry-format",
+      "headRefOid": "7a5babfd370bba3bb55be009e9a1384cd4293ea6",
       "closedAt": "2020-03-02T16:01:05Z",
       "mergedAt": "2020-03-02T16:01:04Z",
       "mergedBy": "martinduke",
+      "mergeCommit": {
+        "oid": "589d0a45e47f1bc49a67742e6ead64f3fd58d2bf"
+      },
       "comments": [],
       "reviews": [
         {
@@ -3767,16 +3808,7 @@
           "updatedAt": "2020-03-02T04:39:49Z",
           "comments": []
         }
-      ],
-      "baseRepository": "quicwg/load-balancers",
-      "baseRefName": "master",
-      "baseRefOid": "568bfa12852a731f9c757ec6878f52e2c8319774",
-      "headRepository": "quicwg/load-balancers",
-      "headRefName": "mduke-new-retry-format",
-      "headRefOid": "7a5babfd370bba3bb55be009e9a1384cd4293ea6",
-      "mergeCommit": {
-        "oid": "589d0a45e47f1bc49a67742e6ead64f3fd58d2bf"
-      }
+      ]
     },
     {
       "number": 3,
@@ -3791,9 +3823,18 @@
       "body": "resolves https://github.com/martinduke/draft-duke-quic-load-balancers/issues/61\r\n\r\n(also added the changelog for this draft version)",
       "createdAt": "2020-02-27T02:22:25Z",
       "updatedAt": "2020-02-28T23:03:13Z",
+      "baseRepository": "quicwg/load-balancers",
+      "baseRefName": "master",
+      "baseRefOid": "568bfa12852a731f9c757ec6878f52e2c8319774",
+      "headRepository": "quicwg/load-balancers",
+      "headRefName": "mduke-multi-tier",
+      "headRefOid": "ff56b1cc73c8db1cb98d4007e0adf6bf75e20a52",
       "closedAt": "2020-02-28T23:03:12Z",
       "mergedAt": "2020-02-28T23:03:12Z",
       "mergedBy": "martinduke",
+      "mergeCommit": {
+        "oid": "bc77d7d6891cc91c53a76b102dab739cf62cd5f1"
+      },
       "comments": [],
       "reviews": [
         {
@@ -3809,16 +3850,7 @@
           "updatedAt": "2020-02-27T02:57:14Z",
           "comments": []
         }
-      ],
-      "baseRepository": "quicwg/load-balancers",
-      "baseRefName": "master",
-      "baseRefOid": "568bfa12852a731f9c757ec6878f52e2c8319774",
-      "headRepository": "quicwg/load-balancers",
-      "headRefName": "mduke-multi-tier",
-      "headRefOid": "ff56b1cc73c8db1cb98d4007e0adf6bf75e20a52",
-      "mergeCommit": {
-        "oid": "bc77d7d6891cc91c53a76b102dab739cf62cd5f1"
-      }
+      ]
     },
     {
       "number": 4,
@@ -3833,9 +3865,16 @@
       "body": "",
       "createdAt": "2020-02-27T02:59:28Z",
       "updatedAt": "2020-03-02T04:40:06Z",
+      "baseRepository": "quicwg/load-balancers",
+      "baseRefName": "master",
+      "baseRefOid": "568bfa12852a731f9c757ec6878f52e2c8319774",
+      "headRepository": "quicwg/load-balancers",
+      "headRefName": "nibanks/update-readme",
+      "headRefOid": "1ebc02923d300893d672b4bed87835f2fd37ea53",
       "closedAt": "2020-03-01T16:49:00Z",
       "mergedAt": null,
       "mergedBy": null,
+      "mergeCommit": null,
       "comments": [
         {
           "author": "martinduke",
@@ -3845,14 +3884,7 @@
           "updatedAt": "2020-02-28T23:46:08Z"
         }
       ],
-      "reviews": [],
-      "baseRepository": "quicwg/load-balancers",
-      "baseRefName": "master",
-      "baseRefOid": "568bfa12852a731f9c757ec6878f52e2c8319774",
-      "headRepository": "quicwg/load-balancers",
-      "headRefName": "nibanks/update-readme",
-      "headRefOid": "1ebc02923d300893d672b4bed87835f2fd37ea53",
-      "mergeCommit": null
+      "reviews": []
     },
     {
       "number": 5,
@@ -3867,9 +3899,18 @@
       "body": "",
       "createdAt": "2020-02-28T23:43:59Z",
       "updatedAt": "2020-03-01T16:48:35Z",
+      "baseRepository": "quicwg/load-balancers",
+      "baseRefName": "master",
+      "baseRefOid": "bc77d7d6891cc91c53a76b102dab739cf62cd5f1",
+      "headRepository": "quicwg/load-balancers",
+      "headRefName": "mduke-fix-readme",
+      "headRefOid": "1a3b46205dc5bb05d9d9a3deb71cbb758b51e295",
       "closedAt": "2020-03-01T16:48:34Z",
       "mergedAt": "2020-03-01T16:48:34Z",
       "mergedBy": "martinduke",
+      "mergeCommit": {
+        "oid": "37d829da4b7f99bfabe89c75432016065af9abda"
+      },
       "comments": [],
       "reviews": [
         {
@@ -3885,16 +3926,7 @@
           "updatedAt": "2020-02-29T00:20:33Z",
           "comments": []
         }
-      ],
-      "baseRepository": "quicwg/load-balancers",
-      "baseRefName": "master",
-      "baseRefOid": "bc77d7d6891cc91c53a76b102dab739cf62cd5f1",
-      "headRepository": "quicwg/load-balancers",
-      "headRefName": "mduke-fix-readme",
-      "headRefOid": "1a3b46205dc5bb05d9d9a3deb71cbb758b51e295",
-      "mergeCommit": {
-        "oid": "37d829da4b7f99bfabe89c75432016065af9abda"
-      }
+      ]
     },
     {
       "number": 11,
@@ -3909,9 +3941,18 @@
       "body": "I copied over the circle .yaml file from base-drafts, then commented out the \"push to datatracker\" bit because I'm afraid I'll do it by accident, and am happy to do that part manually.",
       "createdAt": "2020-03-02T20:40:11Z",
       "updatedAt": "2020-03-03T00:46:48Z",
+      "baseRepository": "quicwg/load-balancers",
+      "baseRefName": "master",
+      "baseRefOid": "589d0a45e47f1bc49a67742e6ead64f3fd58d2bf",
+      "headRepository": "quicwg/load-balancers",
+      "headRefName": "fix-circle-config",
+      "headRefOid": "51766b0ac942c74206310bebbc57d67ad6f93a41",
       "closedAt": "2020-03-03T00:46:47Z",
       "mergedAt": "2020-03-03T00:46:47Z",
       "mergedBy": "martinduke",
+      "mergeCommit": {
+        "oid": "20f2e030b00b6be05b416135e52e38afe18fae36"
+      },
       "comments": [],
       "reviews": [
         {
@@ -3934,16 +3975,7 @@
             }
           ]
         }
-      ],
-      "baseRepository": "quicwg/load-balancers",
-      "baseRefName": "master",
-      "baseRefOid": "589d0a45e47f1bc49a67742e6ead64f3fd58d2bf",
-      "headRepository": "quicwg/load-balancers",
-      "headRefName": "fix-circle-config",
-      "headRefOid": "51766b0ac942c74206310bebbc57d67ad6f93a41",
-      "mergeCommit": {
-        "oid": "20f2e030b00b6be05b416135e52e38afe18fae36"
-      }
+      ]
     },
     {
       "number": 13,
@@ -3958,9 +3990,18 @@
       "body": "I wrote some code to generate these CIDs and then extract the SID back. It's self-consistent, at least.",
       "createdAt": "2020-03-06T06:28:38Z",
       "updatedAt": "2020-03-09T14:58:49Z",
+      "baseRepository": "quicwg/load-balancers",
+      "baseRefName": "master",
+      "baseRefOid": "42ad253c3f510a555b1c8d9b71342748c78dee8b",
+      "headRepository": "quicwg/load-balancers",
+      "headRefName": "test-vectors",
+      "headRefOid": "302b1ae86f97faa3227832676ac524ebf243fe34",
       "closedAt": "2020-03-09T14:58:48Z",
       "mergedAt": "2020-03-09T14:58:48Z",
       "mergedBy": "martinduke",
+      "mergeCommit": {
+        "oid": "359dcc9d819c90277123262b33a9ab2a117829c9"
+      },
       "comments": [
         {
           "author": "martinduke",
@@ -3977,16 +4018,7 @@
           "updatedAt": "2020-03-06T06:31:08Z"
         }
       ],
-      "reviews": [],
-      "baseRepository": "quicwg/load-balancers",
-      "baseRefName": "master",
-      "baseRefOid": "42ad253c3f510a555b1c8d9b71342748c78dee8b",
-      "headRepository": "quicwg/load-balancers",
-      "headRefName": "test-vectors",
-      "headRefOid": "302b1ae86f97faa3227832676ac524ebf243fe34",
-      "mergeCommit": {
-        "oid": "359dcc9d819c90277123262b33a9ab2a117829c9"
-      }
+      "reviews": []
     },
     {
       "number": 14,
@@ -4001,9 +4033,18 @@
       "body": "Intended to resolve #10.",
       "createdAt": "2020-03-06T22:25:03Z",
       "updatedAt": "2020-03-09T15:18:45Z",
+      "baseRepository": "quicwg/load-balancers",
+      "baseRefName": "master",
+      "baseRefOid": "42ad253c3f510a555b1c8d9b71342748c78dee8b",
+      "headRepository": "quicwg/load-balancers",
+      "headRefName": "edge-cases",
+      "headRefOid": "532dd1adfd11dde3fc4749aca9f2ce3d9ade9ad7",
       "closedAt": "2020-03-09T15:18:44Z",
       "mergedAt": "2020-03-09T15:18:44Z",
       "mergedBy": "martinduke",
+      "mergeCommit": {
+        "oid": "a03dbcc7f0040b32bfbe0a757400fdf88fd37a45"
+      },
       "comments": [],
       "reviews": [
         {
@@ -4039,16 +4080,7 @@
           "updatedAt": "2020-03-09T05:36:32Z",
           "comments": []
         }
-      ],
-      "baseRepository": "quicwg/load-balancers",
-      "baseRefName": "master",
-      "baseRefOid": "42ad253c3f510a555b1c8d9b71342748c78dee8b",
-      "headRepository": "quicwg/load-balancers",
-      "headRefName": "edge-cases",
-      "headRefOid": "532dd1adfd11dde3fc4749aca9f2ce3d9ade9ad7",
-      "mergeCommit": {
-        "oid": "a03dbcc7f0040b32bfbe0a757400fdf88fd37a45"
-      }
+      ]
     },
     {
       "number": 15,
@@ -4063,20 +4095,20 @@
       "body": "I found some text that still references the in-band protocol mechanisms.\r\n\r\nI tried to update terminology here (and in Security Considerations) without changing any design decisions, so that we can bracket those discussions.\r\n\r\nIn particular, #12 would change the intent of the config-rotation bits that we are trying to enforce here. This also touches the normative text about PCID that is the subject of #8, though I believe this PR  doesn't apply any change to the status quo.",
       "createdAt": "2020-03-09T17:06:02Z",
       "updatedAt": "2020-03-12T14:20:10Z",
-      "closedAt": "2020-03-12T14:20:09Z",
-      "mergedAt": "2020-03-12T14:20:09Z",
-      "mergedBy": "martinduke",
-      "comments": [],
-      "reviews": [],
       "baseRepository": "quicwg/load-balancers",
       "baseRefName": "master",
       "baseRefOid": "a03dbcc7f0040b32bfbe0a757400fdf88fd37a45",
       "headRepository": "quicwg/load-balancers",
       "headRefName": "mduke-nits",
       "headRefOid": "bb9956293162aa250a8d872e43acacf70d20ecfa",
+      "closedAt": "2020-03-12T14:20:09Z",
+      "mergedAt": "2020-03-12T14:20:09Z",
+      "mergedBy": "martinduke",
       "mergeCommit": {
         "oid": "4a6936b1faf9de4af6a6fc62257d64ce92a13c12"
-      }
+      },
+      "comments": [],
+      "reviews": []
     },
     {
       "number": 17,
@@ -4091,9 +4123,18 @@
       "body": "",
       "createdAt": "2020-04-30T17:29:45Z",
       "updatedAt": "2020-04-30T18:47:27Z",
+      "baseRepository": "quicwg/load-balancers",
+      "baseRefName": "master",
+      "baseRefOid": "4a6936b1faf9de4af6a6fc62257d64ce92a13c12",
+      "headRepository": "quicwg/load-balancers",
+      "headRefName": "vector-line-breaks",
+      "headRefOid": "2d751c57c91fd45be789cb524047bf1e2f7adfd3",
       "closedAt": "2020-04-30T18:47:25Z",
       "mergedAt": "2020-04-30T18:47:25Z",
       "mergedBy": "martinduke",
+      "mergeCommit": {
+        "oid": "98fe4b33b709f24b57b882ef1e2438bffaa8c47e"
+      },
       "comments": [],
       "reviews": [
         {
@@ -4109,16 +4150,7 @@
           "updatedAt": "2020-04-30T17:48:08Z",
           "comments": []
         }
-      ],
-      "baseRepository": "quicwg/load-balancers",
-      "baseRefName": "master",
-      "baseRefOid": "4a6936b1faf9de4af6a6fc62257d64ce92a13c12",
-      "headRepository": "quicwg/load-balancers",
-      "headRefName": "vector-line-breaks",
-      "headRefOid": "2d751c57c91fd45be789cb524047bf1e2f7adfd3",
-      "mergeCommit": {
-        "oid": "98fe4b33b709f24b57b882ef1e2438bffaa8c47e"
-      }
+      ]
     },
     {
       "number": 18,
@@ -4133,20 +4165,20 @@
       "body": "",
       "createdAt": "2020-04-30T19:04:09Z",
       "updatedAt": "2020-04-30T19:04:39Z",
-      "closedAt": "2020-04-30T19:04:38Z",
-      "mergedAt": "2020-04-30T19:04:38Z",
-      "mergedBy": "martinduke",
-      "comments": [],
-      "reviews": [],
       "baseRepository": "quicwg/load-balancers",
       "baseRefName": "master",
       "baseRefOid": "98fe4b33b709f24b57b882ef1e2438bffaa8c47e",
       "headRepository": "quicwg/load-balancers",
       "headRefName": "line-break-2",
       "headRefOid": "c430fe0be5e81804377f41b8ff2927557d301bb7",
+      "closedAt": "2020-04-30T19:04:38Z",
+      "mergedAt": "2020-04-30T19:04:38Z",
+      "mergedBy": "martinduke",
       "mergeCommit": {
         "oid": "85e0cbaa5d4749596d185c6b3e2a65230c726c04"
-      }
+      },
+      "comments": [],
+      "reviews": []
     },
     {
       "number": 19,
@@ -4161,20 +4193,20 @@
       "body": "this is mostly to test I've fixed some integration issues.",
       "createdAt": "2020-05-02T02:06:27Z",
       "updatedAt": "2020-05-02T02:06:40Z",
-      "closedAt": "2020-05-02T02:06:39Z",
-      "mergedAt": "2020-05-02T02:06:39Z",
-      "mergedBy": "martinduke",
-      "comments": [],
-      "reviews": [],
       "baseRepository": "quicwg/load-balancers",
       "baseRefName": "master",
       "baseRefOid": "85e0cbaa5d4749596d185c6b3e2a65230c726c04",
       "headRepository": "quicwg/load-balancers",
       "headRefName": "nit",
       "headRefOid": "ab696021278a487e9520f0b330ae6d79d4ec67df",
+      "closedAt": "2020-05-02T02:06:39Z",
+      "mergedAt": "2020-05-02T02:06:39Z",
+      "mergedBy": "martinduke",
       "mergeCommit": {
         "oid": "38132cf34147a0aa66b0b462f935317b5cb289f1"
-      }
+      },
+      "comments": [],
+      "reviews": []
     },
     {
       "number": 21,
@@ -7071,7 +7103,7 @@
       "baseRepository": "quicwg/load-balancers",
       "baseRefName": "master",
       "baseRefOid": "710f916f4a6f41071e0ca64665a6a3975bd0e3d4",
-      "headRepository": "fiestajetsam/load-balancers",
+      "headRepository": null,
       "headRefName": "time",
       "headRefOid": "6829983553597e6868e0ae4011928134224843b8",
       "closedAt": "2021-03-18T15:12:35Z",
@@ -7489,7 +7521,7 @@
       "title": "change AEAD checksum to AEAD ICV",
       "url": "https://github.com/quicwg/load-balancers/pull/112",
       "state": "MERGED",
-      "author": "william-zk",
+      "author": "Neo-ZK",
       "authorAssociation": "CONTRIBUTOR",
       "assignees": [],
       "labels": [],
@@ -7499,7 +7531,7 @@
       "baseRepository": "quicwg/load-balancers",
       "baseRefName": "master",
       "baseRefOid": "0e5b20fe561a403038cf5a92ce30b6c7a0dfb3cf",
-      "headRepository": "william-zk/load-balancers",
+      "headRepository": "Neo-ZK/load-balancers",
       "headRefName": "dev_fix_aead_checksum",
       "headRefOid": "309186d500d0ce7486c8703d056dbc2f08580c8d",
       "closedAt": "2021-04-21T23:16:38Z",
@@ -7517,7 +7549,7 @@
       "title": "Give more illustration of AEAD IV and key sequence",
       "url": "https://github.com/quicwg/load-balancers/pull/115",
       "state": "MERGED",
-      "author": "william-zk",
+      "author": "Neo-ZK",
       "authorAssociation": "CONTRIBUTOR",
       "assignees": [],
       "labels": [],
@@ -7527,7 +7559,7 @@
       "baseRepository": "quicwg/load-balancers",
       "baseRefName": "main",
       "baseRefOid": "0e5b20fe561a403038cf5a92ce30b6c7a0dfb3cf",
-      "headRepository": "william-zk/load-balancers",
+      "headRepository": "Neo-ZK/load-balancers",
       "headRefName": "dev_rename_iv_and_nonce",
       "headRefOid": "f764584b784727accf51c2c11e4fa189f9e45ad5",
       "closedAt": "2021-07-09T19:45:31Z",
@@ -7589,7 +7621,7 @@
           "commit": {
             "abbreviatedOid": "853012c"
           },
-          "author": "william-zk",
+          "author": "Neo-ZK",
           "authorAssociation": "CONTRIBUTOR",
           "state": "COMMENTED",
           "body": "",
@@ -7609,7 +7641,7 @@
           "commit": {
             "abbreviatedOid": "46f9bef"
           },
-          "author": "william-zk",
+          "author": "Neo-ZK",
           "authorAssociation": "CONTRIBUTOR",
           "state": "COMMENTED",
           "body": "",
@@ -7649,7 +7681,7 @@
           "commit": {
             "abbreviatedOid": "46f9bef"
           },
-          "author": "william-zk",
+          "author": "Neo-ZK",
           "authorAssociation": "CONTRIBUTOR",
           "state": "COMMENTED",
           "body": "",
@@ -7695,7 +7727,7 @@
           "commit": {
             "abbreviatedOid": "46f9bef"
           },
-          "author": "william-zk",
+          "author": "Neo-ZK",
           "authorAssociation": "CONTRIBUTOR",
           "state": "COMMENTED",
           "body": "",
@@ -7715,7 +7747,7 @@
           "commit": {
             "abbreviatedOid": "46f9bef"
           },
-          "author": "william-zk",
+          "author": "Neo-ZK",
           "authorAssociation": "CONTRIBUTOR",
           "state": "COMMENTED",
           "body": "",
@@ -7755,7 +7787,7 @@
           "commit": {
             "abbreviatedOid": "aba2a9f"
           },
-          "author": "william-zk",
+          "author": "Neo-ZK",
           "authorAssociation": "CONTRIBUTOR",
           "state": "COMMENTED",
           "body": "",
@@ -7848,7 +7880,7 @@
           "commit": {
             "abbreviatedOid": "2aab2d9"
           },
-          "author": "william-zk",
+          "author": "Neo-ZK",
           "authorAssociation": "CONTRIBUTOR",
           "state": "COMMENTED",
           "body": "",
@@ -7939,7 +7971,7 @@
       "title": "add test vector for shared-stated retry service, see #114",
       "url": "https://github.com/quicwg/load-balancers/pull/117",
       "state": "MERGED",
-      "author": "william-zk",
+      "author": "Neo-ZK",
       "authorAssociation": "CONTRIBUTOR",
       "assignees": [],
       "labels": [],
@@ -7949,7 +7981,7 @@
       "baseRepository": "quicwg/load-balancers",
       "baseRefName": "master",
       "baseRefOid": "99088755d82ac9d7e68bc33901e7918282778767",
-      "headRepository": "william-zk/load-balancers",
+      "headRepository": "Neo-ZK/load-balancers",
       "headRefName": "dev_add_test_vector_for_share_state_retry_service",
       "headRefOid": "52517ce4b9e6d49c3a1e9f5c73985b820b501c50",
       "closedAt": "2021-05-14T20:37:30Z",
@@ -7960,7 +7992,7 @@
       },
       "comments": [
         {
-          "author": "william-zk",
+          "author": "Neo-ZK",
           "authorAssociation": "CONTRIBUTOR",
           "body": "> When I fake my inputs to use the inverted IP address as you have here, I get the same output. So I think your code is sound except for that.\r\n\r\nSounds great, I have rewrite the test-vector and give more information about it,please confirm again if you are free",
           "createdAt": "2021-05-11T03:36:01Z",
@@ -8026,7 +8058,7 @@
           "commit": {
             "abbreviatedOid": "dae2b01"
           },
-          "author": "william-zk",
+          "author": "Neo-ZK",
           "authorAssociation": "CONTRIBUTOR",
           "state": "COMMENTED",
           "body": "",
@@ -8515,7 +8547,7 @@
       "baseRepository": "quicwg/load-balancers",
       "baseRefName": "main",
       "baseRefOid": "7e98785430179074243a00b76135ddc6a2379371",
-      "headRepository": "iyangsj/load-balancers",
+      "headRepository": null,
       "headRefName": "patch-1",
       "headRefOid": "a986f8d5a15bb4173e77bdbe4486d1bc46cfa15a",
       "closedAt": "2021-10-19T16:58:30Z",
@@ -8533,7 +8565,7 @@
       "title": "refactor the description of stream cipher",
       "url": "https://github.com/quicwg/load-balancers/pull/144",
       "state": "CLOSED",
-      "author": "william-zk",
+      "author": "Neo-ZK",
       "authorAssociation": "CONTRIBUTOR",
       "assignees": [],
       "labels": [],
@@ -8543,7 +8575,7 @@
       "baseRepository": "quicwg/load-balancers",
       "baseRefName": "main",
       "baseRefOid": "ad90f86112a55b274fca54862128052a8ee4b44c",
-      "headRepository": "william-zk/load-balancers",
+      "headRepository": "Neo-ZK/load-balancers",
       "headRefName": "dev_refactor_padding_mode_of_stream_cipher",
       "headRefOid": "c8bf1860eec76717d8f112ab8595afa6a678aa46",
       "closedAt": "2021-12-15T20:26:54Z",
@@ -8629,7 +8661,7 @@
           "commit": {
             "abbreviatedOid": "8ef8602"
           },
-          "author": "william-zk",
+          "author": "Neo-ZK",
           "authorAssociation": "CONTRIBUTOR",
           "state": "COMMENTED",
           "body": "",
@@ -11099,6 +11131,34 @@
       "mergedBy": "martinduke",
       "mergeCommit": {
         "oid": "eeb517c00b8f0edd138766f5bebfc2631dd0456f"
+      },
+      "comments": [],
+      "reviews": []
+    },
+    {
+      "number": 223,
+      "id": "PR_kwDODoD6yc5kkrAn",
+      "title": "Fix regressions",
+      "url": "https://github.com/quicwg/load-balancers/pull/223",
+      "state": "MERGED",
+      "author": "martinduke",
+      "authorAssociation": "CONTRIBUTOR",
+      "assignees": [],
+      "labels": [],
+      "body": "Fixes #221 ",
+      "createdAt": "2024-01-19T18:01:41Z",
+      "updatedAt": "2024-01-19T18:02:07Z",
+      "baseRepository": "quicwg/load-balancers",
+      "baseRefName": "main",
+      "baseRefOid": "eeb517c00b8f0edd138766f5bebfc2631dd0456f",
+      "headRepository": "martinduke/load-balancers",
+      "headRefName": "main",
+      "headRefOid": "813527df6758df513d02e485302f2799f5877d8b",
+      "closedAt": "2024-01-19T18:02:07Z",
+      "mergedAt": "2024-01-19T18:02:07Z",
+      "mergedBy": "martinduke",
+      "mergeCommit": {
+        "oid": "e830f57a70481fada838d98522077b17615d5eb8"
       },
       "comments": [],
       "reviews": []
