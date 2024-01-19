@@ -1479,6 +1479,10 @@ Victor Vasiliev, and William Zeng Ke all provided useful input to this document.
 > **RFC Editor's Note:**  Please remove this section prior to
 > publication of a final version of this document.
 
+## since draft-ietf-quic-load-balancers-17
+
+- fixed regressions in draft-17 publication
+
 ## since draft-ietf-quic-load-balancers-16
 
 - added a config ID bit (now there are 3).
