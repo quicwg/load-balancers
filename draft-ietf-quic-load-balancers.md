@@ -511,13 +511,13 @@ in which:
 
 * 'input_bytes' is drawn from one half of the plaintext. It forms the N most
 significant octets of the output, where N is half the 'length' argument, rounded
-up, and thus a number between 3 and 14, inclusive.
+up, and thus a number between 3 and 10, inclusive.
 
 * 'Zeropad' is a set of 14-N zeroes.
 
 * 'length' is an 8-bit integer that reports the sum of the configured nonce
 length and server id length in octets, and forms the fifteenth octet of the
-output. The 'length' argument MUST NOT exceed 28 and MUST NOT be less than 5.
+output. The 'length' argument MUST NOT exceed 19 and MUST NOT be less than 5.
 
 * 'pass' is an 8-bit integer that reports the 'pass' argument of the algorithm,
 and forms the sixteenth (least significant) octet of the output. It guarantees
