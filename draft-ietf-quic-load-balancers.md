@@ -496,16 +496,32 @@ Two functions are useful to define:
 The expand(length, pass, input_bytes) function concatenates three arguments and
 outputs 16 zero-padded octets.
 
-The first argument 'length' is an 8-bit integer that reports the sum of the
-configured nonce length and server id length in octets, and forms the fifteenth
-octet of the output. The 'length' argument MUST NOT exceed 28.
+The output of expand is as follows:
 
-The second argument is an 8-bit integer that is the 'pass' of the algorithm, and
-forms the sixteenth (least significant) octet of the output.
+~~~psuedocode
+ExpandResult {
+     input_bytes(...),
+     ZeroPad(...),
+     length(8),
+     pass(8)
+}
+~~~
 
-The third argument is a variable-length stream of octets, which is copied into
-the most significant octets of the output. The length of this octet stream is
-half the 'length', rounded up. All remaining octets of the output are zero.
+in which:
+
+* 'input_bytes' is drawn from one half of the plaintext. It forms the N most
+significant octets of the output, where N is half the 'length' argument, rounded
+up, and thus a number between 3 and 14, inclusive.
+
+* 'Zeropad' is a set of 14-N zeroes.
+
+* 'length' is an 8-bit integer that reports the sum of the configured nonce
+length and server id length in octets, and forms the fifteenth octet of the
+output. The 'length' argument MUST NOT exceed 28 and MUST NOT be less than 5.
+
+* 'pass' is an 8-bit integer that reports the 'pass' argument of the algorithm,
+and forms the sixteenth (least significant) octet of the output. It guarantees
+that the cryptographic input of every pass of the algorithm is unique.
 
 For example,
 
@@ -1384,7 +1400,7 @@ cr_bits sid nonce cid
 2 ed793a51d49b8f5f ee080dbf48c0d1e5
                          504dd2d05a7b0de9b2b9907afb5ecf8cc3
 3 ed793a51d49b8f5fab ee080dbf48c0d1e55d
-			 125779c9cc86beb3a3a4a3ca96fce4bfe0cdbc
+                         125779c9cc86beb3a3a4a3ca96fce4bfe0cdbc
 ~~~
 
 # Interoperability with DTLS over UDP
