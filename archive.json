@@ -1,6 +1,6 @@
 {
   "magic": "E!vIA5L86J2I",
-  "timestamp": "2024-01-19T18:03:36.774430+00:00",
+  "timestamp": "2024-02-05T20:31:09.470870+00:00",
   "repo": "quicwg/load-balancers",
   "labels": [
     {
@@ -3647,15 +3647,15 @@
       "id": "I_kwDODoD6yc57tLjv",
       "title": "Tweak the expand() function again to reduce copying",
       "url": "https://github.com/quicwg/load-balancers/issues/222",
-      "state": "OPEN",
+      "state": "CLOSED",
       "author": "martinduke",
       "authorAssociation": "CONTRIBUTOR",
       "assignees": [],
       "labels": [],
       "body": "I've discovered that the copying involved in the 4-pass algorithm may be a non-negligible part of the total decrypt time.\r\n\r\nWe can eliminate some of the copying in 4 pass by putting the length and index fields at the end of the output of expand, e.g.\r\n\r\nOLD\r\nexpand(0x484848, 7, 1) = (0x07, 0x01, 0x48, 0x48, 0x48, ....)\r\nNEW\r\nexpand(0x484848, 7, 1) = (0x48, 0x48, 0x48, .... 0x07, 0x01)\r\n\r\nin the likely case where server_id_len < nonce_len, this means that the decoder can just pass server_id_len bytes of left_1 to the caller, rather then copying it into a new buffer.",
       "createdAt": "2024-01-11T00:11:30Z",
-      "updatedAt": "2024-01-11T00:11:30Z",
-      "closedAt": null,
+      "updatedAt": "2024-02-05T20:30:32Z",
+      "closedAt": "2024-02-05T20:30:32Z",
       "comments": []
     }
   ],
@@ -9509,7 +9509,7 @@
       "labels": [],
       "body": "Fix #165",
       "createdAt": "2022-04-12T18:06:40Z",
-      "updatedAt": "2022-07-06T15:16:40Z",
+      "updatedAt": "2024-01-19T18:06:57Z",
       "baseRepository": "quicwg/load-balancers",
       "baseRefName": "main",
       "baseRefOid": "cf4c59ea1d54b6023a36458192ff0ce058cdbfc6",
@@ -11119,7 +11119,7 @@
       "labels": [],
       "body": "",
       "createdAt": "2023-09-28T20:28:39Z",
-      "updatedAt": "2023-09-28T20:28:48Z",
+      "updatedAt": "2024-01-19T18:07:21Z",
       "baseRepository": "quicwg/load-balancers",
       "baseRefName": "main",
       "baseRefOid": "58019b0f0344b5e5f4acb5a80fc38b1d7e14bd4f",
@@ -11162,6 +11162,128 @@
       },
       "comments": [],
       "reviews": []
+    },
+    {
+      "number": 224,
+      "id": "PR_kwDODoD6yc5kl8nj",
+      "title": "Rearrange expand()",
+      "url": "https://github.com/quicwg/load-balancers/pull/224",
+      "state": "MERGED",
+      "author": "martinduke",
+      "authorAssociation": "CONTRIBUTOR",
+      "assignees": [],
+      "labels": [],
+      "body": "by moving the arbitrary location of some bytes around, we can eliminate a copy and improve performance on 3-pass decryption by about 7%.\r\n\r\nI would very much appreciate someone verifying my test vectors.\r\n\r\nFixes #222",
+      "createdAt": "2024-01-19T21:24:35Z",
+      "updatedAt": "2024-02-05T20:30:31Z",
+      "baseRepository": "quicwg/load-balancers",
+      "baseRefName": "main",
+      "baseRefOid": "e830f57a70481fada838d98522077b17615d5eb8",
+      "headRepository": "martinduke/load-balancers",
+      "headRefName": "rearrange-expand",
+      "headRefOid": "77062f3b8265fa72e868107cdacde6871ea484ca",
+      "closedAt": "2024-02-05T20:30:31Z",
+      "mergedAt": "2024-02-05T20:30:31Z",
+      "mergedBy": "martinduke",
+      "mergeCommit": {
+        "oid": "84fd79e6571401689b4cd4af01ca26739abe3bab"
+      },
+      "comments": [],
+      "reviews": [
+        {
+          "id": "PRR_kwDODoD6yc5uv_Hw",
+          "commit": {
+            "abbreviatedOid": "f150581"
+          },
+          "author": "huitema",
+          "authorAssociation": "CONTRIBUTOR",
+          "state": "COMMENTED",
+          "body": "Yes, I see how this new syntax leads to simpler code. But the text could be improved, see suggestion.",
+          "createdAt": "2024-02-02T01:23:52Z",
+          "updatedAt": "2024-02-02T01:24:46Z",
+          "comments": [
+            {
+              "originalPosition": 19,
+              "body": "This appears to be half an edit. The syntax as you express it appears to be:\r\n~~~\r\nExpandResult {\r\n      Bytes(...),\r\n      ZeroPad(...),\r\n      length(8),\r\n      pass(8)\r\n}\r\n~~~\r\n\r\nIn which:\r\n\r\n* 'Bytes' are the N most significant octets of the output. The number N is half the 'length', rounded up, thus a number between 1 and 14.\r\n* 'Zeropad' is a set of 14-N zeroes,\r\n* 'length' is an 8-bit integer that reports the sum of the configured nonce length and server id length in octets, and forms the fifteenth octet of the output. The 'length' argument MUST NOT exceed 28.\r\n* 'pass' is an 8-bit integer that reports the 'pass' argument of the algorithm, and\r\nforms the sixteenth (least significant) octet of the output.\r\n     \r\n      ",
+              "createdAt": "2024-02-02T01:23:53Z",
+              "updatedAt": "2024-02-02T01:24:46Z"
+            }
+          ]
+        },
+        {
+          "id": "PRR_kwDODoD6yc5u5Axs",
+          "commit": {
+            "abbreviatedOid": "f150581"
+          },
+          "author": "martinduke",
+          "authorAssociation": "CONTRIBUTOR",
+          "state": "COMMENTED",
+          "body": "",
+          "createdAt": "2024-02-02T21:45:29Z",
+          "updatedAt": "2024-02-02T21:45:29Z",
+          "comments": [
+            {
+              "originalPosition": 19,
+              "body": "OK, I took this working, minus some corrections. Length has to be between 5 and 19, meaning N is between 3 and 10.",
+              "createdAt": "2024-02-02T21:45:29Z",
+              "updatedAt": "2024-02-02T21:45:29Z"
+            }
+          ]
+        },
+        {
+          "id": "PRR_kwDODoD6yc5u7YU1",
+          "commit": {
+            "abbreviatedOid": "a724713"
+          },
+          "author": "huitema",
+          "authorAssociation": "CONTRIBUTOR",
+          "state": "COMMENTED",
+          "body": "",
+          "createdAt": "2024-02-03T16:12:09Z",
+          "updatedAt": "2024-02-03T16:12:09Z",
+          "comments": [
+            {
+              "originalPosition": 11,
+              "body": "Typo.",
+              "createdAt": "2024-02-03T16:12:09Z",
+              "updatedAt": "2024-02-03T16:12:09Z"
+            }
+          ]
+        },
+        {
+          "id": "PRR_kwDODoD6yc5u7YYb",
+          "commit": {
+            "abbreviatedOid": "a724713"
+          },
+          "author": "huitema",
+          "authorAssociation": "CONTRIBUTOR",
+          "state": "COMMENTED",
+          "body": "",
+          "createdAt": "2024-02-03T16:13:54Z",
+          "updatedAt": "2024-02-03T16:13:54Z",
+          "comments": [
+            {
+              "originalPosition": 31,
+              "body": "Reading again, I would write \"a set of 14-N octets set to zero.\"",
+              "createdAt": "2024-02-03T16:13:54Z",
+              "updatedAt": "2024-02-03T16:13:54Z"
+            }
+          ]
+        },
+        {
+          "id": "PRR_kwDODoD6yc5vFpET",
+          "commit": {
+            "abbreviatedOid": "77062f3"
+          },
+          "author": "huitema",
+          "authorAssociation": "CONTRIBUTOR",
+          "state": "APPROVED",
+          "body": "Looks good now.",
+          "createdAt": "2024-02-05T20:22:28Z",
+          "updatedAt": "2024-02-05T20:22:28Z",
+          "comments": []
+        }
+      ]
     }
   ]
 }
