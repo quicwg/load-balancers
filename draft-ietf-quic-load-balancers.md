@@ -498,7 +498,7 @@ outputs 16 zero-padded octets.
 
 The output of expand is as follows:
 
-~~~psuedocode
+~~~pseudocode
 ExpandResult {
      input_bytes(...),
      ZeroPad(...),
@@ -513,7 +513,7 @@ in which:
 significant octets of the output, where N is half the 'length' argument, rounded
 up, and thus a number between 3 and 10, inclusive.
 
-* 'Zeropad' is a set of 14-N zeroes.
+* 'Zeropad' is a set of 14-N octets set to zero.
 
 * 'length' is an 8-bit integer that reports the sum of the configured nonce
 length and server id length in octets, and forms the fifteenth octet of the
