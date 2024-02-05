@@ -5,10 +5,10 @@
 QUIC                                                             M. Duke
 Internet-Draft                                                    Google
 Intended status: Standards Track                                N. Banks
-Expires: 22 July 2024                                          Microsoft
+Expires: 8 August 2024                                         Microsoft
                                                               C. Huitema
                                                     Private Octopus Inc.
-                                                         19 January 2024
+                                                         5 February 2024
 
 
             QUIC-LB: Generating Routable QUIC Connection IDs
@@ -55,7 +55,7 @@ Status of This Memo
    time.  It is inappropriate to use Internet-Drafts as reference
    material or to cite them other than as "work in progress."
 
-   This Internet-Draft will expire on 22 July 2024.
+   This Internet-Draft will expire on 8 August 2024.
 
 Copyright Notice
 
@@ -123,31 +123,32 @@ Table of Contents
      C.3.  Future Versions of DTLS
    Appendix D.  Acknowledgments
    Appendix E.  Change Log
-     E.1.  since draft-ietf-quic-load-balancers-17
-     E.2.  since draft-ietf-quic-load-balancers-16
-     E.3.  since draft-ietf-quic-load-balancers-15
-     E.4.  since draft-ietf-quic-load-balancers-14
-     E.5.  since draft-ietf-quic-load-balancers-13
-     E.6.  since draft-ietf-quic-load-balancers-12
-     E.7.  since draft-ietf-quic-load-balancers-11
-     E.8.  since draft-ietf-quic-load-balancers-10
-     E.9.  since draft-ietf-quic-load-balancers-09
-     E.10. since draft-ietf-quic-load-balancers-08
-     E.11. since draft-ietf-quic-load-balancers-07
-     E.12. since draft-ietf-quic-load-balancers-06
-     E.13. since draft-ietf-quic-load-balancers-05
-     E.14. since draft-ietf-quic-load-balancers-04
-     E.15. since-draft-ietf-quic-load-balancers-03
-     E.16. since-draft-ietf-quic-load-balancers-02
-     E.17. since-draft-ietf-quic-load-balancers-01
-     E.18. since-draft-ietf-quic-load-balancers-00
-     E.19. Since draft-duke-quic-load-balancers-06
-     E.20. Since draft-duke-quic-load-balancers-05
-     E.21. Since draft-duke-quic-load-balancers-04
-     E.22. Since draft-duke-quic-load-balancers-03
-     E.23. Since draft-duke-quic-load-balancers-02
-     E.24. Since draft-duke-quic-load-balancers-01
-     E.25. Since draft-duke-quic-load-balancers-00
+     E.1.  since draft-ietf-quic-load-balancers-18
+     E.2.  since draft-ietf-quic-load-balancers-17
+     E.3.  since draft-ietf-quic-load-balancers-16
+     E.4.  since draft-ietf-quic-load-balancers-15
+     E.5.  since draft-ietf-quic-load-balancers-14
+     E.6.  since draft-ietf-quic-load-balancers-13
+     E.7.  since draft-ietf-quic-load-balancers-12
+     E.8.  since draft-ietf-quic-load-balancers-11
+     E.9.  since draft-ietf-quic-load-balancers-10
+     E.10. since draft-ietf-quic-load-balancers-09
+     E.11. since draft-ietf-quic-load-balancers-08
+     E.12. since draft-ietf-quic-load-balancers-07
+     E.13. since draft-ietf-quic-load-balancers-06
+     E.14. since draft-ietf-quic-load-balancers-05
+     E.15. since draft-ietf-quic-load-balancers-04
+     E.16. since-draft-ietf-quic-load-balancers-03
+     E.17. since-draft-ietf-quic-load-balancers-02
+     E.18. since-draft-ietf-quic-load-balancers-01
+     E.19. since-draft-ietf-quic-load-balancers-00
+     E.20. Since draft-duke-quic-load-balancers-06
+     E.21. Since draft-duke-quic-load-balancers-05
+     E.22. Since draft-duke-quic-load-balancers-04
+     E.23. Since draft-duke-quic-load-balancers-03
+     E.24. Since draft-duke-quic-load-balancers-02
+     E.25. Since draft-duke-quic-load-balancers-01
+     E.26. Since draft-duke-quic-load-balancers-00
    Authors' Addresses
 
 1.  Introduction
@@ -614,22 +615,37 @@ Table of Contents
    The expand(length, pass, input_bytes) function concatenates three
    arguments and outputs 16 zero-padded octets.
 
-   The first argument 'length' is an 8-bit integer that reports the sum
-   of the configured nonce length and server id length in octets, and
-   forms the most significant octet of the output.  The 'length'
-   argument MUST NOT exceed 28.
+   The output of expand is as follows:
 
-   The second argument is an 8-bit integer that is the 'pass' of the
-   algorithm, and forms the second-most significant octet of the output.
+   ExpandResult {
+        input_bytes(...),
+        ZeroPad(...),
+        length(8),
+        pass(8)
+   }
 
-   The third argument is a variable-length stream of octets, which is
-   copied into the third-most significant octet of the output and
-   beyond.  The length of this octet stream is half the 'length',
-   rounded up.  All remaining octets of the output are zero.
+   in which:
+
+   *  'input_bytes' is drawn from one half of the plaintext.  It forms
+      the N most significant octets of the output, where N is half the
+      'length' argument, rounded up, and thus a number between 3 and 10,
+      inclusive.
+
+   *  'Zeropad' is a set of 14-N octets set to zero.
+
+   *  'length' is an 8-bit integer that reports the sum of the
+      configured nonce length and server id length in octets, and forms
+      the fifteenth octet of the output.  The 'length' argument MUST NOT
+      exceed 19 and MUST NOT be less than 5.
+
+   *  'pass' is an 8-bit integer that reports the 'pass' argument of the
+      algorithm, and forms the sixteenth (least significant) octet of
+      the output.  It guarantees that the cryptographic input of every
+      pass of the algorithm is unique.
 
    For example,
 
-   expand(0x06, 0x02, 0xaaba3c) = 0x0602aaba3c0000000000000000000000
+   expand(0x06, 0x02, 0xaaba3c) = 0xaaba3c00000000000000000000000602
 
    Similarly, truncate(input, n) returns the first n octets of 'input'.
 
@@ -719,41 +735,41 @@ Table of Contents
    right_0 = 0x0c69c275
 
    // step 3
-   aes_input = 0x070131441a9000000000000000000000
-   ciphertext = 0x6373991e1d6d5d284f3d015da31d343d
+   aes_input = 0x31441a90000000000000000000000701
+   aes_output = 0xa255dd8cdacf01948d3a848c3c7fee23
 
    // step 4
-   right_1 = 0x0c69c275 ^ 0x6373991e = 0x6f1a5b6b
+   right_1 = 0x0c69c275 ^ 0xa255dd8c = 0xae3c1ff9
 
    // step 5 (clear bits)
-   right_1 = 0x0f1a5b6b
+   right_1 = 0x0e8c1ff9
 
    // step 6
-   aes_input = 0x07020f1a5b6b00000000000000000000
-   aes_output = 0x33ca01c065da4c66e27a990967272dca
-   left_1 = 0x31441a90 ^ 0x33ca01c0 = 0x028e1b50
+   aes_input = 0x0e8c1ff9000000000000000000000702
+   aes_output = 0xe5e452cb9e1bedb0b2bf830506bf4c4e
+   left_1 = 0x31441a90 ^ 0xe5e452cb = 0xd4a0485b
 
    // step 7 (clear bits)
-   left_1 = 0x028e1b50
+   left_1 = 0xd4a04850
 
    // step 8
-   aes_input = 0x0703028e1b5000000000000000000000
-   aes_output = 0x6b8ecc0905bab0a3a96273cc50f4eee1
-   right_2 = 0x0f1a5b6b ^ 0x6b8ecc09 = 0x64949762
+   aes_input = 0xd4a04850000000000000000000000703
+   aes_output = 0xb7821ab3024fed0913b6a04d18e3216f
+   right_2 = 0x0e8c1ff9 ^ 0xb7821ab3 = 0xb9be054a
 
    // step 9 (clear bits)
-   right_2 = 0x04949762
+   right_2 = 0x09be054a
 
    // step 10
-   aes_input = 0x07040494976200000000000000000000
-   aes_output = 0x8c148aa72244e4b46ae2f019dcfc8a64
-   left_2 = 0x028e1b50 ^ 0x8c148aa7 = 0x8e9a91f7
+   aes_input = 0x09be054a000000000000000000000704
+   aes_output = 0xb334357cfdf81e3fafe180154eaf7378
+   left_2 = 0xd4a04850 ^ 0xb3e4357c = 0x67947d2c
 
    // step 11 (clear bits)
-   left_2 = 0x8e9a91f0
+   left_2 = 0x67947d20
 
    // step 12
-   cid = first_octet || left_2 || right_2 = 0x078e9a91f4949762
+   cid = first_octet || left_2 || right_2 = 0x0767947d29be054a
 
 4.4.  Load Balancer Actions
 
@@ -1593,13 +1609,13 @@ B.2.  Encrypted CIDs
    requiring a fourth decryption pass.
 
    cr_bits sid nonce cid
-   0 ed793a ee080dbf 074126ee38bf5454
+   0 ed793a ee080dbf 0720b1d07b359d3c
    1 ed793a51d49b8f5fab65 ee080dbf48
-                            2fcd3f572d4eefb046fdb51d164efccc
+                            2fcc381bc74cb4fbad2823a3d1f8fed2
    2 ed793a51d49b8f5f ee080dbf48c0d1e5
                             504dd2d05a7b0de9b2b9907afb5ecf8cc3
    3 ed793a51d49b8f5fab ee080dbf48c0d1e55d
-                            72124d1eb8fbb21e4a490ca53cfe21d04ae63a
+                            125779c9cc86beb3a3a4a3ca96fce4bfe0cdbc
 
 Appendix C.  Interoperability with DTLS over UDP
 
@@ -1701,19 +1717,24 @@ Appendix E.  Change Log
       *RFC Editor's Note:* Please remove this section prior to
       publication of a final version of this document.
 
-E.1.  since draft-ietf-quic-load-balancers-17
+E.1.  since draft-ietf-quic-load-balancers-18
+
+   *  Rearranged the output of the expand function to reduce CPU load of
+      decrypt
+
+E.2.  since draft-ietf-quic-load-balancers-17
 
    *  fixed regressions in draft-17 publication
 
-E.2.  since draft-ietf-quic-load-balancers-16
+E.3.  since draft-ietf-quic-load-balancers-16
 
    *  added a config ID bit (now there are 3).
 
-E.3.  since draft-ietf-quic-load-balancers-15
+E.4.  since draft-ietf-quic-load-balancers-15
 
    *  aasvg fixes.
 
-E.4.  since draft-ietf-quic-load-balancers-14
+E.5.  since draft-ietf-quic-load-balancers-14
 
    *  Revised process demultiplexing text
 
@@ -1724,7 +1745,7 @@ E.4.  since draft-ietf-quic-load-balancers-14
    *  Tweaked 4-pass algorithm to avoid accidental plaintext
       similarities
 
-E.5.  since draft-ietf-quic-load-balancers-13
+E.6.  since draft-ietf-quic-load-balancers-13
 
    *  Incorporated Connection ID length in argument of truncate function
 
@@ -1734,15 +1755,15 @@ E.5.  since draft-ietf-quic-load-balancers-13
 
    *  Added non-normative language about server process demultiplexers
 
-E.6.  since draft-ietf-quic-load-balancers-12
+E.7.  since draft-ietf-quic-load-balancers-12
 
    *  Separated Retry Service design into a separate draft
 
-E.7.  since draft-ietf-quic-load-balancers-11
+E.8.  since draft-ietf-quic-load-balancers-11
 
    *  Fixed mistakes in test vectors
 
-E.8.  since draft-ietf-quic-load-balancers-10
+E.9.  since draft-ietf-quic-load-balancers-10
 
    *  Refactored algorithm descriptions; made the 4-pass algorithm
       easier to implement
@@ -1751,7 +1772,7 @@ E.8.  since draft-ietf-quic-load-balancers-10
 
    *  Split YANG model into a server and middlebox version
 
-E.9.  since draft-ietf-quic-load-balancers-09
+E.10.  since draft-ietf-quic-load-balancers-09
 
    *  Renamed "Stream Cipher" and "Block Cipher" to "Encrypted Short"
       and "Encrypted Long"
@@ -1764,13 +1785,13 @@ E.9.  since draft-ietf-quic-load-balancers-09
 
    *  Clarified what SNI LBs should do with unknown QUIC versions.
 
-E.10.  since draft-ietf-quic-load-balancers-08
+E.11.  since draft-ietf-quic-load-balancers-08
 
    *  Eliminate Dynamic SID allocation
 
    *  Eliminated server use bytes
 
-E.11.  since draft-ietf-quic-load-balancers-07
+E.12.  since draft-ietf-quic-load-balancers-07
 
    *  Shortened SSCID nonce minimum length to 4 bytes
 
@@ -1780,7 +1801,7 @@ E.11.  since draft-ietf-quic-load-balancers-07
 
    *  Shrunk size of SID table
 
-E.12.  since draft-ietf-quic-load-balancers-06
+E.13.  since draft-ietf-quic-load-balancers-06
 
    *  Added interoperability with DTLS
 
@@ -1792,7 +1813,7 @@ E.12.  since draft-ietf-quic-load-balancers-06
 
    *  Added retry service considerations for non-Initial packets
 
-E.13.  since draft-ietf-quic-load-balancers-05
+E.14.  since draft-ietf-quic-load-balancers-05
 
    *  Added low-config CID for further discussion
 
@@ -1804,7 +1825,7 @@ E.13.  since draft-ietf-quic-load-balancers-05
 
    *  Switched to notation from quic-transport
 
-E.14.  since draft-ietf-quic-load-balancers-04
+E.15.  since draft-ietf-quic-load-balancers-04
 
    *  Rearranged the shared-state retry token to simplify token
       processing
@@ -1819,7 +1840,7 @@ E.14.  since draft-ietf-quic-load-balancers-04
 
    *  Additional compliant DCID criteria
 
-E.15.  since-draft-ietf-quic-load-balancers-03
+E.16.  since-draft-ietf-quic-load-balancers-03
 
    *  Improved Config Rotation text
 
@@ -1827,7 +1848,7 @@ E.15.  since-draft-ietf-quic-load-balancers-03
 
    *  Deleted the Obfuscated CID algorithm
 
-E.16.  since-draft-ietf-quic-load-balancers-02
+E.17.  since-draft-ietf-quic-load-balancers-02
 
    *  Replaced stream cipher algorithm with three-pass version
 
@@ -1841,7 +1862,7 @@ E.16.  since-draft-ietf-quic-load-balancers-02
 
    *  Allow dropped long-header packets for known QUIC versions
 
-E.17.  since-draft-ietf-quic-load-balancers-01
+E.18.  since-draft-ietf-quic-load-balancers-01
 
    *  Test vectors for load balancer decoding
 
@@ -1851,15 +1872,15 @@ E.17.  since-draft-ietf-quic-load-balancers-01
 
    *  Discussed load balancer chains
 
-E.18.  since-draft-ietf-quic-load-balancers-00
+E.19.  since-draft-ietf-quic-load-balancers-00
 
    *  Removed in-band protocol from the document
 
-E.19.  Since draft-duke-quic-load-balancers-06
+E.20.  Since draft-duke-quic-load-balancers-06
 
    *  Switch to IETF WG draft.
 
-E.20.  Since draft-duke-quic-load-balancers-05
+E.21.  Since draft-duke-quic-load-balancers-05
 
    *  Editorial changes
 
@@ -1873,11 +1894,11 @@ E.20.  Since draft-duke-quic-load-balancers-05
 
    *  Added psuedocode for config schema
 
-E.21.  Since draft-duke-quic-load-balancers-04
+E.22.  Since draft-duke-quic-load-balancers-04
 
    *  Added standard for retry services
 
-E.22.  Since draft-duke-quic-load-balancers-03
+E.23.  Since draft-duke-quic-load-balancers-03
 
    *  Renamed Plaintext CID algorithm as Obfuscated CID
 
@@ -1887,7 +1908,7 @@ E.22.  Since draft-duke-quic-load-balancers-03
 
    *  Added self-encoding of CID length
 
-E.23.  Since draft-duke-quic-load-balancers-02
+E.24.  Since draft-duke-quic-load-balancers-02
 
    *  Added Config Rotation
 
@@ -1899,7 +1920,7 @@ E.23.  Since draft-duke-quic-load-balancers-02
 
    *  Reformatted QUIC-LB packets
 
-E.24.  Since draft-duke-quic-load-balancers-01
+E.25.  Since draft-duke-quic-load-balancers-01
 
    *  Complete rewrite
 
@@ -1907,7 +1928,7 @@ E.24.  Since draft-duke-quic-load-balancers-01
 
    *  Lightweight messages
 
-E.25.  Since draft-duke-quic-load-balancers-00
+E.26.  Since draft-duke-quic-load-balancers-00
 
    *  Converted to markdown
 
