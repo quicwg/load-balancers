@@ -123,32 +123,33 @@ Table of Contents
      C.3.  Future Versions of DTLS
    Appendix D.  Acknowledgments
    Appendix E.  Change Log
-     E.1.  since draft-ietf-quic-load-balancers-18
-     E.2.  since draft-ietf-quic-load-balancers-17
-     E.3.  since draft-ietf-quic-load-balancers-16
-     E.4.  since draft-ietf-quic-load-balancers-15
-     E.5.  since draft-ietf-quic-load-balancers-14
-     E.6.  since draft-ietf-quic-load-balancers-13
-     E.7.  since draft-ietf-quic-load-balancers-12
-     E.8.  since draft-ietf-quic-load-balancers-11
-     E.9.  since draft-ietf-quic-load-balancers-10
-     E.10. since draft-ietf-quic-load-balancers-09
-     E.11. since draft-ietf-quic-load-balancers-08
-     E.12. since draft-ietf-quic-load-balancers-07
-     E.13. since draft-ietf-quic-load-balancers-06
-     E.14. since draft-ietf-quic-load-balancers-05
-     E.15. since draft-ietf-quic-load-balancers-04
-     E.16. since-draft-ietf-quic-load-balancers-03
-     E.17. since-draft-ietf-quic-load-balancers-02
-     E.18. since-draft-ietf-quic-load-balancers-01
-     E.19. since-draft-ietf-quic-load-balancers-00
-     E.20. Since draft-duke-quic-load-balancers-06
-     E.21. Since draft-duke-quic-load-balancers-05
-     E.22. Since draft-duke-quic-load-balancers-04
-     E.23. Since draft-duke-quic-load-balancers-03
-     E.24. Since draft-duke-quic-load-balancers-02
-     E.25. Since draft-duke-quic-load-balancers-01
-     E.26. Since draft-duke-quic-load-balancers-00
+     E.1.  since draft-ietf-quic-load-balancers-19
+     E.2.  since draft-ietf-quic-load-balancers-18
+     E.3.  since draft-ietf-quic-load-balancers-17
+     E.4.  since draft-ietf-quic-load-balancers-16
+     E.5.  since draft-ietf-quic-load-balancers-15
+     E.6.  since draft-ietf-quic-load-balancers-14
+     E.7.  since draft-ietf-quic-load-balancers-13
+     E.8.  since draft-ietf-quic-load-balancers-12
+     E.9.  since draft-ietf-quic-load-balancers-11
+     E.10. since draft-ietf-quic-load-balancers-10
+     E.11. since draft-ietf-quic-load-balancers-09
+     E.12. since draft-ietf-quic-load-balancers-08
+     E.13. since draft-ietf-quic-load-balancers-07
+     E.14. since draft-ietf-quic-load-balancers-06
+     E.15. since draft-ietf-quic-load-balancers-05
+     E.16. since draft-ietf-quic-load-balancers-04
+     E.17. since-draft-ietf-quic-load-balancers-03
+     E.18. since-draft-ietf-quic-load-balancers-02
+     E.19. since-draft-ietf-quic-load-balancers-01
+     E.20. since-draft-ietf-quic-load-balancers-00
+     E.21. Since draft-duke-quic-load-balancers-06
+     E.22. Since draft-duke-quic-load-balancers-05
+     E.23. Since draft-duke-quic-load-balancers-04
+     E.24. Since draft-duke-quic-load-balancers-03
+     E.25. Since draft-duke-quic-load-balancers-02
+     E.26. Since draft-duke-quic-load-balancers-01
+     E.27. Since draft-duke-quic-load-balancers-00
    Authors' Addresses
 
 1.  Introduction
@@ -755,7 +756,7 @@ Table of Contents
    // step 8
    aes_input = 0xd4a04850000000000000000000000703
    aes_output = 0xb7821ab3024fed0913b6a04d18e3216f
-   right_2 = 0x0e8c1ff9 ^ 0xb7821ab3 = 0xb9be054a
+   right_2 = 0x0e3c1ff9 ^ 0xb7821ab3 = 0xb9be054a
 
    // step 9 (clear bits)
    right_2 = 0x09be054a
@@ -1709,32 +1710,36 @@ Appendix D.  Acknowledgments
    Manasi Deval, Erik Fuller, Toma Gavrichenkov, Jana Iyengar, Subodh
    Iyengar, Stefan Kolbl, Ladislav Lhotka, Jan Lindblad, Ling Tao Nju,
    Ilari Liusvaara, Kazuho Oku, Udip Pant, Ian Swett, Andy Sykes, Martin
-   Thomson, Dmitri Tikhonov, Victor Vasiliev, and William Zeng Ke all
-   provided useful input to this document.
+   Thomson, Dmitri Tikhonov, Victor Vasiliev, Yu Zhu, and William Zeng
+   Ke all provided useful input to this document.
 
 Appendix E.  Change Log
 
       *RFC Editor's Note:* Please remove this section prior to
       publication of a final version of this document.
 
-E.1.  since draft-ietf-quic-load-balancers-18
+E.1.  since draft-ietf-quic-load-balancers-19
+
+   *  Fixed error in encryption example.
+
+E.2.  since draft-ietf-quic-load-balancers-18
 
    *  Rearranged the output of the expand function to reduce CPU load of
       decrypt
 
-E.2.  since draft-ietf-quic-load-balancers-17
+E.3.  since draft-ietf-quic-load-balancers-17
 
    *  fixed regressions in draft-17 publication
 
-E.3.  since draft-ietf-quic-load-balancers-16
+E.4.  since draft-ietf-quic-load-balancers-16
 
    *  added a config ID bit (now there are 3).
 
-E.4.  since draft-ietf-quic-load-balancers-15
+E.5.  since draft-ietf-quic-load-balancers-15
 
    *  aasvg fixes.
 
-E.5.  since draft-ietf-quic-load-balancers-14
+E.6.  since draft-ietf-quic-load-balancers-14
 
    *  Revised process demultiplexing text
 
@@ -1745,7 +1750,7 @@ E.5.  since draft-ietf-quic-load-balancers-14
    *  Tweaked 4-pass algorithm to avoid accidental plaintext
       similarities
 
-E.6.  since draft-ietf-quic-load-balancers-13
+E.7.  since draft-ietf-quic-load-balancers-13
 
    *  Incorporated Connection ID length in argument of truncate function
 
@@ -1755,15 +1760,15 @@ E.6.  since draft-ietf-quic-load-balancers-13
 
    *  Added non-normative language about server process demultiplexers
 
-E.7.  since draft-ietf-quic-load-balancers-12
+E.8.  since draft-ietf-quic-load-balancers-12
 
    *  Separated Retry Service design into a separate draft
 
-E.8.  since draft-ietf-quic-load-balancers-11
+E.9.  since draft-ietf-quic-load-balancers-11
 
    *  Fixed mistakes in test vectors
 
-E.9.  since draft-ietf-quic-load-balancers-10
+E.10.  since draft-ietf-quic-load-balancers-10
 
    *  Refactored algorithm descriptions; made the 4-pass algorithm
       easier to implement
@@ -1772,7 +1777,7 @@ E.9.  since draft-ietf-quic-load-balancers-10
 
    *  Split YANG model into a server and middlebox version
 
-E.10.  since draft-ietf-quic-load-balancers-09
+E.11.  since draft-ietf-quic-load-balancers-09
 
    *  Renamed "Stream Cipher" and "Block Cipher" to "Encrypted Short"
       and "Encrypted Long"
@@ -1785,13 +1790,13 @@ E.10.  since draft-ietf-quic-load-balancers-09
 
    *  Clarified what SNI LBs should do with unknown QUIC versions.
 
-E.11.  since draft-ietf-quic-load-balancers-08
+E.12.  since draft-ietf-quic-load-balancers-08
 
    *  Eliminate Dynamic SID allocation
 
    *  Eliminated server use bytes
 
-E.12.  since draft-ietf-quic-load-balancers-07
+E.13.  since draft-ietf-quic-load-balancers-07
 
    *  Shortened SSCID nonce minimum length to 4 bytes
 
@@ -1801,7 +1806,7 @@ E.12.  since draft-ietf-quic-load-balancers-07
 
    *  Shrunk size of SID table
 
-E.13.  since draft-ietf-quic-load-balancers-06
+E.14.  since draft-ietf-quic-load-balancers-06
 
    *  Added interoperability with DTLS
 
@@ -1813,7 +1818,7 @@ E.13.  since draft-ietf-quic-load-balancers-06
 
    *  Added retry service considerations for non-Initial packets
 
-E.14.  since draft-ietf-quic-load-balancers-05
+E.15.  since draft-ietf-quic-load-balancers-05
 
    *  Added low-config CID for further discussion
 
@@ -1825,7 +1830,7 @@ E.14.  since draft-ietf-quic-load-balancers-05
 
    *  Switched to notation from quic-transport
 
-E.15.  since draft-ietf-quic-load-balancers-04
+E.16.  since draft-ietf-quic-load-balancers-04
 
    *  Rearranged the shared-state retry token to simplify token
       processing
@@ -1840,7 +1845,7 @@ E.15.  since draft-ietf-quic-load-balancers-04
 
    *  Additional compliant DCID criteria
 
-E.16.  since-draft-ietf-quic-load-balancers-03
+E.17.  since-draft-ietf-quic-load-balancers-03
 
    *  Improved Config Rotation text
 
@@ -1848,7 +1853,7 @@ E.16.  since-draft-ietf-quic-load-balancers-03
 
    *  Deleted the Obfuscated CID algorithm
 
-E.17.  since-draft-ietf-quic-load-balancers-02
+E.18.  since-draft-ietf-quic-load-balancers-02
 
    *  Replaced stream cipher algorithm with three-pass version
 
@@ -1862,7 +1867,7 @@ E.17.  since-draft-ietf-quic-load-balancers-02
 
    *  Allow dropped long-header packets for known QUIC versions
 
-E.18.  since-draft-ietf-quic-load-balancers-01
+E.19.  since-draft-ietf-quic-load-balancers-01
 
    *  Test vectors for load balancer decoding
 
@@ -1872,15 +1877,15 @@ E.18.  since-draft-ietf-quic-load-balancers-01
 
    *  Discussed load balancer chains
 
-E.19.  since-draft-ietf-quic-load-balancers-00
+E.20.  since-draft-ietf-quic-load-balancers-00
 
    *  Removed in-band protocol from the document
 
-E.20.  Since draft-duke-quic-load-balancers-06
+E.21.  Since draft-duke-quic-load-balancers-06
 
    *  Switch to IETF WG draft.
 
-E.21.  Since draft-duke-quic-load-balancers-05
+E.22.  Since draft-duke-quic-load-balancers-05
 
    *  Editorial changes
 
@@ -1894,11 +1899,11 @@ E.21.  Since draft-duke-quic-load-balancers-05
 
    *  Added psuedocode for config schema
 
-E.22.  Since draft-duke-quic-load-balancers-04
+E.23.  Since draft-duke-quic-load-balancers-04
 
    *  Added standard for retry services
 
-E.23.  Since draft-duke-quic-load-balancers-03
+E.24.  Since draft-duke-quic-load-balancers-03
 
    *  Renamed Plaintext CID algorithm as Obfuscated CID
 
@@ -1908,7 +1913,7 @@ E.23.  Since draft-duke-quic-load-balancers-03
 
    *  Added self-encoding of CID length
 
-E.24.  Since draft-duke-quic-load-balancers-02
+E.25.  Since draft-duke-quic-load-balancers-02
 
    *  Added Config Rotation
 
@@ -1920,7 +1925,7 @@ E.24.  Since draft-duke-quic-load-balancers-02
 
    *  Reformatted QUIC-LB packets
 
-E.25.  Since draft-duke-quic-load-balancers-01
+E.26.  Since draft-duke-quic-load-balancers-01
 
    *  Complete rewrite
 
@@ -1928,7 +1933,7 @@ E.25.  Since draft-duke-quic-load-balancers-01
 
    *  Lightweight messages
 
-E.26.  Since draft-duke-quic-load-balancers-00
+E.27.  Since draft-duke-quic-load-balancers-00
 
    *  Converted to markdown
 
