@@ -631,10 +631,10 @@ aes_output = 0xa255dd8cdacf01948d3a848c3c7fee23
 right_1 = 0x0c69c275 ^ 0xa255dd8c = 0xae3c1ff9
 
 // step 5 (clear bits)
-right_1 = 0x0e8c1ff9
+right_1 = 0x0e3c1ff9
 
 // step 6
-aes_input = 0x0e8c1ff9000000000000000000000702
+aes_input = 0x0e3c1ff9000000000000000000000702
 aes_output = 0xe5e452cb9e1bedb0b2bf830506bf4c4e
 left_1 = 0x31441a90 ^ 0xe5e452cb = 0xd4a0485b
 
