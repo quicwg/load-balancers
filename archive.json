@@ -1,6 +1,6 @@
 {
   "magic": "E!vIA5L86J2I",
-  "timestamp": "2024-02-05T20:31:09.470870+00:00",
+  "timestamp": "2024-03-26T18:13:33.191671+00:00",
   "repo": "quicwg/load-balancers",
   "labels": [
     {
@@ -3656,6 +3656,22 @@
       "createdAt": "2024-01-11T00:11:30Z",
       "updatedAt": "2024-02-05T20:30:32Z",
       "closedAt": "2024-02-05T20:30:32Z",
+      "comments": []
+    },
+    {
+      "number": 227,
+      "id": "I_kwDODoD6yc6C8xCQ",
+      "title": "There is an error in the encryption example .",
+      "url": "https://github.com/quicwg/load-balancers/issues/227",
+      "state": "OPEN",
+      "author": "nandsky",
+      "authorAssociation": "CONTRIBUTOR",
+      "assignees": [],
+      "labels": [],
+      "body": "detail: #226 ",
+      "createdAt": "2024-03-20T08:45:15Z",
+      "updatedAt": "2024-03-20T08:45:15Z",
+      "closedAt": null,
       "comments": []
     }
   ],
@@ -11284,6 +11300,42 @@
           "comments": []
         }
       ]
+    },
+    {
+      "number": 226,
+      "id": "PR_kwDODoD6yc5p1Z-l",
+      "title": "fixed encryption example",
+      "url": "https://github.com/quicwg/load-balancers/pull/226",
+      "state": "MERGED",
+      "author": "nandsky",
+      "authorAssociation": "CONTRIBUTOR",
+      "assignees": [],
+      "labels": [],
+      "body": "There is an error in the [encryption example](https://github.com/quicwg/load-balancers/blob/84fd79e6571401689b4cd4af01ca26739abe3bab/draft-ietf-quic-load-balancers.md?plain=1#L637) .\r\n\r\n> // step 4\r\n> right_1 = 0x0c69c275 ^ 0xa255dd8c = 0xae**3c**1ff9\r\n>\r\n> // step 5 (clear bits)\r\n> right_1 = 0x0e**8c**1ff9\r\n> \r\n> // step 6\r\n> aes_input = 0x0e**8c**1ff9000000000000000000000702\r\n> aes_output = 0xe5e452cb9e1bedb0b2bf830506bf4c4e\r\n\r\nTest as follows:\r\n\r\n``` python\r\n#!/usr/bin/env python\r\n\r\nfrom Crypto.Cipher import AES\r\nimport binascii\r\n\r\nkey = binascii.unhexlify('fdf726a9893ec05c0632d3956680baf0')\r\ncipher = AES.new(key, AES.MODE_ECB)\r\n\r\ndef encrypt(plaintext):\r\n        ciphertext = cipher.encrypt(plaintext)\r\n        hex_str = binascii.b2a_hex(ciphertext)\r\n        print(\"plaintext: \", binascii.b2a_hex(plaintext), \" -> ciphertext: \", hex_str)\r\n\r\nplaintext1 = binascii.unhexlify('0e8c1ff9000000000000000000000702')\r\nplaintext2 = binascii.unhexlify('0e3c1ff9000000000000000000000702')\r\n\r\nencrypt(plaintext1)\r\nencrypt(plaintext2)\r\n```\r\n\r\n```shell\r\n$python ~/test.py\r\n('plaintext: ', '0e8c1ff9000000000000000000000702', ' -> ciphertext: ', '6e9883364a602f96aac381ecfeaff13f')\r\n('plaintext: ', '0e3c1ff9000000000000000000000702', ' -> ciphertext: ', 'e5e452cb9e1bedb0b2bf830506bf4c4e')\r\n```",
+      "createdAt": "2024-03-16T17:50:57Z",
+      "updatedAt": "2024-03-26T18:13:00Z",
+      "baseRepository": "quicwg/load-balancers",
+      "baseRefName": "main",
+      "baseRefOid": "84fd79e6571401689b4cd4af01ca26739abe3bab",
+      "headRepository": "nandsky/load-balancers",
+      "headRefName": "encryption_example",
+      "headRefOid": "d0fa1b12f4f095815d17988a26d7398450e2089c",
+      "closedAt": "2024-03-26T18:12:59Z",
+      "mergedAt": "2024-03-26T18:12:59Z",
+      "mergedBy": "martinduke",
+      "mergeCommit": {
+        "oid": "12b10309682dd06edc4a18912cb27ab7a8f8b9f7"
+      },
+      "comments": [
+        {
+          "author": "martinduke",
+          "authorAssociation": "CONTRIBUTOR",
+          "body": "Thanks for catching this!",
+          "createdAt": "2024-03-26T18:12:56Z",
+          "updatedAt": "2024-03-26T18:12:56Z"
+        }
+      ],
+      "reviews": []
     }
   ]
 }
