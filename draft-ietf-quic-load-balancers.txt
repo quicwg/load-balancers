@@ -5,10 +5,10 @@
 QUIC                                                             M. Duke
 Internet-Draft                                                    Google
 Intended status: Standards Track                                N. Banks
-Expires: 8 August 2024                                         Microsoft
+Expires: 27 September 2024                                     Microsoft
                                                               C. Huitema
                                                     Private Octopus Inc.
-                                                         5 February 2024
+                                                           26 March 2024
 
 
             QUIC-LB: Generating Routable QUIC Connection IDs
@@ -55,7 +55,7 @@ Status of This Memo
    time.  It is inappropriate to use Internet-Drafts as reference
    material or to cite them other than as "work in progress."
 
-   This Internet-Draft will expire on 8 August 2024.
+   This Internet-Draft will expire on 27 September 2024.
 
 Copyright Notice
 
@@ -742,10 +742,10 @@ Table of Contents
    right_1 = 0x0c69c275 ^ 0xa255dd8c = 0xae3c1ff9
 
    // step 5 (clear bits)
-   right_1 = 0x0e8c1ff9
+   right_1 = 0x0e3c1ff9
 
    // step 6
-   aes_input = 0x0e8c1ff9000000000000000000000702
+   aes_input = 0x0e3c1ff9000000000000000000000702
    aes_output = 0xe5e452cb9e1bedb0b2bf830506bf4c4e
    left_1 = 0x31441a90 ^ 0xe5e452cb = 0xd4a0485b
 
@@ -1222,9 +1222,9 @@ Table of Contents
    [I-D.ietf-tls-esni]
               Rescorla, E., Oku, K., Sullivan, N., and C. A. Wood, "TLS
               Encrypted Client Hello", Work in Progress, Internet-Draft,
-              draft-ietf-tls-esni-17, 9 October 2023,
+              draft-ietf-tls-esni-18, 4 March 2024,
               <https://datatracker.ietf.org/doc/html/draft-ietf-tls-
-              esni-17>.
+              esni-18>.
 
    [Patarin2008]
               Patarin, J., "Generic Attacks on Feistel Schemes -
