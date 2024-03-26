@@ -644,7 +644,7 @@ left_1 = 0xd4a04850
 // step 8
 aes_input = 0xd4a04850000000000000000000000703
 aes_output = 0xb7821ab3024fed0913b6a04d18e3216f
-right_2 = 0x0e8c1ff9 ^ 0xb7821ab3 = 0xb9be054a
+right_2 = 0x0e3c1ff9 ^ 0xb7821ab3 = 0xb9be054a
 
 // step 9 (clear bits)
 right_2 = 0x09be054a
@@ -1487,12 +1487,17 @@ the applicability of this section to future versions of DTLS.
 Manasi Deval, Erik Fuller, Toma Gavrichenkov, Jana Iyengar, Subodh Iyengar,
 Stefan Kolbl, Ladislav Lhotka, Jan Lindblad, Ling Tao Nju, Ilari Liusvaara,
 Kazuho Oku, Udip Pant, Ian Swett, Andy Sykes, Martin Thomson, Dmitri Tikhonov,
-Victor Vasiliev, and William Zeng Ke all provided useful input to this document.
+Victor Vasiliev, Yu Zhu, and William Zeng Ke all provided useful input to this
+document.
 
 # Change Log
 
 > **RFC Editor's Note:**  Please remove this section prior to
 > publication of a final version of this document.
+
+## since draft-ietf-quic-load-balancers-19
+
+- Fixed error in encryption example.
 
 ## since draft-ietf-quic-load-balancers-18
 
