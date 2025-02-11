@@ -252,8 +252,8 @@ to the correct server.
 
 There are situations where a server pool might be operating two or more routing
 algorithms or parameter sets simultaneously.  The load balancer uses the first
-two bits of the connection ID to multiplex incoming DCIDs over these schemes
-(see {{config-rotation}}).
+three bits of the connection ID to multiplex incoming Destination Connection IDs
+(DCIDs) over these schemes (see {{config-rotation}}).
 
 ## Unroutable Connection IDs {#unroutable}
 
