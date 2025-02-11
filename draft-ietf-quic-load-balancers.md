@@ -775,9 +775,9 @@ did not use as part of the nonce.
 
 ## Server Process Demultiplexing
 
-QUIC servers might have QUIC running on multiple processes listening on the same
-address, and have a need to demultiplex between them. In principle, this
-demultiplexer is a Layer 4 load balancer, and the guidance in {{lb-chains}}
+QUIC servers might have QUIC running on multiple processes or threads listening
+on the same address, and have a need to demultiplex between them. In principle,
+this demultiplexer is a Layer 4 load balancer, and the guidance in {{lb-chains}}
 applies. However, in many deployments the demultiplexer lacks the capability to
 perform decryption operations. Internal server coordination is out of scope of
 this specification, but this non-normative section proposes some approaches
@@ -805,7 +805,10 @@ a key locally generated for the sole use of that server). The hash result is
 used as a bitmask to XOR with the bits encoding the process ID. On packet
 receipt, the demultiplexer applies the same keyed hash to generate the same
 mask and recoversthe process ID. (Note that this approach is conceptually
-similar to QUIC header protection).
+similar to QUIC header protection). It is important that the server also appends
+the thread ID to the server ID in the plaintext, so that different threads do
+not generate the same ciphertext. The load balancer will consider this data to
+be part of the nonce.
 
 ## Moving connections between servers
 
@@ -1497,6 +1500,7 @@ document.
 
 ## since draft-ietf-quic-load-balancers-19
 
+- Further guidance on multiple server processes/threads
 - Fixed error in encryption example.
 
 ## since draft-ietf-quic-load-balancers-18
