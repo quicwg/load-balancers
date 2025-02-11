@@ -924,10 +924,10 @@ Table of Contents
       demultiplexer applies the same keyed hash to generate the same
       mask and recoversthe process ID.  (Note that this approach is
       conceptually similar to QUIC header protection).  It is important
-      that the server also appends the thread ID to the server ID in the
-      plaintext, so that different threads do not generate the same
-      ciphertext.  The load balancer will consider this data to be part
-      of the nonce.
+      that the server also appends the process ID to the server ID in
+      the plaintext, so that different processes do not generate the
+      same ciphertext.  The load balancer will consider this data to be
+      part of the nonce.
 
 6.3.  Moving connections between servers
 

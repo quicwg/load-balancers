@@ -2350,7 +2350,7 @@ used as a bitmask to XOR with the bits encoding the process ID. On packet
 receipt, the demultiplexer applies the same keyed hash to generate the same
 mask and recoversthe process ID. (Note that this approach is conceptually
 similar to QUIC header protection). It is important that the server also appends
-the thread ID to the server ID in the plaintext, so that different threads do
+the process ID to the server ID in the plaintext, so that different processes do
 not generate the same ciphertext. The load balancer will consider this data to
 be part of the nonce.<a href="#section-6.2-2.4.1" class="pilcrow">¶</a></p>
 </li>
