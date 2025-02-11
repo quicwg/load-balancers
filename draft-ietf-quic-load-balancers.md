@@ -1486,9 +1486,9 @@ the applicability of this section to future versions of DTLS.
 
 Manasi Deval, Erik Fuller, Toma Gavrichenkov, Jana Iyengar, Subodh Iyengar,
 Stefan Kolbl, Ladislav Lhotka, Jan Lindblad, Ling Tao Nju, Ilari Liusvaara,
-Kazuho Oku, Udip Pant, Ian Swett, Andy Sykes, Martin Thomson, Dmitri Tikhonov,
-Victor Vasiliev, Yu Zhu, and William Zeng Ke all provided useful input to this
-document.
+Kazuho Oku, Udip Pant, Zaheduzzaman Sarker, Ian Swett, Andy Sykes, Martin
+Thomson, Dmitri Tikhonov, Victor Vasiliev, Yu Zhu, and William Zeng Ke all
+provided useful input to this document.
 
 # Change Log
 
