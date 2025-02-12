@@ -1,6 +1,6 @@
 {
   "magic": "E!vIA5L86J2I",
-  "timestamp": "2025-02-11T18:57:25.421763+00:00",
+  "timestamp": "2025-02-12T17:44:43.072846+00:00",
   "repo": "quicwg/load-balancers",
   "labels": [
     {
@@ -57,6 +57,11 @@
       "name": "needs-discussion",
       "description": "",
       "color": "32d5db"
+    },
+    {
+      "name": "Parked",
+      "description": "",
+      "color": "D03AB5"
     }
   ],
   "issues": [
@@ -3701,7 +3706,7 @@
     {
       "number": 230,
       "id": "I_kwDODoD6yc6MmomS",
-      "title": "Allow the load balancer to assume DCID format of Initial Packet and apply certain routing strategy on it",
+      "title": "Allow fallback algorithms to parse known QUIC versions ",
       "url": "https://github.com/quicwg/load-balancers/issues/230",
       "state": "OPEN",
       "author": "thynson",
@@ -3710,9 +3715,31 @@
       "labels": [],
       "body": "Usually, the DCID in the Initial Packet is chosen by the clients with a random value, the current QUIC-LB draft does not mention much about it.\r\n\r\nIt would be great if the final RFC allowed that, in certain deployments, the clients and the load balancers may assume the DCID of Initial Packets are in a particular format so that some routing strategy can be applied, as long as the DCID is unpredictable with at least 64 bits random entropy, thus not weaken the requirements in section 7.2 of RFC9000.\r\n\r\nFor example, the client may construct the DCID of the initial packet with a hashed client identifier and a random nonce of 8 bytes, and the load balancers will route the initial packets based on the hashed client identifier if the DCID is in a recognized format, otherwise fallback to the way how the unroutable CID is handled. Of course, such construct comes with security concerns, and probably should be encrypted, e.g. in the same way as how the routable CID is encrypted, with a key that needs to be exchanged/negotiated out of bands.",
       "createdAt": "2024-06-18T05:25:41Z",
-      "updatedAt": "2024-06-18T06:36:42Z",
+      "updatedAt": "2025-02-12T17:20:09Z",
       "closedAt": null,
-      "comments": []
+      "comments": [
+        {
+          "author": "martinduke",
+          "authorAssociation": "CONTRIBUTOR",
+          "body": "Thanks for filing the issue!\n\nThe spec assumes that client-generated connection IDs are random, and Section 3.1 is all about how to handle it.\n\nAdding client coordination to the operating model is a major expansion of scope. Allowing clients to control backend routing introduces security concerns well beyond what can be resolved with encryption.\n\nFurthermore, special rules for Initial Packets introduces version dependence in a way that is unsatisfactory (See Sec. 7).\n\nAdding new rules for unroutable DCIDs due to an alternate structure to client-generated connection IDs requires only modest changes to QUIC-LB, and I would very much prefer that they go in a separate draft that modifies the sections about unroutable DCID handling.\n\nI'm closing this with no action. If there is significant interest on the mailing list to make this happen, I'd be willing to reconsider.",
+          "createdAt": "2025-02-11T19:10:18Z",
+          "updatedAt": "2025-02-11T19:10:18Z"
+        },
+        {
+          "author": "thynson",
+          "authorAssociation": "NONE",
+          "body": "Thanks for the reply. \n\nWe're fine with this decision, as in our deployment, both client, server and balancer are under controlled. \n\nAnd it seems to me that [Section 3.2. Fallback Algorithms] already allowed us to do so, except there is something we violate but, and as a feedback, we would like to propose to change/fix. \n\nSince in our implementation we treat Initial Packet differently, effectively it violates\n\n> A fallback algorithm MUST NOT make the routing behavior dependent on\n   any bits in the first octet of the QUIC packet header, except the\n   first bit, which indicates a long header.\n\nwhile the type of packets is something version specific. \n\nMeanwhile, In [7.  Version Invariance of QUIC-LB], \n\n> Some load balancers might inspect version-specific elements of\n   packets to make a routing decision.  This might include the Server\n   Name Indication (SNI) extension in the TLS Client Hello.\n\nSo I think Section 3.2 should be fixed to make it consist.",
+          "createdAt": "2025-02-12T10:27:13Z",
+          "updatedAt": "2025-02-12T10:29:01Z"
+        },
+        {
+          "author": "martinduke",
+          "authorAssociation": "CONTRIBUTOR",
+          "body": "I agree that this could be better written. Reopening.",
+          "createdAt": "2025-02-12T17:19:35Z",
+          "updatedAt": "2025-02-12T17:19:35Z"
+        }
+      ]
     },
     {
       "number": 231,
@@ -9791,10 +9818,12 @@
       "author": "huitema",
       "authorAssociation": "CONTRIBUTOR",
       "assignees": [],
-      "labels": [],
+      "labels": [
+        "Parked"
+      ],
       "body": "Not really sure that we have to do that, but I did it anyhow. \r\nAlso fixed a couple of random line length issues that were causing errors in xml2rfc",
       "createdAt": "2022-07-07T06:01:41Z",
-      "updatedAt": "2022-07-08T17:35:08Z",
+      "updatedAt": "2025-02-11T19:11:17Z",
       "baseRepository": "quicwg/load-balancers",
       "baseRefName": "main",
       "baseRefOid": "8569234f87c482c8a081e28a0ff184d83c02e700",
@@ -11433,13 +11462,39 @@
       "labels": [],
       "body": "Fixes #231 ",
       "createdAt": "2025-02-11T18:57:13Z",
-      "updatedAt": "2025-02-11T18:57:13Z",
+      "updatedAt": "2025-02-11T18:58:06Z",
       "baseRepository": "quicwg/load-balancers",
       "baseRefName": "main",
       "baseRefOid": "cd03bab419f180a3d287aec85b82ce03ef24d471",
       "headRepository": "quicwg/load-balancers",
       "headRefName": "threads",
-      "headRefOid": "4bb8082f313e6092afde0d8611e22a38e38ca1b6",
+      "headRefOid": "9985dafb271a955f297bae7261caab3eb4f40686",
+      "closedAt": null,
+      "mergedAt": null,
+      "mergedBy": null,
+      "mergeCommit": null,
+      "comments": [],
+      "reviews": []
+    },
+    {
+      "number": 233,
+      "id": "PR_kwDODoD6yc6K2YJg",
+      "title": "Expand DCID, update reference to config ID",
+      "url": "https://github.com/quicwg/load-balancers/pull/233",
+      "state": "OPEN",
+      "author": "martinduke",
+      "authorAssociation": "CONTRIBUTOR",
+      "assignees": [],
+      "labels": [],
+      "body": "Fixes #229 ",
+      "createdAt": "2025-02-11T19:00:55Z",
+      "updatedAt": "2025-02-11T19:10:39Z",
+      "baseRepository": "quicwg/load-balancers",
+      "baseRefName": "main",
+      "baseRefOid": "cd03bab419f180a3d287aec85b82ce03ef24d471",
+      "headRepository": "quicwg/load-balancers",
+      "headRefName": "definition",
+      "headRefOid": "795433088dd186a6f343e640c7a9916392ab49bf",
       "closedAt": null,
       "mergedAt": null,
       "mergedBy": null,
