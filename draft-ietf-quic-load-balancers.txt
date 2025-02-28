@@ -357,8 +357,9 @@ Table of Contents
 
    There are situations where a server pool might be operating two or
    more routing algorithms or parameter sets simultaneously.  The load
-   balancer uses the first two bits of the connection ID to multiplex
-   incoming DCIDs over these schemes (see Section 2.1).
+   balancer uses the first three bits of the connection ID to multiplex
+   incoming Destination Connection IDs (DCIDs) over these schemes (see
+   Section 2.1).
 
 3.1.  Unroutable Connection IDs
 
@@ -1709,9 +1710,11 @@ Appendix D.  Acknowledgments
 
    Manasi Deval, Erik Fuller, Toma Gavrichenkov, Jana Iyengar, Subodh
    Iyengar, Stefan Kolbl, Ladislav Lhotka, Jan Lindblad, Ling Tao Nju,
-   Ilari Liusvaara, Kazuho Oku, Udip Pant, Ian Swett, Andy Sykes, Martin
-   Thomson, Dmitri Tikhonov, Victor Vasiliev, Xingcan Lan, Yu Zhu, and
-   William Zeng Ke all provided useful input to this document.
+   Ilari Liusvaara,
+
+   Kazuho Oku, Udip Pant, Zaheduzzaman Sarker, Ian Swett, Andy Sykes,
+   Martin Thomson, Dmitri Tikhonov, Victor Vasiliev, Xingcan Lan, Yu
+   Zhu, and William Zeng Ke all provided useful input to this document.
 
 Appendix E.  Change Log
 
