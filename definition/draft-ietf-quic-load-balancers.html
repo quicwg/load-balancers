@@ -445,7 +445,7 @@ dl {
     margin-bottom: 0;
   }
 }
-dl > dt {
+dl:not(.dlNewline) > dt {
   float: left;
   margin-right: 2ch;
   min-width: 8ch;
@@ -1058,7 +1058,7 @@ svg :is([fill="white"], [fill^="#fff"]) {
 </tr></thead>
 <tfoot><tr>
 <td class="left">Duke, et al.</td>
-<td class="center">Expires 15 August 2025</td>
+<td class="center">Expires 1 September 2025</td>
 <td class="right">[Page]</td>
 </tr></tfoot>
 </table>
@@ -1071,12 +1071,12 @@ svg :is([fill="white"], [fill^="#fff"]) {
 <dd class="internet-draft">draft-ietf-quic-load-balancers-latest</dd>
 <dt class="label-published">Published:</dt>
 <dd class="published">
-<time datetime="2025-02-11" class="published">11 February 2025</time>
+<time datetime="2025-02-28" class="published">28 February 2025</time>
     </dd>
 <dt class="label-intended-status">Intended Status:</dt>
 <dd class="intended-status">Standards Track</dd>
 <dt class="label-expires">Expires:</dt>
-<dd class="expires"><time datetime="2025-08-15">15 August 2025</time></dd>
+<dd class="expires"><time datetime="2025-09-01">1 September 2025</time></dd>
 <dt class="label-authors">Authors:</dt>
 <dd class="authors">
 <div class="author">
@@ -1137,7 +1137,7 @@ self-encoding their length to aid some hardware offloads.<a href="#section-abstr
         time. It is inappropriate to use Internet-Drafts as reference
         material or to cite them other than as "work in progress."<a href="#section-boilerplate.1-3" class="pilcrow">¶</a></p>
 <p id="section-boilerplate.1-4">
-        This Internet-Draft will expire on 15 August 2025.<a href="#section-boilerplate.1-4" class="pilcrow">¶</a></p>
+        This Internet-Draft will expire on 1 September 2025.<a href="#section-boilerplate.1-4" class="pilcrow">¶</a></p>
 </section>
 </div>
 <div id="copyright">
@@ -1678,9 +1678,9 @@ drop a QUIC version 1 Handshake packet with an unroutable DCID, as a
 version 1 Handshake packet sent to a QUIC-LB routable server will always have
 a server-generated routable CID. The prohibition against dropping packets with
 long headers remains for unknown QUIC versions.<a href="#section-3.1-8" class="pilcrow">¶</a></p>
-<p id="section-3.1-9">Furthermore, while the load balancer function MUST NOT drop packets, the device
-might implement other security policies, outside the scope of this
-specification, that might force a drop.<a href="#section-3.1-9" class="pilcrow">¶</a></p>
+<p id="section-3.1-9">Furthermore, while the load balancer function MUST NOT otherwise drop long
+header packets, the device might implement other security policies, outside the
+scope of this specification, that might force a drop.<a href="#section-3.1-9" class="pilcrow">¶</a></p>
 <p id="section-3.1-10">Servers that receive packets with unroutable CIDs MUST use the available
 mechanisms to induce the client to use a routable CID in future packets. In
 QUIC version 1, this requires using a routable CID in the Source CID field of
@@ -1695,18 +1695,17 @@ server-generated long headers.<a href="#section-3.1-10" class="pilcrow">¶</a></
 <p id="section-3.2-1">There are conditions described below where a load balancer routes a packet using
 a "fallback algorithm." It can choose any algorithm, without coordination with
 the servers, but the algorithm SHOULD be deterministic over short time scales so
-that related packets go to the same server. The design of this algorithm SHOULD
-consider the version-invariant properties of QUIC described in <span>[<a href="#RFC8999" class="cite xref">RFC8999</a>]</span> to
-maximize its robustness to future versions of QUIC.<a href="#section-3.2-1" class="pilcrow">¶</a></p>
-<p id="section-3.2-2">A fallback algorithm MUST NOT make the routing behavior dependent on any bits
-in the first octet of the QUIC packet header, except the first bit, which
-indicates a long header. All other bits are QUIC version-dependent and
-intermediaries SHOULD NOT base their design on version-specific templates.<a href="#section-3.2-2" class="pilcrow">¶</a></p>
-<p id="section-3.2-3">For example, one fallback algorithm might convert a unroutable DCID to an
+that related packets go to the same server.<a href="#section-3.2-1" class="pilcrow">¶</a></p>
+<p id="section-3.2-2">A fallback algorithm MAY parse a packet from a QUIC version it understands and
+use that information to make a routing decision.<a href="#section-3.2-2" class="pilcrow">¶</a></p>
+<p id="section-3.2-3">For versions it does not understand, a fallback algorithm MUST NOT make the
+routing behavior dependent on any part of the long header that is not invariant
+across versions (see <span>[<a href="#RFC8999" class="cite xref">RFC8999</a>]</span>).<a href="#section-3.2-3" class="pilcrow">¶</a></p>
+<p id="section-3.2-4">For example, one fallback algorithm might convert a unroutable DCID to an
 integer and divided by the number of servers, with the modulus used to forward
 the packet. The number of servers is usually consistent on the time scale of a
 QUIC connection handshake. Another might simply hash the address/port 4-tuple.
-See also <a href="#version-invariance" class="auto internal xref">Section 7</a>.<a href="#section-3.2-3" class="pilcrow">¶</a></p>
+See also <a href="#version-invariance" class="auto internal xref">Section 7</a>.<a href="#section-3.2-4" class="pilcrow">¶</a></p>
 </section>
 </div>
 <div id="sid-allocation">
@@ -2661,7 +2660,7 @@ server ID allocations for the clear text and the encrypted versions.<a href="#se
 <dl class="references">
 <dt id="I-D.ietf-tls-esni">[I-D.ietf-tls-esni]</dt>
         <dd>
-<span class="refAuthor">Rescorla, E.</span>, <span class="refAuthor">Oku, K.</span>, <span class="refAuthor">Sullivan, N.</span>, and <span class="refAuthor">C. A. Wood</span>, <span class="refTitle">"TLS Encrypted Client Hello"</span>, <span class="refContent">Work in Progress</span>, <span class="seriesInfo">Internet-Draft, draft-ietf-tls-esni-22</span>, <time datetime="2024-09-15" class="refDate">15 September 2024</time>, <span>&lt;<a href="https://datatracker.ietf.org/doc/html/draft-ietf-tls-esni-22">https://datatracker.ietf.org/doc/html/draft-ietf-tls-esni-22</a>&gt;</span>. </dd>
+<span class="refAuthor">Rescorla, E.</span>, <span class="refAuthor">Oku, K.</span>, <span class="refAuthor">Sullivan, N.</span>, and <span class="refAuthor">C. A. Wood</span>, <span class="refTitle">"TLS Encrypted Client Hello"</span>, <span class="refContent">Work in Progress</span>, <span class="seriesInfo">Internet-Draft, draft-ietf-tls-esni-23</span>, <time datetime="2025-02-19" class="refDate">19 February 2025</time>, <span>&lt;<a href="https://datatracker.ietf.org/doc/html/draft-ietf-tls-esni-23">https://datatracker.ietf.org/doc/html/draft-ietf-tls-esni-23</a>&gt;</span>. </dd>
 <dd class="break"></dd>
 <dt id="Patarin2008">[Patarin2008]</dt>
         <dd>
@@ -3183,10 +3182,10 @@ the applicability of this section to future versions of DTLS.<a href="#appendix-
 <a href="#appendix-D" class="section-number selfRef">Appendix D. </a><a href="#name-acknowledgments" class="section-name selfRef">Acknowledgments</a>
       </h2>
 <p id="appendix-D-1">Manasi Deval, Erik Fuller, Toma Gavrichenkov, Jana Iyengar, Subodh Iyengar,
-Stefan Kolbl, Ladislav Lhotka, Jan Lindblad, Ling Tao Nju, Ilari Liusvaara,
-Kazuho Oku, Udip Pant, Zaheduzzaman Sarker, Ian Swett, Andy Sykes, Martin
-Thomson, Dmitri Tikhonov, Victor Vasiliev, Yu Zhu, and William Zeng Ke all
-provided useful input to this document.<a href="#appendix-D-1" class="pilcrow">¶</a></p>
+Stefan Kolbl, Ladislav Lhotka, Jan Lindblad, Ling Tao Nju, Ilari Liusvaara,<a href="#appendix-D-1" class="pilcrow">¶</a></p>
+<p id="appendix-D-2">Kazuho Oku, Udip Pant, Zaheduzzaman Sarker, Ian Swett, Andy Sykes, Martin
+Thomson, Dmitri Tikhonov, Victor Vasiliev, Xingcan Lan, Yu Zhu, and William
+Zeng Ke all provided useful input to this document.<a href="#appendix-D-2" class="pilcrow">¶</a></p>
 </section>
 </div>
 <div id="change-log">
@@ -3208,6 +3207,9 @@ publication of a final version of this document.<a href="#appendix-E-1.1.1" clas
 <ul class="normal">
 <li class="normal" id="appendix-E.1-1.1">
             <p id="appendix-E.1-1.1.1">Fixed error in encryption example.<a href="#appendix-E.1-1.1.1" class="pilcrow">¶</a></p>
+</li>
+          <li class="normal" id="appendix-E.1-1.2">
+            <p id="appendix-E.1-1.2.1">Clarified fallback algorithms and known QUIC versions.<a href="#appendix-E.1-1.2.1" class="pilcrow">¶</a></p>
 </li>
         </ul>
 </section>
