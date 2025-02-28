@@ -1,6 +1,6 @@
 {
   "magic": "E!vIA5L86J2I",
-  "timestamp": "2025-02-12T17:44:43.072846+00:00",
+  "timestamp": "2025-02-28T22:04:11.977096+00:00",
   "repo": "quicwg/load-balancers",
   "labels": [
     {
@@ -3708,15 +3708,15 @@
       "id": "I_kwDODoD6yc6MmomS",
       "title": "Allow fallback algorithms to parse known QUIC versions ",
       "url": "https://github.com/quicwg/load-balancers/issues/230",
-      "state": "OPEN",
+      "state": "CLOSED",
       "author": "thynson",
       "authorAssociation": "NONE",
       "assignees": [],
       "labels": [],
       "body": "Usually, the DCID in the Initial Packet is chosen by the clients with a random value, the current QUIC-LB draft does not mention much about it.\r\n\r\nIt would be great if the final RFC allowed that, in certain deployments, the clients and the load balancers may assume the DCID of Initial Packets are in a particular format so that some routing strategy can be applied, as long as the DCID is unpredictable with at least 64 bits random entropy, thus not weaken the requirements in section 7.2 of RFC9000.\r\n\r\nFor example, the client may construct the DCID of the initial packet with a hashed client identifier and a random nonce of 8 bytes, and the load balancers will route the initial packets based on the hashed client identifier if the DCID is in a recognized format, otherwise fallback to the way how the unroutable CID is handled. Of course, such construct comes with security concerns, and probably should be encrypted, e.g. in the same way as how the routable CID is encrypted, with a key that needs to be exchanged/negotiated out of bands.",
       "createdAt": "2024-06-18T05:25:41Z",
-      "updatedAt": "2025-02-12T17:20:09Z",
-      "closedAt": null,
+      "updatedAt": "2025-02-28T22:03:42Z",
+      "closedAt": "2025-02-28T22:03:42Z",
       "comments": [
         {
           "author": "martinduke",
@@ -3756,6 +3756,37 @@
       "updatedAt": "2025-02-11T18:51:17Z",
       "closedAt": null,
       "comments": []
+    },
+    {
+      "number": 235,
+      "id": "I_kwDODoD6yc6sI-vS",
+      "title": "Tensions between Fallback algorithms and 0b111 routing.",
+      "url": "https://github.com/quicwg/load-balancers/issues/235",
+      "state": "OPEN",
+      "author": "martinduke",
+      "authorAssociation": "CONTRIBUTOR",
+      "assignees": [],
+      "labels": [],
+      "body": "When LBs are missing config that servers are using, connections will drop. Sec 2.1 says LBs SHOULD have a superset of active server configs; consider escalating this to a MUST (or have a SHOULD with strong warnings).\n\nAssume that everyone has config. Sec 2.2 says that 0b111 CIDs are always routable and MUST be routed by 4-tuple. Thus, for the 1/8 of connections where the client happens to pick a 0b111 CID, any SNI-based routing will fail. This is suboptimal, especially since it applies to the main case where everyone has config.\n\n**Recommendation**: Update 2.2 to add an exception for the SNI thing.\n\nIf the server doesn't have a config, 0b111 CIDs are going to work less well:\n\n1) If the fallback algorithm is purely 4-tuple based, things will work fine (until there is a NAT rebinding or migration, which is expected). The 0b111 codepoint will cause the LB to pass later packets consistently.\n\n2) If the fallback algorithm uses any other information, the 0b111 CID will be misrouted, as different logic is being applied to both.\n\nIt's not clear what to do about this. Some observations:\n\na) If the LB doesn't have config, the servers don't either. In Sec 2, it should say that LBs with no config should just 4-tuple route.\n\nb) If the LB has config, it has no way of knowing that the server it routes to is going to generate 0b111, putting us in the dilemma above.\n\nc) If the server keeps a table of 4-tuple mappings to servers, this is likely to work.\n\nIf we were optimizing for the no-config case, we'd just force fallback algorithms to be 4-tuple based. But that would make the happy path worse (by disallowing SNI routing).\n\n",
+      "createdAt": "2025-02-28T20:47:53Z",
+      "updatedAt": "2025-02-28T22:02:41Z",
+      "closedAt": null,
+      "comments": [
+        {
+          "author": "ggreenway",
+          "authorAssociation": "NONE",
+          "body": "> When LBs are missing config that servers are using, connections will drop. Sec 2.1 says LBs SHOULD have a superset of active server configs; consider escalating this to a MUST (or have a SHOULD with strong warnings).\n\nI think if the LB doesn't have a matching configuration of what the server generated (regardless of the reason) the only thing it can really do is use it's fallback routing, and treat it the same way it treats an initial client-specified CID.\n\n> Sec 2.2 says that 0b111 CIDs are always routable and MUST be routed by 4-tuple.\n\nAs you noted, 1/8 of random CIDs will have this set. Because of this, I don't think there can be any special requirement on 0b111 other than \"use whatever fallback routing you'd use for an unroutable CID\", because there's no way to tell if this is a server-generated 0b111 or if it's a random/client-generated CID. I suppose for short-headers you could always assume it's generated by the server, but during the initial handshake the initial long-header packet will have a random CID, and subsequent hong-header handshake packets may have a server-generated CID. The only indication of which type may be the length, but the client might by chance choose an initial CID that is the same length as server CIDs, so that's an unreliable heuristic.",
+          "createdAt": "2025-02-28T21:45:49Z",
+          "updatedAt": "2025-02-28T21:45:49Z"
+        },
+        {
+          "author": "martinduke",
+          "authorAssociation": "CONTRIBUTOR",
+          "body": "One problem is that if the fallback uses the CID, and the server replaces the CID, it breaks the fallback.\n\nSimilarly, with SNI routing, 0-RTT and multi-packet CHLOs will break.\n\nI'm starting to think the way out is LB state -- track the routing decisions for all 4-tuples for which no routable CID has been observed. This can obviously be overwhelmed, but I can't see another way to resolve the tradeoffs except to not have SNI routing (which is how Google avoids it right now).\n\nSo,\n(1) 0b111 fits the definition of \"unroutable\".\n(2a) LBs MUST keep a listing of all 4-tuples that have not had a routable CID yet, and the server mapping, OR\n(2b) All unroutable CIDs are routed by 4-tuple.\n",
+          "createdAt": "2025-02-28T22:02:40Z",
+          "updatedAt": "2025-02-28T22:02:40Z"
+        }
+      ]
     }
   ],
   "pulls": [
@@ -11488,7 +11519,7 @@
       "labels": [],
       "body": "Fixes #229 ",
       "createdAt": "2025-02-11T19:00:55Z",
-      "updatedAt": "2025-02-11T19:10:39Z",
+      "updatedAt": "2025-02-12T19:25:14Z",
       "baseRepository": "quicwg/load-balancers",
       "baseRefName": "main",
       "baseRefOid": "cd03bab419f180a3d287aec85b82ce03ef24d471",
@@ -11500,7 +11531,63 @@
       "mergedBy": null,
       "mergeCommit": null,
       "comments": [],
-      "reviews": []
+      "reviews": [
+        {
+          "id": "PRR_kwDODoD6yc6bvwgW",
+          "commit": {
+            "abbreviatedOid": "7954330"
+          },
+          "author": "LPardue",
+          "authorAssociation": "MEMBER",
+          "state": "APPROVED",
+          "body": "",
+          "createdAt": "2025-02-12T19:25:14Z",
+          "updatedAt": "2025-02-12T19:25:14Z",
+          "comments": []
+        }
+      ]
+    },
+    {
+      "number": 234,
+      "id": "PR_kwDODoD6yc6K_rWc",
+      "title": "Clarified fallback algorithm rules for known versions",
+      "url": "https://github.com/quicwg/load-balancers/pull/234",
+      "state": "MERGED",
+      "author": "martinduke",
+      "authorAssociation": "CONTRIBUTOR",
+      "assignees": [],
+      "labels": [],
+      "body": "Fixes #230",
+      "createdAt": "2025-02-12T17:44:47Z",
+      "updatedAt": "2025-02-28T22:03:42Z",
+      "baseRepository": "quicwg/load-balancers",
+      "baseRefName": "main",
+      "baseRefOid": "cd03bab419f180a3d287aec85b82ce03ef24d471",
+      "headRepository": "quicwg/load-balancers",
+      "headRefName": "unroutable",
+      "headRefOid": "787a9f6b1dbbf036e31f353a1ad85232f6a0c4ec",
+      "closedAt": "2025-02-28T22:03:41Z",
+      "mergedAt": "2025-02-28T22:03:41Z",
+      "mergedBy": "martinduke",
+      "mergeCommit": {
+        "oid": "0b9374ddb2179db19742f38a5702a9e6278b0a44"
+      },
+      "comments": [],
+      "reviews": [
+        {
+          "id": "PRR_kwDODoD6yc6bvyFM",
+          "commit": {
+            "abbreviatedOid": "787a9f6"
+          },
+          "author": "LPardue",
+          "authorAssociation": "MEMBER",
+          "state": "APPROVED",
+          "body": "",
+          "createdAt": "2025-02-12T19:28:01Z",
+          "updatedAt": "2025-02-12T19:28:01Z",
+          "comments": []
+        }
+      ]
     }
   ]
 }
