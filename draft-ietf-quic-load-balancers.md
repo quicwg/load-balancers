@@ -252,8 +252,8 @@ to the correct server.
 
 There are situations where a server pool might be operating two or more routing
 algorithms or parameter sets simultaneously.  The load balancer uses the first
-two bits of the connection ID to multiplex incoming DCIDs over these schemes
-(see {{config-rotation}}).
+three bits of the connection ID to multiplex incoming Destination Connection IDs
+(DCIDs) over these schemes (see {{config-rotation}}).
 
 ## Unroutable Connection IDs {#unroutable}
 
@@ -1486,9 +1486,10 @@ the applicability of this section to future versions of DTLS.
 
 Manasi Deval, Erik Fuller, Toma Gavrichenkov, Jana Iyengar, Subodh Iyengar,
 Stefan Kolbl, Ladislav Lhotka, Jan Lindblad, Ling Tao Nju, Ilari Liusvaara,
-Kazuho Oku, Udip Pant, Ian Swett, Andy Sykes, Martin Thomson, Dmitri Tikhonov,
-Victor Vasiliev, Xingcan Lan, Yu Zhu, and William Zeng Ke all provided useful
-input to this document.
+
+Kazuho Oku, Udip Pant, Zaheduzzaman Sarker, Ian Swett, Andy Sykes, Martin
+Thomson, Dmitri Tikhonov, Victor Vasiliev, Xingcan Lan, Yu Zhu, and William
+Zeng Ke all provided useful input to this document.
 
 # Change Log
 
