@@ -890,14 +890,14 @@ Table of Contents
 
 6.2.  Server Process Demultiplexing
 
-   QUIC servers might have QUIC running on multiple processes listening
-   on the same address, and have a need to demultiplex between them.  In
-   principle, this demultiplexer is a Layer 4 load balancer, and the
-   guidance in Section 6.1 applies.  However, in many deployments the
-   demultiplexer lacks the capability to perform decryption operations.
-   Internal server coordination is out of scope of this specification,
-   but this non-normative section proposes some approaches that could
-   work given certain server capabilities:
+   QUIC servers might have QUIC running on multiple processes or threads
+   listening on the same address, and have a need to demultiplex between
+   them.  In principle, this demultiplexer is a Layer 4 load balancer,
+   and the guidance in Section 6.1 applies.  However, in many
+   deployments the demultiplexer lacks the capability to perform
+   decryption operations.  Internal server coordination is out of scope
+   of this specification, but this non-normative section proposes some
+   approaches that could work given certain server capabilities:
 
    *  Some bytes of the server ID are reserved to encode the process ID.
       The demultiplexer might operate based on the 4-tuple or other
@@ -924,7 +924,11 @@ Table of Contents
       XOR with the bits encoding the process ID.  On packet receipt, the
       demultiplexer applies the same keyed hash to generate the same
       mask and recoversthe process ID.  (Note that this approach is
-      conceptually similar to QUIC header protection).
+      conceptually similar to QUIC header protection).  It is important
+      that the server also appends the process ID to the server ID in
+      the plaintext, so that different processes do not generate the
+      same ciphertext.  The load balancer will consider this data to be
+      part of the nonce.
 
 6.3.  Moving connections between servers
 
@@ -1722,6 +1726,8 @@ Appendix E.  Change Log
       publication of a final version of this document.
 
 E.1.  since draft-ietf-quic-load-balancers-19
+
+   *  Further guidance on multiple server processes/threads
 
    *  Fixed error in encryption example.
 
