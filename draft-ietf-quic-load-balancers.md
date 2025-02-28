@@ -295,9 +295,9 @@ version 1 Handshake packet sent to a QUIC-LB routable server will always have
 a server-generated routable CID. The prohibition against dropping packets with
 long headers remains for unknown QUIC versions.
 
-Furthermore, while the load balancer function MUST NOT drop packets, the device
-might implement other security policies, outside the scope of this
-specification, that might force a drop.
+Furthermore, while the load balancer function MUST NOT otherwise drop long
+header packets, the device might implement other security policies, outside the
+scope of this specification, that might force a drop.
 
 Servers that receive packets with unroutable CIDs MUST use the available
 mechanisms to induce the client to use a routable CID in future packets. In
@@ -309,14 +309,14 @@ server-generated long headers.
 There are conditions described below where a load balancer routes a packet using
 a "fallback algorithm." It can choose any algorithm, without coordination with
 the servers, but the algorithm SHOULD be deterministic over short time scales so
-that related packets go to the same server. The design of this algorithm SHOULD
-consider the version-invariant properties of QUIC described in {{!RFC8999}} to
-maximize its robustness to future versions of QUIC.
+that related packets go to the same server.
 
-A fallback algorithm MUST NOT make the routing behavior dependent on any bits
-in the first octet of the QUIC packet header, except the first bit, which
-indicates a long header. All other bits are QUIC version-dependent and
-intermediaries SHOULD NOT base their design on version-specific templates.
+A fallback algorithm MAY parse a packet from a QUIC version it understands and
+use that information to make a routing decision.
+
+For versions it does not understand, a fallback algorithm MUST NOT make the
+routing behavior dependent on any part of the long header that is not invariant
+across versions (see {{!RFC8999}}).
 
 For example, one fallback algorithm might convert a unroutable DCID to an
 integer and divided by the number of servers, with the modulus used to forward
@@ -1486,9 +1486,10 @@ the applicability of this section to future versions of DTLS.
 
 Manasi Deval, Erik Fuller, Toma Gavrichenkov, Jana Iyengar, Subodh Iyengar,
 Stefan Kolbl, Ladislav Lhotka, Jan Lindblad, Ling Tao Nju, Ilari Liusvaara,
+
 Kazuho Oku, Udip Pant, Zaheduzzaman Sarker, Ian Swett, Andy Sykes, Martin
-Thomson, Dmitri Tikhonov, Victor Vasiliev, Yu Zhu, and William Zeng Ke all
-provided useful input to this document.
+Thomson, Dmitri Tikhonov, Victor Vasiliev, Xingcan Lan, Yu Zhu, and William
+Zeng Ke all provided useful input to this document.
 
 # Change Log
 
@@ -1498,6 +1499,7 @@ provided useful input to this document.
 ## since draft-ietf-quic-load-balancers-19
 
 - Fixed error in encryption example.
+- Clarified fallback algorithms and known QUIC versions.
 
 ## since draft-ietf-quic-load-balancers-18
 
