@@ -148,7 +148,8 @@ Subsequent sections of this document refer to the contents of this octet as the
 
 The first three bits of any connection ID MUST encode an identifier for the
 configuration that the connection ID uses. This enables incremental deployment
-of new QUIC-LB settings (e.g., keys).
+of new QUIC-LB settings (e.g., keys). A configuration MUST NOT use the
+reserved identifier 0b111 (see {{config-failover}} below).
 
 When new configuration is distributed to servers, there will be a transition
 period when connection IDs reflecting old and new configuration coexist in the
@@ -174,30 +175,27 @@ configurations, but this has privacy implications (see {{multiple-configs}}).
 
 ## Configuration Failover {#config-failover}
 
-A server that is configured to use QUIC-LB might be forced to accept new
-connections without having received a current configuration.  A server without
-QUIC-LB configuration can accept connections, but it SHOULD generate initial
-connection IDs with the config rotation bits set to 0b111 and avoid sending the
-client connection IDs in NEW_CONNECTION_ID frames or the preferred_address
-transport parameter.  Servers in this state SHOULD use the
-"disable_active_migration" transport parameter until a valid configuration is
-received.
+In some deployments, an infrastructure will not receive traffic unless all
+servers have received a configuration, and load balancers have a superset of all
+configurations that are active in the server pool. Servers and load balancers
+deployed under all of these assumptions can ignore the provisions in this
+subsection.
 
-A load balancer that sees a connection ID with config rotation bits set to
-0b111 MUST route using an algorithm based solely on the address/port 4-tuple,
-which is consistent well beyond the QUIC handshake. However, a load balancer MAY
-observe the connection IDs used during the handshake and populate a connection
-ID table that allows the connection to survive a NAT rebinding, and reduces the
-probability of connection failure due to a change in the number of servers.
+Load balancers treat connection IDs for which they have no corresponding config
+ID as unroutable (see {{unroutable}}). If they have no configuration at all,
+then all connection IDs are unroutable.
+
+Servers with no active configuration MUST issue connection IDs with the three
+most significant bits set to 0b111 to signify the connection ID is unroutable,
+corresponding to the config ID reserved for this purpose. These connection IDs
+MUST self-encode their length (see {{length-self-encoding}}).
 
 When using codepoint 0b111, all bytes but the first SHOULD have no larger of a
 chance of collision as random bytes. The connection ID SHOULD be of at least
 length 8 to provide 7 bytes of entropy after the first octet with a low chance
-of collision. Furthermore, servers in a pool SHOULD also use a consistent
-connection ID length to simplify the load balancer's extraction of a connection
-ID from short headers.
+of collision.
 
-## Length Self-Description
+## Length Self-Description {#length-self-description}
 
 Local hardware cryptographic offload devices may accelerate QUIC servers by
 receiving keys from the QUIC implementation indexed to the connection ID.
@@ -257,6 +255,8 @@ three bits of the connection ID to multiplex incoming Destination Connection IDs
 
 ## Unroutable Connection IDs {#unroutable}
 
+### Definition
+
 QUIC-LB servers will generate Connection IDs that are decodable to extract a
 server ID in accordance with a specified algorithm and parameters.  However,
 QUIC often uses client-generated Connection IDs prior to receiving a packet from
@@ -269,40 +269,21 @@ regardless of why they're unroutable:
 
 * The config rotation bits ({{config-rotation}}) may not correspond to an active
 configuration. Note: a packet with a DCID with config ID codepoint 0b111 (see
-{{config-failover}}) is always routable.
-* The DCID might not be long enough for the decoder to process.
+{{config-failover}}) is always unroutable.
+* If the packet header encodes the DCID length, the DCID might not be long
+enough for the decoder to process.
 * The extracted server mapping might not correspond to an active server.
 
-All other DCIDs are routable.
+If the load balancer has knowledge that all servers in the pool are encoding
+CID length in the first octet (see {{length-self-encoding}}), additional checks
+are possible based on that self-encoded length:
 
-Load balancers MUST forward packets with routable DCIDs to a server in
-accordance with the chosen routing algorithm. Exception: if the load balancer
-can parse the QUIC packet and makes a routing decision depending on the
-contents (e.g., the SNI in a TLS client hello), it MAY route in accordance with
-this instead. However, load balancers MUST always route long header packets it
-cannot parse in accordance with the DCID (see {{version-invariance}}).
+* It does not match the CID length in a long header.
+* It is not valid for a QUIC version the packet is known to
+encode.
+* It is too short for the decoder to process using the indicated config ID.
 
-Load balancers SHOULD drop short header packets with unroutable DCIDs.
-
-When forwarding a packet with a long header and unroutable DCID, load
-balancers MUST use a fallback algorithm as specified in {{fallback-algorithm}}.
-
-Load balancers MAY drop packets with long headers and unroutable DCIDs if
-and only if it knows that the encoded QUIC version does not allow an unroutable
-DCID in a packet with that signature. For example, a load balancer can safely
-drop a QUIC version 1 Handshake packet with an unroutable DCID, as a
-version 1 Handshake packet sent to a QUIC-LB routable server will always have
-a server-generated routable CID. The prohibition against dropping packets with
-long headers remains for unknown QUIC versions.
-
-Furthermore, while the load balancer function MUST NOT otherwise drop long
-header packets, the device might implement other security policies, outside the
-scope of this specification, that might force a drop.
-
-Servers that receive packets with unroutable CIDs MUST use the available
-mechanisms to induce the client to use a routable CID in future packets. In
-QUIC version 1, this requires using a routable CID in the Source CID field of
-server-generated long headers.
+DCIDs that do not meet any of these criteria are routable.
 
 ## Fallback Algorithms {#fallback-algorithm}
 
@@ -312,7 +293,10 @@ the servers, but the algorithm SHOULD be deterministic over short time scales so
 that related packets go to the same server.
 
 A fallback algorithm MAY parse a packet from a QUIC version it understands and
-use that information to make a routing decision.
+use that information to make a routing decision. If so, it MAY buffer packets
+with unroutable DCIDs to await further packets that allow it to make a routing
+decision. For example, it may use the TLS 1.3 Server Name Indication (SNI)
+field, which might appear in one of several QUIC version 1 Initial packets.
 
 For versions it does not understand, a fallback algorithm MUST NOT make the
 routing behavior dependent on any part of the long header that is not invariant
@@ -323,6 +307,69 @@ integer and divided by the number of servers, with the modulus used to forward
 the packet. The number of servers is usually consistent on the time scale of a
 QUIC connection handshake. Another might simply hash the address/port 4-tuple.
 See also {{version-invariance}}.
+
+Note that any information used by the Fallback Algorithm ight not be repeated
+from one QUIC packet to another. The 4-tuple is assumed to remain stable during
+the handshake, but the server can change the destination connection ID after the
+client's first flight.
+
+Therefore, if the fallback algorithm uses information other than the 4-tuple in
+its routing decision, the load balancer SHOULD store the routing decision for
+that 4-tuple in order to route future packets unless doing so would exceed
+resource limits. It can free these records when the 4-tuple uses a routable CID.
+This state allows the load balancer to successfully route other packets from
+the client's first flight, as well as subsequent flights if the server provides
+an unroutable CID for the reasons described in {{config-failover}}.
+
+Even if the fallback algorithm solely uses the 4-tuple, it MAY store the
+algorithm result in case changes to the server pool make change the output.
+
+The load balancer MAY also store the routing decision indexed by DCID. This
+is not robust to new server-selected DCIDs, but can increase robustness when
+a connection to a server generating unroutable CIDs experiences a NAT rebinding.
+An entry can be freed when the corresponding 4-tuple uses a different CID,
+whether routable or not.
+
+### Load Balancer Forwarding {{load-balancer-forwarding}}
+
+Packets with routable CIDs are, of course, routed in accordance with the
+decoded server ID.
+
+For unroutable CIDs, load balancers execute the following steps in order
+until one results in a routing decision.
+
+1. If the load balancer has a table of routing decisions by DCID, and the
+DCID is present in it, route the packet accordingly. 
+1. If the load balancer has a table of routing decisions by 4-tuple, and
+the DCID is present in it, route the packet accordingly.
+1. Use the fallback algorithm to make a routing decision and record the results
+in the tables indexed by 4-tuple and/or DCID.
+
+When load balancers and servers are guaranteed to have common non-null
+configuration, all valid QUIC short headers have routable DCIDs. Under these
+conditions, load balancers MAY drop packets with short headers and unroutable
+DCIDs.
+
+When load balancers are guaranteed to have a superset of all server
+configurations, but servers might have no configuration at all, all valid QUIC
+short headers have either a routable DCID or use config ID 0b111. Under these
+conditions, load balancers MAY drop packets with short headers and unroutable
+DCIDs that do not have config ID 0b111.
+
+Load balancers MAY drop packets with long headers and unroutable DCIDs if
+and only if it knows that the encoded QUIC version does not allow an unroutable
+DCID in a packet with that signature. For example, a load balancer can safely
+drop a QUIC version 1 Handshake packet with an unroutable DCID, as a
+version 1 Handshake packet sent to a QUIC-LB routable server will always have
+a server-generated routable CID. Load balancers MUST NOT drop packets with
+long headers and unknown QUIC versions.
+
+Under all other circumstances, load balancers MUST NOT drop packets with
+unroutable DCIDs.
+
+While the load balancer function on a device has restrictions on which packets
+it can drop, a colocated function, outside the scope of this specification, can
+apply other policies to drop packets.
 
 ## Server ID Allocation {#sid-allocation}
 
@@ -834,11 +881,12 @@ ID length could be below the minimum necessary to use all or part of this
 specification; or, the minimum connection ID length could be larger than the
 largest value in this specification.
 
-{{unroutable}} provides guidance about how load balancers should handle
-unroutable DCIDs. This guidance, and the implementation of an algorithm to
-handle these DCIDs, rests on some assumptions:
+{{load-balancer-forwarding}} provides guidance about how load balancers should
+handle unroutable DCIDs. This guidance, and the implementation of an algorithm
+to handle these DCIDs, rests on some assumptions that are not specified in
+RFC 8999:
 
-* Incoming short headers do not contain DCIDs that are client-generated.
+* Incoming short headers do not contain DCIDs that are client-generated. 
 * The use of client-generated incoming DCIDs does not persist beyond a few round
 trips in the connection.
 * While the client is using DCIDs it generated, some exposed fields (IP address,
@@ -1487,12 +1535,11 @@ the applicability of this section to future versions of DTLS.
 
 # Acknowledgments
 
-Manasi Deval, Erik Fuller, Toma Gavrichenkov, Jana Iyengar, Subodh Iyengar,
-Stefan Kolbl, Ladislav Lhotka, Jan Lindblad, Ling Tao Nju, Ilari Liusvaara,
-
-Kazuho Oku, Udip Pant, Zaheduzzaman Sarker, Ian Swett, Andy Sykes, Martin
-Thomson, Dmitri Tikhonov, Victor Vasiliev, Xingcan Lan, Yu Zhu, and William
-Zeng Ke all provided useful input to this document.
+Manasi Deval, Erik Fuller, Toma Gavrichenkov, Greg Greenway, Jana Iyengar,
+Subodh Iyengar, Stefan Kolbl, Ladislav Lhotka, Jan Lindblad, Ling Tao Nju,
+Ilari Liusvaara, Kazuho Oku, Udip Pant, Zaheduzzaman Sarker, Ian Swett, Andy
+Sykes, Martin Thomson, Dmitri Tikhonov, Victor Vasiliev, Xingcan Lan, Yu Zhu,
+and William Zeng Ke all provided useful input to this document.
 
 # Change Log
 
