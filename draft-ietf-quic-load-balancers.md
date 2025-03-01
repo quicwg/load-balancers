@@ -308,7 +308,7 @@ the packet. The number of servers is usually consistent on the time scale of a
 QUIC connection handshake. Another might simply hash the address/port 4-tuple.
 See also {{version-invariance}}.
 
-Note that any information used by the Fallback Algorithm ight not be repeated
+Note that any information used by the Fallback Algorithm might not be repeated
 from one QUIC packet to another. The 4-tuple is assumed to remain stable during
 the handshake, but the server can change the destination connection ID after the
 client's first flight.
@@ -322,7 +322,8 @@ the client's first flight, as well as subsequent flights if the server provides
 an unroutable CID for the reasons described in {{config-failover}}.
 
 Even if the fallback algorithm solely uses the 4-tuple, it MAY store the
-algorithm result in case changes to the server pool make change the output.
+algorithm result in case changes to the server pool change fallback algoritm
+output.
 
 The load balancer MAY also store the routing decision indexed by DCID. This
 is not robust to new server-selected DCIDs, but can increase robustness when
