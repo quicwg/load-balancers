@@ -340,7 +340,7 @@ For unroutable CIDs, load balancers execute the following steps in order
 until one results in a routing decision.
 
 1. If the load balancer has a table of routing decisions by DCID, and the
-DCID is present in it, route the packet accordingly. 
+DCID is present in it, route the packet accordingly.
 1. If the load balancer has a table of routing decisions by 4-tuple, and
 the DCID is present in it, route the packet accordingly.
 1. Use the fallback algorithm to make a routing decision and record the results
@@ -887,7 +887,7 @@ handle unroutable DCIDs. This guidance, and the implementation of an algorithm
 to handle these DCIDs, rests on some assumptions that are not specified in
 RFC 8999:
 
-* Incoming short headers do not contain DCIDs that are client-generated. 
+* Incoming short headers do not contain DCIDs that are client-generated.
 * The use of client-generated incoming DCIDs does not persist beyond a few round
 trips in the connection.
 * While the client is using DCIDs it generated, some exposed fields (IP address,
