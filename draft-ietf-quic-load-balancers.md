@@ -188,7 +188,7 @@ then all connection IDs are unroutable.
 Servers with no active configuration MUST issue connection IDs with the three
 most significant bits set to 0b111 to signify the connection ID is unroutable,
 corresponding to the config ID reserved for this purpose. These connection IDs
-MUST self-encode their length (see {{length-self-encoding}}).
+MUST self-encode their length (see {{length-self-description}}).
 
 When using codepoint 0b111, all bytes but the first SHOULD have no larger of a
 chance of collision as random bytes. The connection ID SHOULD be of at least
@@ -275,8 +275,8 @@ enough for the decoder to process.
 * The extracted server mapping might not correspond to an active server.
 
 If the load balancer has knowledge that all servers in the pool are encoding
-CID length in the first octet (see {{length-self-encoding}}), additional checks
-are possible based on that self-encoded length:
+CID length in the first octet (see {{length-self-description}}), additional
+checks are possible based on that self-encoded length:
 
 * It does not match the CID length in a long header.
 * It is not valid for a QUIC version the packet is known to
@@ -331,7 +331,7 @@ a connection to a server generating unroutable CIDs experiences a NAT rebinding.
 An entry can be freed when the corresponding 4-tuple uses a different CID,
 whether routable or not.
 
-### Load Balancer Forwarding {{load-balancer-forwarding}}
+### Load Balancer Forwarding {#load-balancer-forwarding}
 
 Packets with routable CIDs are, of course, routed in accordance with the
 decoded server ID.
@@ -1551,7 +1551,8 @@ and William Zeng Ke all provided useful input to this document.
 
 - Further guidance on multiple server processes/threads
 - Fixed error in encryption example.
-- Clarified fallback algorithms and known QUIC versions.
+- Changed defintion of Unroutable DCIDs, and rewrote sections on config
+failover and fallback routing to avoid misrouted connections.
 
 ## since draft-ietf-quic-load-balancers-18
 
