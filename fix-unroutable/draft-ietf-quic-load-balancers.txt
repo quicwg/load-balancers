@@ -5,10 +5,10 @@
 QUIC                                                             M. Duke
 Internet-Draft                                                    Google
 Intended status: Standards Track                                N. Banks
-Expires: 2 September 2025                                      Microsoft
+Expires: 4 September 2025                                      Microsoft
                                                               C. Huitema
                                                     Private Octopus Inc.
-                                                            1 March 2025
+                                                            3 March 2025
 
 
             QUIC-LB: Generating Routable QUIC Connection IDs
@@ -55,7 +55,7 @@ Status of This Memo
    time.  It is inappropriate to use Internet-Drafts as reference
    material or to cite them other than as "work in progress."
 
-   This Internet-Draft will expire on 2 September 2025.
+   This Internet-Draft will expire on 4 September 2025.
 
 Copyright Notice
 
@@ -125,33 +125,34 @@ Table of Contents
      C.3.  Future Versions of DTLS
    Appendix D.  Acknowledgments
    Appendix E.  Change Log
-     E.1.  since draft-ietf-quic-load-balancers-19
-     E.2.  since draft-ietf-quic-load-balancers-18
-     E.3.  since draft-ietf-quic-load-balancers-17
-     E.4.  since draft-ietf-quic-load-balancers-16
-     E.5.  since draft-ietf-quic-load-balancers-15
-     E.6.  since draft-ietf-quic-load-balancers-14
-     E.7.  since draft-ietf-quic-load-balancers-13
-     E.8.  since draft-ietf-quic-load-balancers-12
-     E.9.  since draft-ietf-quic-load-balancers-11
-     E.10. since draft-ietf-quic-load-balancers-10
-     E.11. since draft-ietf-quic-load-balancers-09
-     E.12. since draft-ietf-quic-load-balancers-08
-     E.13. since draft-ietf-quic-load-balancers-07
-     E.14. since draft-ietf-quic-load-balancers-06
-     E.15. since draft-ietf-quic-load-balancers-05
-     E.16. since draft-ietf-quic-load-balancers-04
-     E.17. since-draft-ietf-quic-load-balancers-03
-     E.18. since-draft-ietf-quic-load-balancers-02
-     E.19. since-draft-ietf-quic-load-balancers-01
-     E.20. since-draft-ietf-quic-load-balancers-00
-     E.21. Since draft-duke-quic-load-balancers-06
-     E.22. Since draft-duke-quic-load-balancers-05
-     E.23. Since draft-duke-quic-load-balancers-04
-     E.24. Since draft-duke-quic-load-balancers-03
-     E.25. Since draft-duke-quic-load-balancers-02
-     E.26. Since draft-duke-quic-load-balancers-01
-     E.27. Since draft-duke-quic-load-balancers-00
+     E.1.  since draft-ietf-quic-load-balancers-20
+     E.2.  since draft-ietf-quic-load-balancers-19
+     E.3.  since draft-ietf-quic-load-balancers-18
+     E.4.  since draft-ietf-quic-load-balancers-17
+     E.5.  since draft-ietf-quic-load-balancers-16
+     E.6.  since draft-ietf-quic-load-balancers-15
+     E.7.  since draft-ietf-quic-load-balancers-14
+     E.8.  since draft-ietf-quic-load-balancers-13
+     E.9.  since draft-ietf-quic-load-balancers-12
+     E.10. since draft-ietf-quic-load-balancers-11
+     E.11. since draft-ietf-quic-load-balancers-10
+     E.12. since draft-ietf-quic-load-balancers-09
+     E.13. since draft-ietf-quic-load-balancers-08
+     E.14. since draft-ietf-quic-load-balancers-07
+     E.15. since draft-ietf-quic-load-balancers-06
+     E.16. since draft-ietf-quic-load-balancers-05
+     E.17. since draft-ietf-quic-load-balancers-04
+     E.18. since-draft-ietf-quic-load-balancers-03
+     E.19. since-draft-ietf-quic-load-balancers-02
+     E.20. since-draft-ietf-quic-load-balancers-01
+     E.21. since-draft-ietf-quic-load-balancers-00
+     E.22. Since draft-duke-quic-load-balancers-06
+     E.23. Since draft-duke-quic-load-balancers-05
+     E.24. Since draft-duke-quic-load-balancers-04
+     E.25. Since draft-duke-quic-load-balancers-03
+     E.26. Since draft-duke-quic-load-balancers-02
+     E.27. Since draft-duke-quic-load-balancers-01
+     E.28. Since draft-duke-quic-load-balancers-00
    Authors' Addresses
 
 1.  Introduction
@@ -1777,34 +1778,38 @@ Appendix E.  Change Log
       *RFC Editor's Note:* Please remove this section prior to
       publication of a final version of this document.
 
-E.1.  since draft-ietf-quic-load-balancers-19
-
-   *  Further guidance on multiple server processes/threads
-
-   *  Fixed error in encryption example.
+E.1.  since draft-ietf-quic-load-balancers-20
 
    *  Changed defintion of Unroutable DCIDs, and rewrote sections on
       config failover and fallback routing to avoid misrouted
       connections.
 
-E.2.  since draft-ietf-quic-load-balancers-18
+E.2.  since draft-ietf-quic-load-balancers-19
+
+   *  Further guidance on multiple server processes/threads
+
+   *  Fixed error in encryption example.
+
+   *  Clarified fallback algorithms and known QUIC versions.
+
+E.3.  since draft-ietf-quic-load-balancers-18
 
    *  Rearranged the output of the expand function to reduce CPU load of
       decrypt
 
-E.3.  since draft-ietf-quic-load-balancers-17
+E.4.  since draft-ietf-quic-load-balancers-17
 
    *  fixed regressions in draft-17 publication
 
-E.4.  since draft-ietf-quic-load-balancers-16
+E.5.  since draft-ietf-quic-load-balancers-16
 
    *  added a config ID bit (now there are 3).
 
-E.5.  since draft-ietf-quic-load-balancers-15
+E.6.  since draft-ietf-quic-load-balancers-15
 
    *  aasvg fixes.
 
-E.6.  since draft-ietf-quic-load-balancers-14
+E.7.  since draft-ietf-quic-load-balancers-14
 
    *  Revised process demultiplexing text
 
@@ -1815,7 +1820,7 @@ E.6.  since draft-ietf-quic-load-balancers-14
    *  Tweaked 4-pass algorithm to avoid accidental plaintext
       similarities
 
-E.7.  since draft-ietf-quic-load-balancers-13
+E.8.  since draft-ietf-quic-load-balancers-13
 
    *  Incorporated Connection ID length in argument of truncate function
 
@@ -1825,15 +1830,15 @@ E.7.  since draft-ietf-quic-load-balancers-13
 
    *  Added non-normative language about server process demultiplexers
 
-E.8.  since draft-ietf-quic-load-balancers-12
+E.9.  since draft-ietf-quic-load-balancers-12
 
    *  Separated Retry Service design into a separate draft
 
-E.9.  since draft-ietf-quic-load-balancers-11
+E.10.  since draft-ietf-quic-load-balancers-11
 
    *  Fixed mistakes in test vectors
 
-E.10.  since draft-ietf-quic-load-balancers-10
+E.11.  since draft-ietf-quic-load-balancers-10
 
    *  Refactored algorithm descriptions; made the 4-pass algorithm
       easier to implement
@@ -1842,7 +1847,7 @@ E.10.  since draft-ietf-quic-load-balancers-10
 
    *  Split YANG model into a server and middlebox version
 
-E.11.  since draft-ietf-quic-load-balancers-09
+E.12.  since draft-ietf-quic-load-balancers-09
 
    *  Renamed "Stream Cipher" and "Block Cipher" to "Encrypted Short"
       and "Encrypted Long"
@@ -1855,13 +1860,13 @@ E.11.  since draft-ietf-quic-load-balancers-09
 
    *  Clarified what SNI LBs should do with unknown QUIC versions.
 
-E.12.  since draft-ietf-quic-load-balancers-08
+E.13.  since draft-ietf-quic-load-balancers-08
 
    *  Eliminate Dynamic SID allocation
 
    *  Eliminated server use bytes
 
-E.13.  since draft-ietf-quic-load-balancers-07
+E.14.  since draft-ietf-quic-load-balancers-07
 
    *  Shortened SSCID nonce minimum length to 4 bytes
 
@@ -1871,7 +1876,7 @@ E.13.  since draft-ietf-quic-load-balancers-07
 
    *  Shrunk size of SID table
 
-E.14.  since draft-ietf-quic-load-balancers-06
+E.15.  since draft-ietf-quic-load-balancers-06
 
    *  Added interoperability with DTLS
 
@@ -1883,7 +1888,7 @@ E.14.  since draft-ietf-quic-load-balancers-06
 
    *  Added retry service considerations for non-Initial packets
 
-E.15.  since draft-ietf-quic-load-balancers-05
+E.16.  since draft-ietf-quic-load-balancers-05
 
    *  Added low-config CID for further discussion
 
@@ -1895,7 +1900,7 @@ E.15.  since draft-ietf-quic-load-balancers-05
 
    *  Switched to notation from quic-transport
 
-E.16.  since draft-ietf-quic-load-balancers-04
+E.17.  since draft-ietf-quic-load-balancers-04
 
    *  Rearranged the shared-state retry token to simplify token
       processing
@@ -1910,7 +1915,7 @@ E.16.  since draft-ietf-quic-load-balancers-04
 
    *  Additional compliant DCID criteria
 
-E.17.  since-draft-ietf-quic-load-balancers-03
+E.18.  since-draft-ietf-quic-load-balancers-03
 
    *  Improved Config Rotation text
 
@@ -1918,7 +1923,7 @@ E.17.  since-draft-ietf-quic-load-balancers-03
 
    *  Deleted the Obfuscated CID algorithm
 
-E.18.  since-draft-ietf-quic-load-balancers-02
+E.19.  since-draft-ietf-quic-load-balancers-02
 
    *  Replaced stream cipher algorithm with three-pass version
 
@@ -1932,7 +1937,7 @@ E.18.  since-draft-ietf-quic-load-balancers-02
 
    *  Allow dropped long-header packets for known QUIC versions
 
-E.19.  since-draft-ietf-quic-load-balancers-01
+E.20.  since-draft-ietf-quic-load-balancers-01
 
    *  Test vectors for load balancer decoding
 
@@ -1942,15 +1947,15 @@ E.19.  since-draft-ietf-quic-load-balancers-01
 
    *  Discussed load balancer chains
 
-E.20.  since-draft-ietf-quic-load-balancers-00
+E.21.  since-draft-ietf-quic-load-balancers-00
 
    *  Removed in-band protocol from the document
 
-E.21.  Since draft-duke-quic-load-balancers-06
+E.22.  Since draft-duke-quic-load-balancers-06
 
    *  Switch to IETF WG draft.
 
-E.22.  Since draft-duke-quic-load-balancers-05
+E.23.  Since draft-duke-quic-load-balancers-05
 
    *  Editorial changes
 
@@ -1964,11 +1969,11 @@ E.22.  Since draft-duke-quic-load-balancers-05
 
    *  Added psuedocode for config schema
 
-E.23.  Since draft-duke-quic-load-balancers-04
+E.24.  Since draft-duke-quic-load-balancers-04
 
    *  Added standard for retry services
 
-E.24.  Since draft-duke-quic-load-balancers-03
+E.25.  Since draft-duke-quic-load-balancers-03
 
    *  Renamed Plaintext CID algorithm as Obfuscated CID
 
@@ -1978,7 +1983,7 @@ E.24.  Since draft-duke-quic-load-balancers-03
 
    *  Added self-encoding of CID length
 
-E.25.  Since draft-duke-quic-load-balancers-02
+E.26.  Since draft-duke-quic-load-balancers-02
 
    *  Added Config Rotation
 
@@ -1990,7 +1995,7 @@ E.25.  Since draft-duke-quic-load-balancers-02
 
    *  Reformatted QUIC-LB packets
 
-E.26.  Since draft-duke-quic-load-balancers-01
+E.27.  Since draft-duke-quic-load-balancers-01
 
    *  Complete rewrite
 
@@ -1998,7 +2003,7 @@ E.26.  Since draft-duke-quic-load-balancers-01
 
    *  Lightweight messages
 
-E.27.  Since draft-duke-quic-load-balancers-00
+E.28.  Since draft-duke-quic-load-balancers-00
 
    *  Converted to markdown
 

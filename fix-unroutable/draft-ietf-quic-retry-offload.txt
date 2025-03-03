@@ -5,8 +5,8 @@
 QUIC                                                             M. Duke
 Internet-Draft                                                    Google
 Intended status: Standards Track                                N. Banks
-Expires: 2 September 2025                                      Microsoft
-                                                            1 March 2025
+Expires: 4 September 2025                                      Microsoft
+                                                            3 March 2025
 
 
                            QUIC Retry Offload
@@ -50,7 +50,7 @@ Status of This Memo
    time.  It is inappropriate to use Internet-Drafts as reference
    material or to cite them other than as "work in progress."
 
-   This Internet-Draft will expire on 2 September 2025.
+   This Internet-Draft will expire on 4 September 2025.
 
 Copyright Notice
 
@@ -758,9 +758,9 @@ Table of Contents
    [I-D.ietf-quic-load-balancers]
               Duke, M., Banks, N., and C. Huitema, "QUIC-LB: Generating
               Routable QUIC Connection IDs", Work in Progress, Internet-
-              Draft, draft-ietf-quic-load-balancers-19, 5 February 2024,
+              Draft, draft-ietf-quic-load-balancers-20, 3 March 2025,
               <https://datatracker.ietf.org/doc/html/draft-ietf-quic-
-              load-balancers-19>.
+              load-balancers-20>.
 
    [RFC2119]  Bradner, S., "Key words for use in RFCs to Indicate
               Requirement Levels", BCP 14, RFC 2119,
