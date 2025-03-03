@@ -343,7 +343,7 @@ until one results in a routing decision.
 DCID is present in it, route the packet accordingly.
 1. If the load balancer has a table of routing decisions by 4-tuple, and
 the DCID is present in it, route the packet accordingly.
-1. Use the fallback algorithm to make a routing decision and record the results
+1. Use the fallback algorithm to make a routing decision and, if applicable, record the results
 in the tables indexed by 4-tuple and/or DCID.
 
 When load balancers and servers are guaranteed to have common non-null
