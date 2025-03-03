@@ -1,6 +1,6 @@
 {
   "magic": "E!vIA5L86J2I",
-  "timestamp": "2025-02-28T22:04:11.977096+00:00",
+  "timestamp": "2025-03-03T17:18:44.971638+00:00",
   "repo": "quicwg/load-balancers",
   "labels": [
     {
@@ -3692,15 +3692,15 @@
       "id": "I_kwDODoD6yc6KtgA_",
       "title": "DCID defintion",
       "url": "https://github.com/quicwg/load-balancers/issues/229",
-      "state": "OPEN",
+      "state": "CLOSED",
       "author": "zaheduzzaman",
       "authorAssociation": "NONE",
       "assignees": [],
       "labels": [],
       "body": "https://github.com/quicwg/load-balancers/blob/cd03bab419f180a3d287aec85b82ce03ef24d471/draft-ietf-quic-load-balancers.md?plain=1#L254-L256\r\n\r\nDCID need to be defined. Also the use of first 2 bits to multiplex DCIDs is not explaied in section 2.1.",
       "createdAt": "2024-05-31T07:51:18Z",
-      "updatedAt": "2024-05-31T07:51:18Z",
-      "closedAt": null,
+      "updatedAt": "2025-02-28T22:06:58Z",
+      "closedAt": "2025-02-28T22:06:58Z",
       "comments": []
     },
     {
@@ -3746,15 +3746,15 @@
       "id": "I_kwDODoD6yc6ppDe2",
       "title": "Add more considerations for server processes/threads.",
       "url": "https://github.com/quicwg/load-balancers/issues/231",
-      "state": "OPEN",
+      "state": "CLOSED",
       "author": "martinduke",
       "authorAssociation": "CONTRIBUTOR",
       "assignees": [],
       "labels": [],
       "body": "In Sec 6.2 \n \n- First, replace \"processes\" with \"processes or threads\".\n\n- Second, the secure hash method really needs to have the thread ID appended to the server ID. Otherwise, different processes/threads will generate the same cipher text.",
       "createdAt": "2025-02-11T17:59:13Z",
-      "updatedAt": "2025-02-11T18:51:17Z",
-      "closedAt": null,
+      "updatedAt": "2025-02-28T22:07:17Z",
+      "closedAt": "2025-02-28T22:07:17Z",
       "comments": []
     },
     {
@@ -3769,7 +3769,7 @@
       "labels": [],
       "body": "When LBs are missing config that servers are using, connections will drop. Sec 2.1 says LBs SHOULD have a superset of active server configs; consider escalating this to a MUST (or have a SHOULD with strong warnings).\n\nAssume that everyone has config. Sec 2.2 says that 0b111 CIDs are always routable and MUST be routed by 4-tuple. Thus, for the 1/8 of connections where the client happens to pick a 0b111 CID, any SNI-based routing will fail. This is suboptimal, especially since it applies to the main case where everyone has config.\n\n**Recommendation**: Update 2.2 to add an exception for the SNI thing.\n\nIf the server doesn't have a config, 0b111 CIDs are going to work less well:\n\n1) If the fallback algorithm is purely 4-tuple based, things will work fine (until there is a NAT rebinding or migration, which is expected). The 0b111 codepoint will cause the LB to pass later packets consistently.\n\n2) If the fallback algorithm uses any other information, the 0b111 CID will be misrouted, as different logic is being applied to both.\n\nIt's not clear what to do about this. Some observations:\n\na) If the LB doesn't have config, the servers don't either. In Sec 2, it should say that LBs with no config should just 4-tuple route.\n\nb) If the LB has config, it has no way of knowing that the server it routes to is going to generate 0b111, putting us in the dilemma above.\n\nc) If the server keeps a table of 4-tuple mappings to servers, this is likely to work.\n\nIf we were optimizing for the no-config case, we'd just force fallback algorithms to be 4-tuple based. But that would make the happy path worse (by disallowing SNI routing).\n\n",
       "createdAt": "2025-02-28T20:47:53Z",
-      "updatedAt": "2025-02-28T22:02:41Z",
+      "updatedAt": "2025-03-02T11:05:03Z",
       "closedAt": null,
       "comments": [
         {
@@ -3785,6 +3785,55 @@
           "body": "One problem is that if the fallback uses the CID, and the server replaces the CID, it breaks the fallback.\n\nSimilarly, with SNI routing, 0-RTT and multi-packet CHLOs will break.\n\nI'm starting to think the way out is LB state -- track the routing decisions for all 4-tuples for which no routable CID has been observed. This can obviously be overwhelmed, but I can't see another way to resolve the tradeoffs except to not have SNI routing (which is how Google avoids it right now).\n\nSo,\n(1) 0b111 fits the definition of \"unroutable\".\n(2a) LBs MUST keep a listing of all 4-tuples that have not had a routable CID yet, and the server mapping, OR\n(2b) All unroutable CIDs are routed by 4-tuple.\n",
           "createdAt": "2025-02-28T22:02:40Z",
           "updatedAt": "2025-02-28T22:02:40Z"
+        },
+        {
+          "author": "martinduke",
+          "authorAssociation": "CONTRIBUTOR",
+          "body": "A corollary to (2a) -- the LB MAY also map observed unroutable CIDs to servers, so that it can be robust to NAT rebinding.",
+          "createdAt": "2025-02-28T22:09:29Z",
+          "updatedAt": "2025-02-28T22:09:29Z"
+        },
+        {
+          "author": "ggreenway",
+          "authorAssociation": "NONE",
+          "body": "> I'm starting to think the way out is LB state\n\nI think it depends on the behavior of the LB.\n\nThe requirement is that the LB must be able to send subsequent packets for the same quic connection to the same host, if no routable CID is found.\n\nIf the LB uses a 4-tuple hash for the initial packet routing, it would not need state to continue doing a 4-tuple hash on subsequent packets.\n\nIf the LB did SNI routing, it would require state for this case.\n\nI think it's also an option (with tradeoffs) for a user/operator to assume that there will not be a case where either the LB or the server does not have valid and correct configuration (due to robust control plane systems, etc), and to accept the tradeoff that if this condition is violated they choose to have traffic not function correctly at all (and in common scenarios, clients may fallback to http/2 over TCP, as many clients do).\n\nSo then it may be appropriate for the RFC to offer some guidance on these tradeoffs, without requiring which tradeoff is chosen.",
+          "createdAt": "2025-02-28T22:11:17Z",
+          "updatedAt": "2025-02-28T22:11:17Z"
+        },
+        {
+          "author": "martinduke",
+          "authorAssociation": "CONTRIBUTOR",
+          "body": "Here's some pseudo code for the load balancer:\n\nServerMappingOrDrop Route packet(PacketInfo info) {\n   if (IsRoutable(info.cid))  return GetServerMapping(info.cid);\n   if (info.short_header && !info.cid.config_id = 0b111) return Drop;\n   if (CidTableExists && CidTable[info.cid].exists()) return CidTable[info.cid];\n   if (FallbackAlgorithmOnlyUses4Tuple) return Fallback(info.4tuple);\n   // the 4tuple table exists iff the FallbackAlgorithm uses inputs besides the 4tuple.\n   if (4tupleTable[info.4tuple].exists()) return 4tuple[info.4table];\n   result = Fallback(info);\n   4tupleTable[info.4tuple] = result;\n   if (CidTableExists) CidTable[info.cid] = result;\n   return result;\n}\n\nUnless you see a problem here, or a better way, I'll figure out a way to put this in words.",
+          "createdAt": "2025-02-28T22:27:30Z",
+          "updatedAt": "2025-02-28T22:27:30Z"
+        },
+        {
+          "author": "martinduke",
+          "authorAssociation": "CONTRIBUTOR",
+          "body": "\n> I think it's also an option (with tradeoffs) for a user/operator to assume that there will not be a case where either the LB or the server does not have valid and correct configuration (due to robust control plane systems, etc), and to accept the tradeoff that if this condition is violated they choose to have traffic not function correctly at all (and in common scenarios, clients may fallback to http/2 over TCP, as many clients do).\n> \n> So then it may be appropriate for the RFC to offer some guidance on these tradeoffs, without requiring which tradeoff is chosen.\n\nSounds reasonable to me.\n",
+          "createdAt": "2025-02-28T22:29:21Z",
+          "updatedAt": "2025-02-28T22:29:21Z"
+        },
+        {
+          "author": "martinduke",
+          "authorAssociation": "CONTRIBUTOR",
+          "body": "> Here's some pseudo code for the load balancer:\n> \n\nAlso, this way easier if 0b111 CIDs self-encode the length, since they can be in short headers.\n\n",
+          "createdAt": "2025-02-28T22:30:07Z",
+          "updatedAt": "2025-02-28T22:30:07Z"
+        },
+        {
+          "author": "ggreenway",
+          "authorAssociation": "NONE",
+          "body": "Copied into a md code-block for readability\n\n```\nServerMappingOrDrop Route packet(PacketInfo info) {\n  if (IsRoutable(info.cid)) return GetServerMapping(info.cid);\n  if (info.short_header && !info.cid.config_id = 0b111) return Drop;\n  if (CidTableExists && CidTable[info.cid].exists()) return CidTable[info.cid];\n  if (FallbackAlgorithmOnlyUses4Tuple) return Fallback(info.4tuple);\n  // the 4tuple table exists iff the FallbackAlgorithm uses inputs besides the 4tuple.\n  if (4tupleTable[info.4tuple].exists()) return 4tuple[info.4table];\n  result = Fallback(info);\n  4tupleTable[info.4tuple] = result;\n  if (CidTableExists) CidTable[info.cid] = result;\n  return result;\n}\n```\n\nFor the 2nd condition `if (info.short_header && !info.cid.config_id = 0b111) return Drop;`, it depends on whether the LB MUST or SHOULD have all the configs a server could have. If it only SHOULD, then it should fallback to 4-tuple routing in this case I think.",
+          "createdAt": "2025-02-28T23:07:55Z",
+          "updatedAt": "2025-02-28T23:07:55Z"
+        },
+        {
+          "author": "thynson",
+          "authorAssociation": "NONE",
+          "body": "> As you noted, 1/8 of random CIDs will have this set. Because of this, I don't think there can be any special requirement on 0b111 other than \"use whatever fallback routing you'd use for an unroutable CID\", because there's no way to tell if this is a server-generated 0b111 or if it's a random/client-generated CID.\n\nI think it\u2018s worth to expand the unroutable cid definition to \"if the load balancer is willing to parse the packet, it MAY treat DCID in a InitialPacket as unroutable DCID,  regardless of whether it's 0b111 DCID or not.\"",
+          "createdAt": "2025-03-02T11:02:45Z",
+          "updatedAt": "2025-03-02T11:05:03Z"
         }
       ]
     }
@@ -11486,24 +11535,26 @@
       "id": "PR_kwDODoD6yc6K2V6N",
       "title": "Considerations for Server Processes/Threads",
       "url": "https://github.com/quicwg/load-balancers/pull/232",
-      "state": "OPEN",
+      "state": "MERGED",
       "author": "martinduke",
       "authorAssociation": "CONTRIBUTOR",
       "assignees": [],
       "labels": [],
       "body": "Fixes #231 ",
       "createdAt": "2025-02-11T18:57:13Z",
-      "updatedAt": "2025-02-11T18:58:06Z",
+      "updatedAt": "2025-02-28T22:07:17Z",
       "baseRepository": "quicwg/load-balancers",
       "baseRefName": "main",
       "baseRefOid": "cd03bab419f180a3d287aec85b82ce03ef24d471",
       "headRepository": "quicwg/load-balancers",
       "headRefName": "threads",
       "headRefOid": "9985dafb271a955f297bae7261caab3eb4f40686",
-      "closedAt": null,
-      "mergedAt": null,
-      "mergedBy": null,
-      "mergeCommit": null,
+      "closedAt": "2025-02-28T22:07:16Z",
+      "mergedAt": "2025-02-28T22:07:16Z",
+      "mergedBy": "martinduke",
+      "mergeCommit": {
+        "oid": "d811e9e4e8ab22acf468227f74770562816283d3"
+      },
       "comments": [],
       "reviews": []
     },
@@ -11512,24 +11563,26 @@
       "id": "PR_kwDODoD6yc6K2YJg",
       "title": "Expand DCID, update reference to config ID",
       "url": "https://github.com/quicwg/load-balancers/pull/233",
-      "state": "OPEN",
+      "state": "MERGED",
       "author": "martinduke",
       "authorAssociation": "CONTRIBUTOR",
       "assignees": [],
       "labels": [],
       "body": "Fixes #229 ",
       "createdAt": "2025-02-11T19:00:55Z",
-      "updatedAt": "2025-02-12T19:25:14Z",
+      "updatedAt": "2025-02-28T22:06:58Z",
       "baseRepository": "quicwg/load-balancers",
       "baseRefName": "main",
-      "baseRefOid": "cd03bab419f180a3d287aec85b82ce03ef24d471",
+      "baseRefOid": "0b9374ddb2179db19742f38a5702a9e6278b0a44",
       "headRepository": "quicwg/load-balancers",
       "headRefName": "definition",
-      "headRefOid": "795433088dd186a6f343e640c7a9916392ab49bf",
-      "closedAt": null,
-      "mergedAt": null,
-      "mergedBy": null,
-      "mergeCommit": null,
+      "headRefOid": "1a1734e13de9329dc08a0a213aae9cc485d61c23",
+      "closedAt": "2025-02-28T22:06:57Z",
+      "mergedAt": "2025-02-28T22:06:57Z",
+      "mergedBy": "martinduke",
+      "mergeCommit": {
+        "oid": "74ea168a3e68d1386d200d4b045e493c00fde1d6"
+      },
       "comments": [],
       "reviews": [
         {
@@ -11588,6 +11641,32 @@
           "comments": []
         }
       ]
+    },
+    {
+      "number": 236,
+      "id": "PR_kwDODoD6yc6NAQqm",
+      "title": "Make fallback algorithm airtight",
+      "url": "https://github.com/quicwg/load-balancers/pull/236",
+      "state": "OPEN",
+      "author": "martinduke",
+      "authorAssociation": "CONTRIBUTOR",
+      "assignees": [],
+      "labels": [],
+      "body": "Fixes #235",
+      "createdAt": "2025-03-01T01:40:23Z",
+      "updatedAt": "2025-03-03T17:18:22Z",
+      "baseRepository": "quicwg/load-balancers",
+      "baseRefName": "main",
+      "baseRefOid": "d811e9e4e8ab22acf468227f74770562816283d3",
+      "headRepository": "quicwg/load-balancers",
+      "headRefName": "fix-unroutable",
+      "headRefOid": "2413b6ffdbb98a21514dacf25109e2f7f0887828",
+      "closedAt": null,
+      "mergedAt": null,
+      "mergedBy": null,
+      "mergeCommit": null,
+      "comments": [],
+      "reviews": []
     }
   ]
 }
