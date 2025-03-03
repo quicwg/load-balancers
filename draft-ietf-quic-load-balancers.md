@@ -322,7 +322,7 @@ the client's first flight, as well as subsequent flights if the server provides
 an unroutable CID for the reasons described in {{config-failover}}.
 
 Even if the fallback algorithm solely uses the 4-tuple, it MAY store the
-algorithm result in case changes to the server pool change fallback algoritm
+algorithm result in case changes to the server pool change fallback algorithm
 output.
 
 The load balancer MAY also store the routing decision indexed by DCID. This
