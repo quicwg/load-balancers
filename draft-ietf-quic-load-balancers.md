@@ -1547,12 +1547,16 @@ and William Zeng Ke all provided useful input to this document.
 > **RFC Editor's Note:**  Please remove this section prior to
 > publication of a final version of this document.
 
+## since draft-ietf-quic-load-balancers-20
+
+- Changed defintion of Unroutable DCIDs, and rewrote sections on config
+failover and fallback routing to avoid misrouted connections.
+
 ## since draft-ietf-quic-load-balancers-19
 
 - Further guidance on multiple server processes/threads
 - Fixed error in encryption example.
-- Changed defintion of Unroutable DCIDs, and rewrote sections on config
-failover and fallback routing to avoid misrouted connections.
+- Clarified fallback algorithms and known QUIC versions.
 
 ## since draft-ietf-quic-load-balancers-18
 
