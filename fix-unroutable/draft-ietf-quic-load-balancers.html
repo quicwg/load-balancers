@@ -1731,7 +1731,7 @@ This state allows the load balancer to successfully route other packets from
 the client's first flight, as well as subsequent flights if the server provides
 an unroutable CID for the reasons described in <a href="#config-failover" class="auto internal xref">Section 2.2</a>.<a href="#section-3.2-6" class="pilcrow">¶</a></p>
 <p id="section-3.2-7">Even if the fallback algorithm solely uses the 4-tuple, it MAY store the
-algorithm result in case changes to the server pool change fallback algoritm
+algorithm result in case changes to the server pool change fallback algorithm
 output.<a href="#section-3.2-7" class="pilcrow">¶</a></p>
 <p id="section-3.2-8">The load balancer MAY also store the routing decision indexed by DCID. This
 is not robust to new server-selected DCIDs, but can increase robustness when
