@@ -357,20 +357,28 @@ short headers have either a routable DCID or use config ID 0b111. Under these
 conditions, load balancers MAY drop packets with short headers and unroutable
 DCIDs that do not have config ID 0b111.
 
-Load balancers MAY drop packets with long headers and unroutable DCIDs if
-and only if it knows that the encoded QUIC version does not allow an unroutable
-DCID in a packet with that signature. For example, a load balancer can safely
-drop a QUIC version 1 Handshake packet with an unroutable DCID, as a
-version 1 Handshake packet sent to a QUIC-LB routable server will always have
-a server-generated routable CID. Load balancers MUST NOT drop packets with
-long headers and unknown QUIC versions.
+Some unroutable connection IDs are evidently client-generated if all servers
+behind the load balancer are compliant with this specification. In particular,
+an unroutable CID is evidently client-generated if
+- it does not use the 0b111 config ID; OR
+- it uses the 0b111 config ID, it is in a long header packet, and its self-
+encoded length does not match the length in the long header field.
+
+Load balancers MAY drop packets with evidently client-generated DCIDs if and
+only if it knows that the encoded QUIC version only allows the sending of that
+signature after the server has the opportunity to update the connection ID.
+For example, a load balancer can safely drop a QUIC version 1 Handshake packet
+with a client-generated DCID, as a version 1 Handshake packet sent to a QUIC-LB
+routable server will always have a server-generated CID. Load balancers MUST NOT
+drop packets with long headers and unknown QUIC versions.
 
 Under all other circumstances, load balancers MUST NOT drop packets with
-unroutable DCIDs.
+unroutable DCIDs, and instead forward it using the procedure above.
 
 While the load balancer function on a device has restrictions on which packets
 it can drop, a colocated function, outside the scope of this specification, can
-apply other policies to drop packets.
+apply other policies to drop packets. For example, a rate limiting or security
+function might drop packets that the load balancer routes.
 
 ## Server ID Allocation {#sid-allocation}
 
