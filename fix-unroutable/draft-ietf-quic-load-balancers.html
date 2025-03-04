@@ -1058,7 +1058,7 @@ svg :is([fill="white"], [fill^="#fff"]) {
 </tr></thead>
 <tfoot><tr>
 <td class="left">Duke, et al.</td>
-<td class="center">Expires 4 September 2025</td>
+<td class="center">Expires 5 September 2025</td>
 <td class="right">[Page]</td>
 </tr></tfoot>
 </table>
@@ -1071,12 +1071,12 @@ svg :is([fill="white"], [fill^="#fff"]) {
 <dd class="internet-draft">draft-ietf-quic-load-balancers-latest</dd>
 <dt class="label-published">Published:</dt>
 <dd class="published">
-<time datetime="2025-03-03" class="published">3 March 2025</time>
+<time datetime="2025-03-04" class="published">4 March 2025</time>
     </dd>
 <dt class="label-intended-status">Intended Status:</dt>
 <dd class="intended-status">Standards Track</dd>
 <dt class="label-expires">Expires:</dt>
-<dd class="expires"><time datetime="2025-09-04">4 September 2025</time></dd>
+<dd class="expires"><time datetime="2025-09-05">5 September 2025</time></dd>
 <dt class="label-authors">Authors:</dt>
 <dd class="authors">
 <div class="author">
@@ -1137,7 +1137,7 @@ self-encoding their length to aid some hardware offloads.<a href="#section-abstr
         time. It is inappropriate to use Internet-Drafts as reference
         material or to cite them other than as "work in progress."<a href="#section-boilerplate.1-3" class="pilcrow">¶</a></p>
 <p id="section-boilerplate.1-4">
-        This Internet-Draft will expire on 4 September 2025.<a href="#section-boilerplate.1-4" class="pilcrow">¶</a></p>
+        This Internet-Draft will expire on 5 September 2025.<a href="#section-boilerplate.1-4" class="pilcrow">¶</a></p>
 </section>
 </div>
 <div id="copyright">
@@ -1203,15 +1203,13 @@ self-encoding their length to aid some hardware offloads.<a href="#section-abstr
 <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.3.2.1.2.1">
                     <p id="section-toc.1-1.3.2.1.2.1.1"><a href="#section-3.1.1" class="auto internal xref">3.1.1</a>.  <a href="#name-definition" class="internal xref">Definition</a></p>
 </li>
+                  <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.3.2.1.2.2">
+                    <p id="section-toc.1-1.3.2.1.2.2.1"><a href="#section-3.1.2" class="auto internal xref">3.1.2</a>.  <a href="#name-load-balancer-forwarding" class="internal xref">Load Balancer Forwarding</a></p>
+</li>
                 </ul>
 </li>
               <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.3.2.2">
                 <p id="section-toc.1-1.3.2.2.1"><a href="#section-3.2" class="auto internal xref">3.2</a>.  <a href="#name-fallback-algorithms" class="internal xref">Fallback Algorithms</a></p>
-<ul class="compact toc ulBare ulEmpty">
-<li class="compact toc ulBare ulEmpty" id="section-toc.1-1.3.2.2.2.1">
-                    <p id="section-toc.1-1.3.2.2.2.1.1"><a href="#section-3.2.1" class="auto internal xref">3.2.1</a>.  <a href="#name-load-balancer-forwarding" class="internal xref">Load Balancer Forwarding</a></p>
-</li>
-                </ul>
 </li>
               <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.3.2.3">
                 <p id="section-toc.1-1.3.2.3.1"><a href="#section-3.3" class="auto internal xref">3.3</a>.  <a href="#name-server-id-allocation" class="internal xref">Server ID Allocation</a></p>
@@ -1571,10 +1569,13 @@ then all connection IDs are unroutable.<a href="#section-2.2-2" class="pilcrow">
 most significant bits set to 0b111 to signify the connection ID is unroutable,
 corresponding to the config ID reserved for this purpose. These connection IDs
 MUST self-encode their length (see <a href="#length-self-description" class="auto internal xref">Section 2.3</a>).<a href="#section-2.2-3" class="pilcrow">¶</a></p>
-<p id="section-2.2-4">When using codepoint 0b111, all bytes but the first SHOULD have no larger of a
+<p id="section-2.2-4">Servers with no active configuration SHOULD NOT send the client additional
+connection IDs in NEW_CONNECTION_ID frames. They SHOULD send the
+"disable_active_migration" transport parameter.<a href="#section-2.2-4" class="pilcrow">¶</a></p>
+<p id="section-2.2-5">When using codepoint 0b111, all bytes but the first SHOULD have no larger of a
 chance of collision as random bytes. The connection ID SHOULD be of at least
 length 8 to provide 7 bytes of entropy after the first octet with a low chance
-of collision.<a href="#section-2.2-4" class="pilcrow">¶</a></p>
+of collision.<a href="#section-2.2-5" class="pilcrow">¶</a></p>
 </section>
 </div>
 <div id="length-self-description">
@@ -1678,21 +1679,76 @@ enough for the decoder to process.<a href="#section-3.1.1-3.2.1" class="pilcrow"
 </li>
           </ul>
 <p id="section-3.1.1-4">If the load balancer has knowledge that all servers in the pool are encoding
-CID length in the first octet (see <a href="#length-self-description" class="auto internal xref">Section 2.3</a>), additional
-checks are possible based on that self-encoded length:<a href="#section-3.1.1-4" class="pilcrow">¶</a></p>
+CID length in the first octet (see <a href="#length-self-description" class="auto internal xref">Section 2.3</a>), it MAY
+perform additional checks based on that self-encoded length:<a href="#section-3.1.1-4" class="pilcrow">¶</a></p>
 <ul class="normal">
 <li class="normal" id="section-3.1.1-5.1">
-              <p id="section-3.1.1-5.1.1">It does not match the CID length in a long header.<a href="#section-3.1.1-5.1.1" class="pilcrow">¶</a></p>
+              <p id="section-3.1.1-5.1.1">In a long header, verify that the self-encoded length is consistent with the
+CID length field in the header (i.e. the self-encoded length is one less)<a href="#section-3.1.1-5.1.1" class="pilcrow">¶</a></p>
 </li>
             <li class="normal" id="section-3.1.1-5.2">
-              <p id="section-3.1.1-5.2.1">It is not valid for a QUIC version the packet is known to
-encode.<a href="#section-3.1.1-5.2.1" class="pilcrow">¶</a></p>
+              <p id="section-3.1.1-5.2.1">Verify that the self-encoded length is consistent with the QUIC version, if
+known.<a href="#section-3.1.1-5.2.1" class="pilcrow">¶</a></p>
 </li>
             <li class="normal" id="section-3.1.1-5.3">
-              <p id="section-3.1.1-5.3.1">It is too short for the decoder to process using the indicated config ID.<a href="#section-3.1.1-5.3.1" class="pilcrow">¶</a></p>
+              <p id="section-3.1.1-5.3.1">Verify that the self-encoded length is large enough for the decoder to process
+using the indicated config ID.<a href="#section-3.1.1-5.3.1" class="pilcrow">¶</a></p>
 </li>
           </ul>
 <p id="section-3.1.1-6">DCIDs that do not meet any of these criteria are routable.<a href="#section-3.1.1-6" class="pilcrow">¶</a></p>
+</section>
+</div>
+<div id="load-balancer-forwarding">
+<section id="section-3.1.2">
+          <h4 id="name-load-balancer-forwarding">
+<a href="#section-3.1.2" class="section-number selfRef">3.1.2. </a><a href="#name-load-balancer-forwarding" class="section-name selfRef">Load Balancer Forwarding</a>
+          </h4>
+<p id="section-3.1.2-1">Packets with routable CIDs are, of course, routed in accordance with the
+decoded server ID.<a href="#section-3.1.2-1" class="pilcrow">¶</a></p>
+<p id="section-3.1.2-2">For unroutable CIDs, load balancers execute the following steps in order
+until one results in a routing decision.<a href="#section-3.1.2-2" class="pilcrow">¶</a></p>
+<ol start="1" type="1" class="normal type-1" id="section-3.1.2-3">
+<li id="section-3.1.2-3.1">
+              <p id="section-3.1.2-3.1.1">If the load balancer has a table of routing decisions by DCID, and the
+DCID is present in it, route the packet accordingly.<a href="#section-3.1.2-3.1.1" class="pilcrow">¶</a></p>
+</li>
+            <li id="section-3.1.2-3.2">
+              <p id="section-3.1.2-3.2.1">If the load balancer has a table of routing decisions by 4-tuple, and
+the DCID is present in it, route the packet accordingly.<a href="#section-3.1.2-3.2.1" class="pilcrow">¶</a></p>
+</li>
+            <li id="section-3.1.2-3.3">
+              <p id="section-3.1.2-3.3.1">Use the fallback algorithm to make a routing decision and, if applicable,
+record the results in the tables indexed by 4-tuple and/or DCID.<a href="#section-3.1.2-3.3.1" class="pilcrow">¶</a></p>
+</li>
+          </ol>
+<p id="section-3.1.2-4">When load balancers and servers are guaranteed to have common non-null
+configuration, all valid QUIC short headers have routable DCIDs. Under these
+conditions, load balancers MAY drop packets with short headers and unroutable
+DCIDs.<a href="#section-3.1.2-4" class="pilcrow">¶</a></p>
+<p id="section-3.1.2-5">When load balancers are guaranteed to have a superset of all server
+configurations, but servers might have no configuration at all, all valid QUIC
+short headers have either a routable DCID or use config ID 0b111. Under these
+conditions, load balancers MAY drop packets with short headers and unroutable
+DCIDs that do not have config ID 0b111.<a href="#section-3.1.2-5" class="pilcrow">¶</a></p>
+<p id="section-3.1.2-6">Some unroutable connection IDs are evidently client-generated if all servers
+behind the load balancer are compliant with this specification. In particular,
+an unroutable CID is evidently client-generated if
+- it does not use the 0b111 config ID; OR
+- it uses the 0b111 config ID, it is in a long header packet, and its self-
+encoded length does not match the length in the long header field.<a href="#section-3.1.2-6" class="pilcrow">¶</a></p>
+<p id="section-3.1.2-7">Load balancers MAY drop packets with evidently client-generated DCIDs if and
+only if it knows that the encoded QUIC version only allows the sending of that
+signature after the server has the opportunity to update the connection ID.
+For example, a load balancer can safely drop a QUIC version 1 Handshake packet
+with a client-generated DCID, as a version 1 Handshake packet sent to a QUIC-LB
+routable server will always have a server-generated CID. Load balancers MUST NOT
+drop packets with long headers and unknown QUIC versions.<a href="#section-3.1.2-7" class="pilcrow">¶</a></p>
+<p id="section-3.1.2-8">Under all other circumstances, load balancers MUST NOT drop packets with
+unroutable DCIDs, and instead forward it using the procedure above.<a href="#section-3.1.2-8" class="pilcrow">¶</a></p>
+<p id="section-3.1.2-9">While the load balancer function on a device has restrictions on which packets
+it can drop, a colocated function, outside the scope of this specification, can
+apply other policies to drop packets. For example, a rate limiting or security
+function might drop packets that the load balancer routes.<a href="#section-3.1.2-9" class="pilcrow">¶</a></p>
 </section>
 </div>
 </section>
@@ -1738,59 +1794,6 @@ is not robust to new server-selected DCIDs, but can increase robustness when
 a connection to a server generating unroutable CIDs experiences a NAT rebinding.
 An entry can be freed when the corresponding 4-tuple uses a different CID,
 whether routable or not.<a href="#section-3.2-8" class="pilcrow">¶</a></p>
-<div id="load-balancer-forwarding">
-<section id="section-3.2.1">
-          <h4 id="name-load-balancer-forwarding">
-<a href="#section-3.2.1" class="section-number selfRef">3.2.1. </a><a href="#name-load-balancer-forwarding" class="section-name selfRef">Load Balancer Forwarding</a>
-          </h4>
-<p id="section-3.2.1-1">Packets with routable CIDs are, of course, routed in accordance with the
-decoded server ID.<a href="#section-3.2.1-1" class="pilcrow">¶</a></p>
-<p id="section-3.2.1-2">For unroutable CIDs, load balancers execute the following steps in order
-until one results in a routing decision.<a href="#section-3.2.1-2" class="pilcrow">¶</a></p>
-<ol start="1" type="1" class="normal type-1" id="section-3.2.1-3">
-<li id="section-3.2.1-3.1">
-              <p id="section-3.2.1-3.1.1">If the load balancer has a table of routing decisions by DCID, and the
-DCID is present in it, route the packet accordingly.<a href="#section-3.2.1-3.1.1" class="pilcrow">¶</a></p>
-</li>
-            <li id="section-3.2.1-3.2">
-              <p id="section-3.2.1-3.2.1">If the load balancer has a table of routing decisions by 4-tuple, and
-the DCID is present in it, route the packet accordingly.<a href="#section-3.2.1-3.2.1" class="pilcrow">¶</a></p>
-</li>
-            <li id="section-3.2.1-3.3">
-              <p id="section-3.2.1-3.3.1">Use the fallback algorithm to make a routing decision and, if applicable, record the results
-in the tables indexed by 4-tuple and/or DCID.<a href="#section-3.2.1-3.3.1" class="pilcrow">¶</a></p>
-</li>
-          </ol>
-<p id="section-3.2.1-4">When load balancers and servers are guaranteed to have common non-null
-configuration, all valid QUIC short headers have routable DCIDs. Under these
-conditions, load balancers MAY drop packets with short headers and unroutable
-DCIDs.<a href="#section-3.2.1-4" class="pilcrow">¶</a></p>
-<p id="section-3.2.1-5">When load balancers are guaranteed to have a superset of all server
-configurations, but servers might have no configuration at all, all valid QUIC
-short headers have either a routable DCID or use config ID 0b111. Under these
-conditions, load balancers MAY drop packets with short headers and unroutable
-DCIDs that do not have config ID 0b111.<a href="#section-3.2.1-5" class="pilcrow">¶</a></p>
-<p id="section-3.2.1-6">Some unroutable connection IDs are evidently client-generated if all servers
-behind the load balancer are compliant with this specification. In particular,
-an unroutable CID is evidently client-generated if
-- it does not use the 0b111 config ID; OR
-- it uses the 0b111 config ID, it is in a long header packet, and its self-
-encoded length does not match the length in the long header field.<a href="#section-3.2.1-6" class="pilcrow">¶</a></p>
-<p id="section-3.2.1-7">Load balancers MAY drop packets with evidently client-generated DCIDs if and
-only if it knows that the encoded QUIC version only allows the sending of that
-signature after the server has the opportunity to update the connection ID.
-For example, a load balancer can safely drop a QUIC version 1 Handshake packet
-with a client-generated DCID, as a version 1 Handshake packet sent to a QUIC-LB
-routable server will always have a server-generated CID. Load balancers MUST NOT
-drop packets with long headers and unknown QUIC versions.<a href="#section-3.2.1-7" class="pilcrow">¶</a></p>
-<p id="section-3.2.1-8">Under all other circumstances, load balancers MUST NOT drop packets with
-unroutable DCIDs, and instead forward it using the procedure above.<a href="#section-3.2.1-8" class="pilcrow">¶</a></p>
-<p id="section-3.2.1-9">While the load balancer function on a device has restrictions on which packets
-it can drop, a colocated function, outside the scope of this specification, can
-apply other policies to drop packets. For example, a rate limiting or security
-function might drop packets that the load balancer routes.<a href="#section-3.2.1-9" class="pilcrow">¶</a></p>
-</section>
-</div>
 </section>
 </div>
 <div id="sid-allocation">
@@ -2471,7 +2474,7 @@ of the mechanisms in this document unusable.  For example, a maximum connection
 ID length could be below the minimum necessary to use all or part of this
 specification; or, the minimum connection ID length could be larger than the
 largest value in this specification.<a href="#section-7-2" class="pilcrow">¶</a></p>
-<p id="section-7-3"><a href="#load-balancer-forwarding" class="auto internal xref">Section 3.2.1</a> provides guidance about how load balancers should
+<p id="section-7-3"><a href="#load-balancer-forwarding" class="auto internal xref">Section 3.1.2</a> provides guidance about how load balancers should
 handle unroutable DCIDs. This guidance, and the implementation of an algorithm
 to handle these DCIDs, rests on some assumptions that are not specified in
 RFC 8999:<a href="#section-7-3" class="pilcrow">¶</a></p>

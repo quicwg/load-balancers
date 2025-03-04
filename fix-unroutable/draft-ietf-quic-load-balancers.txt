@@ -5,10 +5,10 @@
 QUIC                                                             M. Duke
 Internet-Draft                                                    Google
 Intended status: Standards Track                                N. Banks
-Expires: 4 September 2025                                      Microsoft
+Expires: 5 September 2025                                      Microsoft
                                                               C. Huitema
                                                     Private Octopus Inc.
-                                                            3 March 2025
+                                                            4 March 2025
 
 
             QUIC-LB: Generating Routable QUIC Connection IDs
@@ -55,7 +55,7 @@ Status of This Memo
    time.  It is inappropriate to use Internet-Drafts as reference
    material or to cite them other than as "work in progress."
 
-   This Internet-Draft will expire on 4 September 2025.
+   This Internet-Draft will expire on 5 September 2025.
 
 Copyright Notice
 
@@ -84,8 +84,8 @@ Table of Contents
    3.  Load Balancing Preliminaries
      3.1.  Unroutable Connection IDs
        3.1.1.  Definition
+       3.1.2.  Load Balancer Forwarding
      3.2.  Fallback Algorithms
-       3.2.1.  Load Balancer Forwarding
      3.3.  Server ID Allocation
    4.  Server ID Encoding in Connection IDs
      4.1.  CID format
@@ -292,6 +292,10 @@ Table of Contents
    for this purpose.  These connection IDs MUST self-encode their length
    (see Section 2.3).
 
+   Servers with no active configuration SHOULD NOT send the client
+   additional connection IDs in NEW_CONNECTION_ID frames.  They SHOULD
+   send the "disable_active_migration" transport parameter.
+
    When using codepoint 0b111, all bytes but the first SHOULD have no
    larger of a chance of collision as random bytes.  The connection ID
    SHOULD be of at least length 8 to provide 7 bytes of entropy after
@@ -385,69 +389,22 @@ Table of Contents
       server.
 
    If the load balancer has knowledge that all servers in the pool are
-   encoding CID length in the first octet (see Section 2.3), additional
-   checks are possible based on that self-encoded length:
+   encoding CID length in the first octet (see Section 2.3), it MAY
+   perform additional checks based on that self-encoded length:
 
-   *  It does not match the CID length in a long header.
+   *  In a long header, verify that the self-encoded length is
+      consistent with the CID length field in the header (i.e. the self-
+      encoded length is one less)
 
-   *  It is not valid for a QUIC version the packet is known to encode.
+   *  Verify that the self-encoded length is consistent with the QUIC
+      version, if known.
 
-   *  It is too short for the decoder to process using the indicated
-      config ID.
+   *  Verify that the self-encoded length is large enough for the
+      decoder to process using the indicated config ID.
 
    DCIDs that do not meet any of these criteria are routable.
 
-3.2.  Fallback Algorithms
-
-   There are conditions described below where a load balancer routes a
-   packet using a "fallback algorithm."  It can choose any algorithm,
-   without coordination with the servers, but the algorithm SHOULD be
-   deterministic over short time scales so that related packets go to
-   the same server.
-
-   A fallback algorithm MAY parse a packet from a QUIC version it
-   understands and use that information to make a routing decision.  If
-   so, it MAY buffer packets with unroutable DCIDs to await further
-   packets that allow it to make a routing decision.  For example, it
-   may use the TLS 1.3 Server Name Indication (SNI) field, which might
-   appear in one of several QUIC version 1 Initial packets.
-
-   For versions it does not understand, a fallback algorithm MUST NOT
-   make the routing behavior dependent on any part of the long header
-   that is not invariant across versions (see [RFC8999]).
-
-   For example, one fallback algorithm might convert a unroutable DCID
-   to an integer and divided by the number of servers, with the modulus
-   used to forward the packet.  The number of servers is usually
-   consistent on the time scale of a QUIC connection handshake.  Another
-   might simply hash the address/port 4-tuple.  See also Section 7.
-
-   Note that any information used by the Fallback Algorithm might not be
-   repeated from one QUIC packet to another.  The 4-tuple is assumed to
-   remain stable during the handshake, but the server can change the
-   destination connection ID after the client's first flight.
-
-   Therefore, if the fallback algorithm uses information other than the
-   4-tuple in its routing decision, the load balancer SHOULD store the
-   routing decision for that 4-tuple in order to route future packets
-   unless doing so would exceed resource limits.  It can free these
-   records when the 4-tuple uses a routable CID.  This state allows the
-   load balancer to successfully route other packets from the client's
-   first flight, as well as subsequent flights if the server provides an
-   unroutable CID for the reasons described in Section 2.2.
-
-   Even if the fallback algorithm solely uses the 4-tuple, it MAY store
-   the algorithm result in case changes to the server pool change
-   fallback algorithm output.
-
-   The load balancer MAY also store the routing decision indexed by
-   DCID.  This is not robust to new server-selected DCIDs, but can
-   increase robustness when a connection to a server generating
-   unroutable CIDs experiences a NAT rebinding.  An entry can be freed
-   when the corresponding 4-tuple uses a different CID, whether routable
-   or not.
-
-3.2.1.  Load Balancer Forwarding
+3.1.2.  Load Balancer Forwarding
 
    Packets with routable CIDs are, of course, routed in accordance with
    the decoded server ID.
@@ -501,6 +458,56 @@ Table of Contents
    this specification, can apply other policies to drop packets.  For
    example, a rate limiting or security function might drop packets that
    the load balancer routes.
+
+3.2.  Fallback Algorithms
+
+   There are conditions described below where a load balancer routes a
+   packet using a "fallback algorithm."  It can choose any algorithm,
+   without coordination with the servers, but the algorithm SHOULD be
+   deterministic over short time scales so that related packets go to
+   the same server.
+
+   A fallback algorithm MAY parse a packet from a QUIC version it
+   understands and use that information to make a routing decision.  If
+   so, it MAY buffer packets with unroutable DCIDs to await further
+   packets that allow it to make a routing decision.  For example, it
+   may use the TLS 1.3 Server Name Indication (SNI) field, which might
+   appear in one of several QUIC version 1 Initial packets.
+
+   For versions it does not understand, a fallback algorithm MUST NOT
+   make the routing behavior dependent on any part of the long header
+   that is not invariant across versions (see [RFC8999]).
+
+   For example, one fallback algorithm might convert a unroutable DCID
+   to an integer and divided by the number of servers, with the modulus
+   used to forward the packet.  The number of servers is usually
+   consistent on the time scale of a QUIC connection handshake.  Another
+   might simply hash the address/port 4-tuple.  See also Section 7.
+
+   Note that any information used by the Fallback Algorithm might not be
+   repeated from one QUIC packet to another.  The 4-tuple is assumed to
+   remain stable during the handshake, but the server can change the
+   destination connection ID after the client's first flight.
+
+   Therefore, if the fallback algorithm uses information other than the
+   4-tuple in its routing decision, the load balancer SHOULD store the
+   routing decision for that 4-tuple in order to route future packets
+   unless doing so would exceed resource limits.  It can free these
+   records when the 4-tuple uses a routable CID.  This state allows the
+   load balancer to successfully route other packets from the client's
+   first flight, as well as subsequent flights if the server provides an
+   unroutable CID for the reasons described in Section 2.2.
+
+   Even if the fallback algorithm solely uses the 4-tuple, it MAY store
+   the algorithm result in case changes to the server pool change
+   fallback algorithm output.
+
+   The load balancer MAY also store the routing decision indexed by
+   DCID.  This is not robust to new server-selected DCIDs, but can
+   increase robustness when a connection to a server generating
+   unroutable CIDs experiences a NAT rebinding.  An entry can be freed
+   when the corresponding 4-tuple uses a different CID, whether routable
+   or not.
 
 3.3.  Server ID Allocation
 
@@ -1020,7 +1027,7 @@ Table of Contents
    connection ID length could be larger than the largest value in this
    specification.
 
-   Section 3.2.1 provides guidance about how load balancers should
+   Section 3.1.2 provides guidance about how load balancers should
    handle unroutable DCIDs.  This guidance, and the implementation of an
    algorithm to handle these DCIDs, rests on some assumptions that are
    not specified in RFC 8999:
