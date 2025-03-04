@@ -190,6 +190,10 @@ most significant bits set to 0b111 to signify the connection ID is unroutable,
 corresponding to the config ID reserved for this purpose. These connection IDs
 MUST self-encode their length (see {{length-self-description}}).
 
+Servers with no active configuration SHOULD NOT send the client additional
+connection IDs in NEW_CONNECTION_ID frames. They SHOULD send the
+"disable_active_migration" transport parameter.
+
 When using codepoint 0b111, all bytes but the first SHOULD have no larger of a
 chance of collision as random bytes. The connection ID SHOULD be of at least
 length 8 to provide 7 bytes of entropy after the first octet with a low chance
@@ -275,15 +279,66 @@ enough for the decoder to process.
 * The extracted server mapping might not correspond to an active server.
 
 If the load balancer has knowledge that all servers in the pool are encoding
-CID length in the first octet (see {{length-self-description}}), additional
-checks are possible based on that self-encoded length:
+CID length in the first octet (see {{length-self-description}}), it MAY
+perform additional checks based on that self-encoded length:
 
-* It does not match the CID length in a long header.
-* It is not valid for a QUIC version the packet is known to
-encode.
-* It is too short for the decoder to process using the indicated config ID.
+* In a long header, verify that the self-encoded length is consistent with the
+CID length field in the header (i.e. the self-encoded length is one less)
+* Verify that the self-encoded length is consistent with the QUIC version, if
+known.
+* Verify that the self-encoded length is large enough for the decoder to process
+using the indicated config ID.
 
 DCIDs that do not meet any of these criteria are routable.
+
+### Load Balancer Forwarding {#load-balancer-forwarding}
+
+Packets with routable CIDs are, of course, routed in accordance with the
+decoded server ID.
+
+For unroutable CIDs, load balancers execute the following steps in order
+until one results in a routing decision.
+
+1. If the load balancer has a table of routing decisions by DCID, and the
+DCID is present in it, route the packet accordingly.
+1. If the load balancer has a table of routing decisions by 4-tuple, and
+the DCID is present in it, route the packet accordingly.
+1. Use the fallback algorithm to make a routing decision and, if applicable,
+record the results in the tables indexed by 4-tuple and/or DCID.
+
+When load balancers and servers are guaranteed to have common non-null
+configuration, all valid QUIC short headers have routable DCIDs. Under these
+conditions, load balancers MAY drop packets with short headers and unroutable
+DCIDs.
+
+When load balancers are guaranteed to have a superset of all server
+configurations, but servers might have no configuration at all, all valid QUIC
+short headers have either a routable DCID or use config ID 0b111. Under these
+conditions, load balancers MAY drop packets with short headers and unroutable
+DCIDs that do not have config ID 0b111.
+
+Some unroutable connection IDs are evidently client-generated if all servers
+behind the load balancer are compliant with this specification. In particular,
+an unroutable CID is evidently client-generated if
+- it does not use the 0b111 config ID; OR
+- it uses the 0b111 config ID, it is in a long header packet, and its self-
+encoded length does not match the length in the long header field.
+
+Load balancers MAY drop packets with evidently client-generated DCIDs if and
+only if it knows that the encoded QUIC version only allows the sending of that
+signature after the server has the opportunity to update the connection ID.
+For example, a load balancer can safely drop a QUIC version 1 Handshake packet
+with a client-generated DCID, as a version 1 Handshake packet sent to a QUIC-LB
+routable server will always have a server-generated CID. Load balancers MUST NOT
+drop packets with long headers and unknown QUIC versions.
+
+Under all other circumstances, load balancers MUST NOT drop packets with
+unroutable DCIDs, and instead forward it using the procedure above.
+
+While the load balancer function on a device has restrictions on which packets
+it can drop, a colocated function, outside the scope of this specification, can
+apply other policies to drop packets. For example, a rate limiting or security
+function might drop packets that the load balancer routes.
 
 ## Fallback Algorithms {#fallback-algorithm}
 
@@ -330,55 +385,6 @@ is not robust to new server-selected DCIDs, but can increase robustness when
 a connection to a server generating unroutable CIDs experiences a NAT rebinding.
 An entry can be freed when the corresponding 4-tuple uses a different CID,
 whether routable or not.
-
-### Load Balancer Forwarding {#load-balancer-forwarding}
-
-Packets with routable CIDs are, of course, routed in accordance with the
-decoded server ID.
-
-For unroutable CIDs, load balancers execute the following steps in order
-until one results in a routing decision.
-
-1. If the load balancer has a table of routing decisions by DCID, and the
-DCID is present in it, route the packet accordingly.
-1. If the load balancer has a table of routing decisions by 4-tuple, and
-the DCID is present in it, route the packet accordingly.
-1. Use the fallback algorithm to make a routing decision and, if applicable, record the results
-in the tables indexed by 4-tuple and/or DCID.
-
-When load balancers and servers are guaranteed to have common non-null
-configuration, all valid QUIC short headers have routable DCIDs. Under these
-conditions, load balancers MAY drop packets with short headers and unroutable
-DCIDs.
-
-When load balancers are guaranteed to have a superset of all server
-configurations, but servers might have no configuration at all, all valid QUIC
-short headers have either a routable DCID or use config ID 0b111. Under these
-conditions, load balancers MAY drop packets with short headers and unroutable
-DCIDs that do not have config ID 0b111.
-
-Some unroutable connection IDs are evidently client-generated if all servers
-behind the load balancer are compliant with this specification. In particular,
-an unroutable CID is evidently client-generated if
-- it does not use the 0b111 config ID; OR
-- it uses the 0b111 config ID, it is in a long header packet, and its self-
-encoded length does not match the length in the long header field.
-
-Load balancers MAY drop packets with evidently client-generated DCIDs if and
-only if it knows that the encoded QUIC version only allows the sending of that
-signature after the server has the opportunity to update the connection ID.
-For example, a load balancer can safely drop a QUIC version 1 Handshake packet
-with a client-generated DCID, as a version 1 Handshake packet sent to a QUIC-LB
-routable server will always have a server-generated CID. Load balancers MUST NOT
-drop packets with long headers and unknown QUIC versions.
-
-Under all other circumstances, load balancers MUST NOT drop packets with
-unroutable DCIDs, and instead forward it using the procedure above.
-
-While the load balancer function on a device has restrictions on which packets
-it can drop, a colocated function, outside the scope of this specification, can
-apply other policies to drop packets. For example, a rate limiting or security
-function might drop packets that the load balancer routes.
 
 ## Server ID Allocation {#sid-allocation}
 
