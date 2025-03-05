@@ -914,7 +914,7 @@ with the old server using the "Retire Prior To" field in that frame.
 # Version Invariance of QUIC-LB {#version-invariance}
 
 The server ID encodings, and requirements for their handling, are designed to be
-QUIC version independent (see {{RFC8999}}). A QUIC-LB load balancer will
+QUIC version independent (see {{?RFC8999}}). A QUIC-LB load balancer will
 generally not require changes as servers deploy new versions of QUIC. However,
 there are several unlikely future design decisions that could impact the
 operation of QUIC-LB.
