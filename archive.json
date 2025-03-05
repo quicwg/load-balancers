@@ -1,6 +1,6 @@
 {
   "magic": "E!vIA5L86J2I",
-  "timestamp": "2025-03-04T22:38:25.848361+00:00",
+  "timestamp": "2025-03-05T22:59:36.024804+00:00",
   "repo": "quicwg/load-balancers",
   "labels": [
     {
@@ -3867,6 +3867,53 @@
           "updatedAt": "2025-03-03T21:37:08Z"
         }
       ]
+    },
+    {
+      "number": 238,
+      "id": "I_kwDODoD6yc6sl697",
+      "title": "Text About Dropping Packets is Confusing and Not That Useful",
+      "url": "https://github.com/quicwg/load-balancers/issues/238",
+      "state": "OPEN",
+      "author": "martinduke",
+      "authorAssociation": "CONTRIBUTOR",
+      "assignees": [],
+      "labels": [],
+      "body": "Dropping some packets with unroutable CIDS is an optimization to avoid useless traffic. It doesn't really guard against DoS attacks because an attacker can simply generate Initial packets with unroutable CIDs and force them to be delivered.\n\nThere are tons of conditions and assumptions baked in:\n- The CID is unroutable\n- The CID does not begin with 0b111 (or we know for sure that all servers have valid config)\n- The packet could not contain a client-generated CID (which involves many assumptions about the QUIC version, which it turn leads to discussion of keeping state for a flow's QUIC versions to handle short headers, etc)\n\nThis capability also adds to the conditions where QUIC-LB is not robust to new QUIC versions.\n\nWe should simply delete all of these provisions. The benefits are small and the complexity is great.",
+      "createdAt": "2025-03-04T22:45:49Z",
+      "updatedAt": "2025-03-04T22:45:49Z",
+      "closedAt": null,
+      "comments": []
+    },
+    {
+      "number": 239,
+      "id": "I_kwDODoD6yc6swk4X",
+      "title": "Rewrite Version Invariance Section",
+      "url": "https://github.com/quicwg/load-balancers/issues/239",
+      "state": "OPEN",
+      "author": "martinduke",
+      "authorAssociation": "CONTRIBUTOR",
+      "assignees": [],
+      "labels": [],
+      "body": "A solution for #238 can significantly reduce version dependence. However, the following assumptions still apply:\n\n* Short headers always contain server-generated CIDs -- there is no way to obtain the CID length if not.\n\n* Packets that do not contain server-generated CIDs are consistent in 4-tuple and DCID. Fallback algorithms for unknown versions will fail otherwise.\n\n* There is a mechanism for servers to provide a CID.\n\nNote also that the reference to NEW_CONNECTION_ID frames is version-specific and should be generalized.",
+      "createdAt": "2025-03-05T20:30:09Z",
+      "updatedAt": "2025-03-05T22:52:26Z",
+      "closedAt": null,
+      "comments": [
+        {
+          "author": "martinduke",
+          "authorAssociation": "CONTRIBUTOR",
+          "body": "The advanced fallback algorithm is not robust to new versions and is unlikely to produce satisfactory results.",
+          "createdAt": "2025-03-05T22:31:09Z",
+          "updatedAt": "2025-03-05T22:31:09Z"
+        },
+        {
+          "author": "martinduke",
+          "authorAssociation": "CONTRIBUTOR",
+          "body": "connection IDs cannot be more than 32 bytes and use length-self-encoding.",
+          "createdAt": "2025-03-05T22:52:25Z",
+          "updatedAt": "2025-03-05T22:52:25Z"
+        }
+      ]
     }
   ],
   "pulls": [
@@ -4997,7 +5044,7 @@
       "labels": [],
       "body": "This PR describes a three pass stream cipher option. The three passes are:\r\n\r\n1) Encrypt the server-id bytes using the nonce bytes\r\n\r\n2) Encrypt the nonce bytes using the server-id bytes\r\n\r\n3) Encrypt the server-id bytes using the nonce bytes\r\n\r\nThis is effectively a much simplified version of the FFX algorithm. The effect is complete encryption of server-id and nonce, and thus resiliency against bit flipping attacks. With the simple stream cipher, and attacker can flip bits in the server ID, resulting in a different decrypted value which could be used in attacks. With the triple stream cipher, flipping any bit will result in random flips of every other bits, which would be easy for servers or load balancers to detect.\r\n\r\nOf course, full encryption also has these properties. But full encryption requires fairly long CID, while stream encryption works reasonably with small CID.",
       "createdAt": "2020-07-01T19:57:52Z",
-      "updatedAt": "2020-07-09T01:16:05Z",
+      "updatedAt": "2025-03-05T18:55:19Z",
       "baseRepository": "quicwg/load-balancers",
       "baseRefName": "master",
       "baseRefOid": "1db2dd1ac29a04eb368a82cfbb7e662999fdfb46",
@@ -5697,7 +5744,7 @@
       "labels": [],
       "body": "Close #35 \r\n\r\nThis PR specifies how the retry token should be encoded using AEAD. This replaces the current method that uses AES ECB, and has potential vulnerabilities since encrypted addresses and encrypted ODCID might be encrypted independently. There are differences between the two solutions:\r\n\r\n* AEAD requires key and IV, not just key. The IV will have to be provisioned with the key.\r\n\r\n* AEAD requires a nonce. The proposed format defines a 64 bit \"token sequence number\". We may want to discuss this further, and specify how exactly this is generated.\r\n\r\n* The client address is not encrypted as part of the token, but is verified through AEAD\r\n\r\n* The AEAD protected token may end up 8 bytes longer than the ECB protected token: remove IP address (-16), add a nonce (+8), add the AEAD checksum (+16). On the other hand, the ECB must be padded to the nearest 16 bytes, while AEAD does not require that. Probably not very important.\r\n\r\n* I assume we are using AES128-GCM, but I suppose the specific algorithm could be provisioned with the key.\r\n\r\n\r\n",
       "createdAt": "2020-11-04T02:30:35Z",
-      "updatedAt": "2020-12-18T16:38:02Z",
+      "updatedAt": "2025-03-05T18:55:17Z",
       "baseRepository": "quicwg/load-balancers",
       "baseRefName": "master",
       "baseRefOid": "5d17ce83c507dd6c7d2a12308fba6f129a7b7e0d",
@@ -6860,7 +6907,7 @@
       "labels": [],
       "body": "Close #71",
       "createdAt": "2021-01-08T06:05:37Z",
-      "updatedAt": "2021-01-11T15:10:52Z",
+      "updatedAt": "2025-03-05T18:55:15Z",
       "baseRepository": "quicwg/load-balancers",
       "baseRefName": "master",
       "baseRefOid": "d985a9f171ec244f1c9290315e4ee5bf8c3b922d",
@@ -11685,13 +11732,13 @@
       "labels": [],
       "body": "Fixes #235",
       "createdAt": "2025-03-01T01:40:23Z",
-      "updatedAt": "2025-03-04T22:38:02Z",
+      "updatedAt": "2025-03-05T22:58:37Z",
       "baseRepository": "quicwg/load-balancers",
       "baseRefName": "main",
       "baseRefOid": "d811e9e4e8ab22acf468227f74770562816283d3",
       "headRepository": "quicwg/load-balancers",
       "headRefName": "fix-unroutable",
-      "headRefOid": "76a2a0d3bf44bdb67b64128f658f7b6f8de387f2",
+      "headRefOid": "63722d1415dc483844db801d99856cb48df96fcd",
       "closedAt": null,
       "mergedAt": null,
       "mergedBy": null,
@@ -11703,6 +11750,27 @@
           "body": "> I think we need at a minimum an editorial pass of the \"fallback algorithms\".\r\n\r\nThe overall theme of my reply is that you have missed the overall context of these changes, which are to improve the case when the server has no config and is sending 0b111 CIDs. In this case, the entire life of the connection may be unroutable.\r\n\r\nSecondarily, it is cleaning up cases where the client's first flight has more than one packet, which had many holes in the logic.\r\n\r\nIf there are changes to Section 2.2 and 3 to make all this clearer, I would be happy to make them.",
           "createdAt": "2025-03-04T22:35:39Z",
           "updatedAt": "2025-03-04T22:36:30Z"
+        },
+        {
+          "author": "martinduke",
+          "authorAssociation": "CONTRIBUTOR",
+          "body": "I did another pass to try to organize the text better and make things clearer.",
+          "createdAt": "2025-03-04T23:13:46Z",
+          "updatedAt": "2025-03-04T23:13:46Z"
+        },
+        {
+          "author": "martinduke",
+          "authorAssociation": "CONTRIBUTOR",
+          "body": "Christian and I had a chat and came to some conclusions on how to present this more clearly.\r\n\r\nThe baseline fallback algorithm is 4-tuple based, with no other inputs, eliminating a lot of edge cases.\r\n\r\nIf mutual configuration is guaranteed, keep no tables. Otherwise,\r\n\r\nThe LB MAY keep a table of 4-tuple to server, which protects against the case where the server is generating Unroutable CIDs and the hash result changes down the line.\r\n\r\nThe LB MAY also keep a table of CID to server, so that it can be robust to NAT rebinding.\r\n\r\nall LBs MUST implement this in case they see an unknown version.\r\n\r\n***\r\n\r\nI don't see a compelling case for f(CID), and it introduces tons of edge cases.\r\n\r\n***\r\n\r\nThere is also an advanced case where the LB does DPI on a known version (really this is about SNI routing). This levies additional requirements:\r\n\r\n- There must be a capability to buffer packets in a flow until the LB can make a decision\r\n\r\n- Routing decisions SHOULD be stored by 4-tuple\r\n- Routing decisions MAY be stored by both source connection ID and destination CID to disambiguate multiple connections on the same 4-tuple for both long and short headers, respectively.  The SCID part is required because it is otherwise impossible to disambiguate simultaneous connections on the same 4-tuple that go to different SNIs, where the servers provide new DCIDs.\r\n\r\nI'll rewrite again.\r\n",
+          "createdAt": "2025-03-05T21:37:23Z",
+          "updatedAt": "2025-03-05T21:37:23Z"
+        },
+        {
+          "author": "martinduke",
+          "authorAssociation": "CONTRIBUTOR",
+          "body": "Whew! Thanks to @huitema, I've simplified the text a lot by reducing the degrees of freedom. @ggreenway PTAL.",
+          "createdAt": "2025-03-05T22:56:31Z",
+          "updatedAt": "2025-03-05T22:56:31Z"
         }
       ],
       "reviews": [
@@ -11977,6 +12045,116 @@
               "body": "Whoops, the language about disable_active_migration and NEW_CONNECTION_ID fell out of the edit. I've restored it.",
               "createdAt": "2025-03-04T22:31:48Z",
               "updatedAt": "2025-03-04T22:31:48Z"
+            }
+          ]
+        },
+        {
+          "id": "PRR_kwDODoD6yc6egxbL",
+          "commit": {
+            "abbreviatedOid": "2413b6f"
+          },
+          "author": "martinduke",
+          "authorAssociation": "CONTRIBUTOR",
+          "state": "COMMENTED",
+          "body": "",
+          "createdAt": "2025-03-04T23:12:07Z",
+          "updatedAt": "2025-03-04T23:12:07Z",
+          "comments": [
+            {
+              "originalPosition": 192,
+              "body": "I filed #238 to delete all that text.",
+              "createdAt": "2025-03-04T23:12:07Z",
+              "updatedAt": "2025-03-04T23:12:07Z"
+            }
+          ]
+        },
+        {
+          "id": "PRR_kwDODoD6yc6ervpK",
+          "commit": {
+            "abbreviatedOid": "e2baee4"
+          },
+          "author": "huitema",
+          "authorAssociation": "CONTRIBUTOR",
+          "state": "COMMENTED",
+          "body": "Defininetly improving!\r\n\r\nI think we should have an explanation of how we use hash buckets for mapping 4-tuples to server, and how memorizing CID improves robustness somewhat, with a special case for the transition from IDCID to server provided DCID. Maybe add a consideration that for QUIC V1, remembering CIDs found in Initial packets is futile, since we do not support NAT rebinding during the initial exchange.",
+          "createdAt": "2025-03-05T19:21:57Z",
+          "updatedAt": "2025-03-05T19:47:56Z",
+          "comments": [
+            {
+              "originalPosition": 145,
+              "body": "I am trying to get a picture of the underlying data model. I understand the first two steps:\r\n\r\n1. Routable CID. That one seems obvious, but there is the issue of the Initial DCID that becomes routable \"by chance\". These will be assigned to the \"decoded\" server, regardless of the source address and source port. Is that intentional?\r\n\r\n2. Unroutable CID that has been memorized in a global CID table. That seems obvious too. (Small question: when are such CID ejected from the table?)\r\n\r\n3. Unroutable CID that has been memorized in a \"per 4 tuple\" CID table. Picoquic does something like that for the Initial DCID, because it isolate the routing from collisions due to either poor DCID (e.g., everybody pick 999...999, or everybody picks 0) or deliberate attack -- attacker sends packet with copied DCID, intercepts the connection. But doing that for other DCID than the IDCID prevents handling of NAT rebinding.\r\n\r\nIt seems weird to check the global table of ICID first, and the per tuple table second. Is that what implementations do?\r\n\r\nShould we be explicit about the data model of the load balancer, and the tradeoff between robustness against poor random number generation of IDCID and support for NAT rebinding? ",
+              "createdAt": "2025-03-05T19:21:57Z",
+              "updatedAt": "2025-03-05T19:47:56Z"
+            },
+            {
+              "originalPosition": 127,
+              "body": "OK.",
+              "createdAt": "2025-03-05T19:22:25Z",
+              "updatedAt": "2025-03-05T19:47:56Z"
+            },
+            {
+              "originalPosition": 138,
+              "body": "OK.",
+              "createdAt": "2025-03-05T19:22:54Z",
+              "updatedAt": "2025-03-05T19:47:56Z"
+            },
+            {
+              "originalPosition": 146,
+              "body": "Stateless retry will not change the 4 tuple, but it will change the DCID. The client that receives the retry will get a new DCID suggested by the server. The response will come from that new DCID. If the server is not configured yet, that new DCID will be \"unroutable\". This new unroutable DCID will be coming from the same 4-tuple, but the hashing of four tuples to servers may change between the time the IDCID was first seen and the new DCID is first seen.\r\n\r\nRSS forces a kind of handshake between client and server. The client will switch from using the IDCID to using as DCID that the CID server used as a source CID. The same handshake will happen if the server sends an initial ACK before the client has sent all initial packets, after the client receives the first packets from the server. Same risk: if the hash table changes, the transition to the new DCID will fail.\r\n\r\nBasically, if we route per hash of 4 tuple, the routing fails when hash changes. If the LB remembers the DCID, the routing fails if both the DCID and the hash table change. Remembering the DCID in the global table improves the robustness generally, with the possible exception of the IDCID (routing of initial packets). It might be better to not insert those in any table. In case of NAT rebinding, the connection only survives if the LB remembers the DCID in the global table.\r\n\r\n",
+              "createdAt": "2025-03-05T19:42:09Z",
+              "updatedAt": "2025-03-05T19:47:56Z"
+            },
+            {
+              "originalPosition": 150,
+              "body": "OK.",
+              "createdAt": "2025-03-05T19:42:21Z",
+              "updatedAt": "2025-03-05T19:47:56Z"
+            },
+            {
+              "originalPosition": 285,
+              "body": "Typo, defintion -> definition",
+              "createdAt": "2025-03-05T19:43:42Z",
+              "updatedAt": "2025-03-05T19:47:56Z"
+            }
+          ]
+        },
+        {
+          "id": "PRR_kwDODoD6yc6esP1c",
+          "commit": {
+            "abbreviatedOid": "173a7f4"
+          },
+          "author": "martinduke",
+          "authorAssociation": "CONTRIBUTOR",
+          "state": "COMMENTED",
+          "body": "",
+          "createdAt": "2025-03-05T20:20:11Z",
+          "updatedAt": "2025-03-05T20:20:11Z",
+          "comments": [
+            {
+              "originalPosition": 146,
+              "body": "For stateless retry, we have to split this into the happy path, the unhappy path, and the very unhappy path, and the very very unhappy path.\r\n\r\nIn the happy path, the Retry packet provides a routable CID, and there is no problem.\r\n\r\nIn the unhappy path, there is no common configuration, so the server's CID is unroutable. The client's second attempt, it uses the same 4-tuple almost immediately, and the rest of the packet is pretty much the same. The second packet is a hit in the 4-tuple table, so it goes to the same place.\r\n\r\nIn the very unhappy path, there is no common config and the 4-tuple table is missing or overflowing (maybe reasonable in a Retry case). Pretty much everything in the second packet is the same except the DCID, so any fallback algorithm that does not use DCID should work. One that uses DCID will probably fail.\r\n\r\nIn the very very unhappy path, there is not common config, and the client delays the second attempt, long enough that there the hash result changes or there is a NAT rebinding, and/or the 4-tuple table entry times out. I would consider this edge case to be pathological behavior.\r\n\r\nIf by \"RSS\" you mean \"HRR\", I don't see that it's functionally different. The HRR will provide a new CID that has similar QUIC-LB properties.\r\n\r\nFinally, this is all presumptive of v1/v2. Many other patterns are possible.",
+              "createdAt": "2025-03-05T20:20:11Z",
+              "updatedAt": "2025-03-05T20:20:11Z"
+            }
+          ]
+        },
+        {
+          "id": "PRR_kwDODoD6yc6esvvi",
+          "commit": {
+            "abbreviatedOid": "e2baee4"
+          },
+          "author": "martinduke",
+          "authorAssociation": "CONTRIBUTOR",
+          "state": "COMMENTED",
+          "body": "",
+          "createdAt": "2025-03-05T21:26:13Z",
+          "updatedAt": "2025-03-05T21:26:13Z",
+          "comments": [
+            {
+              "originalPosition": 145,
+              "body": "> I am trying to get a picture of the underlying data model. I understand the first two steps:\r\n> \r\n> 1. Routable CID. That one seems obvious, but there is the issue of the Initial DCID that becomes routable \"by chance\". These will be assigned to the \"decoded\" server, regardless of the source address and source port. Is that intentional?\r\n\r\nYes. This is extremely unlikely because (1) clients sending 8B CIDs is a de facto standard, and QUIC-LB will rarely come out to 8B and (2) even if so, the right thing to do is have a sparse server ID result (as described in S3.3) so that even if it decodes, the server ID is invalid.\r\n\r\n> 2. Unroutable CID that has been memorized in a global CID table. That seems obvious too. (Small question: when are such CID ejected from the table?)\r\n\r\nwe chatted offline and agreed that it would be possible for an attacker to eject people from the table if it was on a routable CID, so ejection should be timer based.\r\n\r\n> 3. Unroutable CID that has been memorized in a \"per 4 tuple\" CID table. Picoquic does something like that for the Initial DCID, because it isolate the routing from collisions due to either poor DCID (e.g., everybody pick 999...999, or everybody picks 0) or deliberate attack -- attacker sends packet with copied DCID, intercepts the connection. But doing that for other DCID than the IDCID prevents handling of NAT rebinding.\r\n> \r\n> It seems weird to check the global table of ICID first, and the per tuple table second. Is that what implementations do?\r\n\r\nThere are no implementations of this PR! As you mentioned in our discussion, it's possible to have multiple connection IDs on the same connection.\r\n\r\n> \r\n> Should we be explicit about the data model of the load balancer, and the tradeoff between robustness against poor random number generation of IDCID and support for NAT rebinding?\r\n\r\nOnline we discussed a major rewrite, which I'll summarize in another comment.\r\n\r\n",
+              "createdAt": "2025-03-05T21:26:13Z",
+              "updatedAt": "2025-03-05T21:26:13Z"
             }
           ]
         }
