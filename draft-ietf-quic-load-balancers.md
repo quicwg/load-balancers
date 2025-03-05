@@ -302,7 +302,7 @@ DCIDs that do not meet any of these criteria are routable.
 Load balancers execute the following steps in order until one results in a
 routing decision.
 
-1. If the packet contains a routable CID, route the packet accordingly. 
+1. If the packet contains a routable CID, route the packet accordingly.
 1. If the packet matches an entry in a table of routing decisions indexed by a
 concatenation of 4-tuple and Source CID, route the packet accordingly.
 1. If the packet matches an entry in a table of routing decisions by destination
@@ -362,7 +362,7 @@ If so, it MUST have the ability to buffer packets with unroutable DCIDs to await
 further packets that allow it to make a routing decision, as the fields of
 interest can be an arbitary number of packets into the connection.
 
-4-tuple routing is not sufficient for this use case, because a client can use 
+4-tuple routing is not sufficient for this use case, because a client can use
 the same 4-tuple for two connections that should be routed differently (e.g.
 because they target different SNIs), as long as the packet contains a source
 connection ID of nonzero length.
