@@ -5,10 +5,10 @@
 QUIC                                                             M. Duke
 Internet-Draft                                                    Google
 Intended status: Standards Track                                N. Banks
-Expires: 5 September 2025                                      Microsoft
+Expires: 6 September 2025                                      Microsoft
                                                               C. Huitema
                                                     Private Octopus Inc.
-                                                            4 March 2025
+                                                            5 March 2025
 
 
             QUIC-LB: Generating Routable QUIC Connection IDs
@@ -55,7 +55,7 @@ Status of This Memo
    time.  It is inappropriate to use Internet-Drafts as reference
    material or to cite them other than as "work in progress."
 
-   This Internet-Draft will expire on 5 September 2025.
+   This Internet-Draft will expire on 6 September 2025.
 
 Copyright Notice
 
@@ -76,45 +76,47 @@ Table of Contents
    1.  Introduction
      1.1.  Terminology
      1.2.  Notation
-   2.  First CID octet
-     2.1.  Config Rotation
-     2.2.  Configuration Failover
-     2.3.  Length Self-Description
-     2.4.  Format
-   3.  Load Balancing Preliminaries
-     3.1.  Unroutable Connection IDs
-       3.1.1.  Definition
-       3.1.2.  Load Balancer Forwarding
-       3.1.3.  Fallback Algorithms
-       3.1.4.  Dropping packets
-     3.2.  Server ID Allocation
-   4.  Server ID Encoding in Connection IDs
-     4.1.  CID format
-     4.2.  Configuration Agent Actions
-     4.3.  Server Actions
-       4.3.1.  Special Case: Single Pass Encryption
-       4.3.2.  General Case: Four-Pass Encryption
-     4.4.  Load Balancer Actions
-       4.4.1.  Special Case: Single Pass Encryption
-       4.4.2.  General Case: Four-Pass Encryption
-   5.  Per-connection state
-   6.  Additional Use Cases
-     6.1.  Load balancer chains
-     6.2.  Server Process Demultiplexing
-     6.3.  Moving connections between servers
-   7.  Version Invariance of QUIC-LB
-   8.  Security Considerations
-     8.1.  Attackers not between the load balancer and server
-     8.2.  Attackers between the load balancer and server
-     8.3.  Multiple Configuration IDs
-     8.4.  Limited configuration scope
-     8.5.  Stateless Reset Oracle
-     8.6.  Connection ID Entropy
-     8.7.  Distinguishing Attacks
-   9.  IANA Considerations
-   10. References
-     10.1.  Normative References
-     10.2.  Informative References
+   2.  Overview
+   3.  First CID octet
+     3.1.  Config Rotation
+     3.2.  Configuration Failover
+     3.3.  Length Self-Description
+     3.4.  Format
+   4.  Unroutable Connection IDs
+     4.1.  Definition
+     4.2.  Load Balancer Forwarding
+     4.3.  Fallback Algorithms
+       4.3.1.  Baseline Fallback Algorithm
+       4.3.2.  Advanced Fallback Algorithm
+     4.4.  Dropping packets
+   5.  Server ID Encoding in Connection IDs
+     5.1.  Server ID Allocation
+     5.2.  CID format
+     5.3.  Configuration Agent Actions
+     5.4.  Server Actions
+       5.4.1.  Special Case: Single Pass Encryption
+       5.4.2.  General Case: Four-Pass Encryption
+     5.5.  Load Balancer Actions
+       5.5.1.  Special Case: Single Pass Encryption
+       5.5.2.  General Case: Four-Pass Encryption
+   6.  Per-connection state
+   7.  Additional Use Cases
+     7.1.  Load balancer chains
+     7.2.  Server Process Demultiplexing
+     7.3.  Moving connections between servers
+   8.  Version Invariance of QUIC-LB
+   9.  Security Considerations
+     9.1.  Attackers not between the load balancer and server
+     9.2.  Attackers between the load balancer and server
+     9.3.  Multiple Configuration IDs
+     9.4.  Limited configuration scope
+     9.5.  Stateless Reset Oracle
+     9.6.  Connection ID Entropy
+     9.7.  Distinguishing Attacks
+   10. IANA Considerations
+   11. References
+     11.1.  Normative References
+     11.2.  Informative References
    Appendix A.  QUIC-LB YANG Model
      A.1.  Tree Diagram
    Appendix B.  Load Balancer Test Vectors
@@ -232,7 +234,33 @@ Table of Contents
    All wire formats will be depicted using the notation defined in
    Section 1.3 of [RFC9000].
 
-2.  First CID octet
+2.  Overview
+
+   In QUIC-LB, load balancers do not generate individual connection IDs
+   for servers.  Instead, they communicate the parameters of an
+   algorithm to generate routable connection IDs.
+
+   The algorithms differ in the complexity of configuration at both load
+   balancer and server.  Increasing complexity improves obfuscation of
+   the server mapping.
+
+   This specificationn describes three participants: the configuration
+   agent, the load balancer, and the server.  For any given QUIC-LB
+   configuration that enables connection-ID-aware load balancing, there
+   must be a choice of (1) routing algorithm, (2) server ID allocation
+   strategy, and (3) algorithm parameters.
+
+   Fundamentally, servers generate connection IDs that encode their
+   server ID.  Load balancers decode the server ID from the CID in
+   incoming packets to route to the correct server.
+
+   There are situations where a server pool might be operating two or
+   more routing algorithms or parameter sets simultaneously.  The load
+   balancer uses the first three bits of the connection ID to multiplex
+   incoming Destination Connection IDs (DCIDs) over these schemes (see
+   Section 3.1).
+
+3.  First CID octet
 
    The Connection ID construction schemes defined in this document
    reserve the first octet of a CID for two special purposes: one
@@ -242,13 +270,13 @@ Table of Contents
    Subsequent sections of this document refer to the contents of this
    octet as the "first octet."
 
-2.1.  Config Rotation
+3.1.  Config Rotation
 
    The first three bits of any connection ID MUST encode an identifier
    for the configuration that the connection ID uses.  This enables
    incremental deployment of new QUIC-LB settings (e.g., keys).  A
    configuration MUST NOT use the reserved identifier 0b111 (see
-   Section 2.2 below).
+   Section 3.2 below).
 
    When new configuration is distributed to servers, there will be a
    transition period when connection IDs reflecting old and new
@@ -273,25 +301,27 @@ Table of Contents
 
    It also possible to use these bits for more long-lived distinction of
    different configurations, but this has privacy implications (see
-   Section 8.3).
+   Section 9.3).
 
-2.2.  Configuration Failover
+3.2.  Configuration Failover
 
    In some deployments, an infrastructure will not receive traffic
    unless all servers have received a configuration, and load balancers
    have a superset of all configurations that are active in the server
-   pool.  Servers and load balancers deployed under all of these
-   assumptions can ignore the provisions in this subsection.
+   pool, thus guaranteeing that any CID generated by a server is
+   decodable by any load balancer.  Servers and load balancers deployed
+   under all of these assumptions can ignore the provisions in this
+   subsection.
 
    Load balancers treat connection IDs for which they have no
-   corresponding config ID as unroutable (see Section 3.1).  If they
-   have no configuration at all, then all connection IDs are unroutable.
+   corresponding config ID as unroutable (see Section 4).  If they have
+   no configuration at all, then all connection IDs are unroutable.
 
    Servers with no active configuration MUST issue connection IDs with
    the three most significant bits set to 0b111 to signify the
    connection ID is unroutable, corresponding to the config ID reserved
    for this purpose.  These connection IDs MUST self-encode their length
-   (see Section 2.3).
+   (see Section 3.3).
 
    Servers with no active configuration SHOULD NOT send the client
    additional connection IDs in NEW_CONNECTION_ID frames.  They SHOULD
@@ -302,7 +332,7 @@ Table of Contents
    SHOULD be of at least length 8 to provide 7 bytes of entropy after
    the first octet with a low chance of collision.
 
-2.3.  Length Self-Description
+3.3.  Length Self-Description
 
    Local hardware cryptographic offload devices may accelerate QUIC
    servers by receiving keys from the QUIC implementation indexed to the
@@ -321,7 +351,7 @@ Table of Contents
    as to have no observable relationship to previous connection IDs
    issued for that connection.
 
-2.4.  Format
+3.4.  Format
 
    First Octet {
      Config Rotation (3),
@@ -339,35 +369,9 @@ Table of Contents
    random bits otherwise.  Encodes the length of the Connection ID
    following the First Octet.
 
-3.  Load Balancing Preliminaries
+4.  Unroutable Connection IDs
 
-   In QUIC-LB, load balancers do not generate individual connection IDs
-   for servers.  Instead, they communicate the parameters of an
-   algorithm to generate routable connection IDs.
-
-   The algorithms differ in the complexity of configuration at both load
-   balancer and server.  Increasing complexity improves obfuscation of
-   the server mapping.
-
-   This section describes three participants: the configuration agent,
-   the load balancer, and the server.  For any given QUIC-LB
-   configuration that enables connection-ID-aware load balancing, there
-   must be a choice of (1) routing algorithm, (2) server ID allocation
-   strategy, and (3) algorithm parameters.
-
-   Fundamentally, servers generate connection IDs that encode their
-   server ID.  Load balancers decode the server ID from the CID in
-   incoming packets to route to the correct server.
-
-   There are situations where a server pool might be operating two or
-   more routing algorithms or parameter sets simultaneously.  The load
-   balancer uses the first three bits of the connection ID to multiplex
-   incoming Destination Connection IDs (DCIDs) over these schemes (see
-   Section 2.1).
-
-3.1.  Unroutable Connection IDs
-
-3.1.1.  Definition
+4.1.  Definition
 
    QUIC-LB servers with a valid configuration will generate Connection
    IDs that are decodable to extract a server ID in accordance with a
@@ -384,18 +388,18 @@ Table of Contents
    that are not routable are "unroutable DCIDs" and receive similar
    treatment regardless of why they're unroutable:
 
-   *  The config rotation bits (Section 2.1) may not correspond to an
+   *  The config rotation bits (Section 3.1) do not correspond to an
       active configuration.  Note: a packet with a DCID with config ID
-      codepoint 0b111 (see Section 2.2) is always unroutable.
+      codepoint 0b111 (see Section 3.2) is always unroutable.
 
-   *  If the packet header encodes the DCID length, the DCID might not
-      be long enough for the decoder to process.
+   *  If the packet header encodes the DCID length, the DCID is not long
+      enough for the decoder to process.
 
-   *  The extracted server mapping might not correspond to an active
+   *  The extracted server mapping does not correspond to an active
       server.
 
    If the load balancer has knowledge that all servers in the pool are
-   encoding CID length in the first octet (see Section 2.3), it MAY
+   encoding CID length in the first octet (see Section 3.3), it MAY
    perform additional checks based on that self-encoded length:
 
    *  In a long header, verify that the self-encoded length is
@@ -410,94 +414,104 @@ Table of Contents
 
    DCIDs that do not meet any of these criteria are routable.
 
-3.1.2.  Load Balancer Forwarding
+4.2.  Load Balancer Forwarding
 
    Load balancers execute the following steps in order until one results
    in a routing decision.
 
    1.  If the packet contains a routable CID, route the packet
-       accordingly.  If there is a routing decision stored for the
-       4-tuple, delete the entry.
+       accordingly.
 
-   2.  If the load balancer has a table of routing decisions by DCID,
-       and the DCID is present in it, route the packet accordingly.
+   2.  If the packet matches an entry in a table of routing decisions
+       indexed by a concatenation of 4-tuple and Source CID, route the
+       packet accordingly.
 
-   3.  If the load balancer has a table of routing decisions by 4-tuple,
-       and the DCID is present in it, route the packet accordingly.
+   3.  If the packet matches an entry in a table of routing decisions by
+       destination CID, route the packet accordingly.
 
-   4.  Use the fallback algorithm to make a routing decision and, if
+   4.  If packet matches an entry in a table of routing decisions by
+       4-tuple, route the packet accordingly.
+
+   5.  Use the fallback algorithm to make a routing decision and, if
        applicable, record the results in the tables indexed by 4-tuple
-       and/or DCID.
+       and/or CID.  In some cases, described below, the load balancer
+       might buffer the packet to defer a decision.
 
-3.1.3.  Fallback Algorithms
+4.3.  Fallback Algorithms
 
    There are conditions described above where a load balancer routes a
-   packet using a "fallback algorithm."  It can choose any algorithm,
-   without coordination with the servers, but the algorithm SHOULD be
-   deterministic over short time scales so that related packets go to
-   the same server.
+   packet using a "fallback algorithm."  This document does not specify
+   an algorithm, because it is unnecessary for interoperability.  There
+   is a baseline case that has relatively simple requirements of the
+   chosen fallback algorithm, and an advanced case with more
+   capabilities and more complex requirements.
 
-   A fallback algorithm MAY parse a packet from a QUIC version it
-   understands and use that information to make a routing decision.  If
-   so, it MAY buffer packets with unroutable DCIDs to await further
-   packets that allow it to make a routing decision.  For example, it
-   may use the TLS 1.3 Server Name Indication (SNI) field, which might
-   appear in one of several QUIC version 1 Initial packets.
+4.3.1.  Baseline Fallback Algorithm
 
-   For versions it does not understand, a fallback algorithm MUST NOT
-   make the routing behavior dependent on any part of the long header
-   that is not invariant across versions (see [RFC8999]).
+   All load balancers MUST implement a baseline fallback algorithm that
+   takes only the 4-tuple as an input and outputs a routing decision.
 
-   For example, one fallback algorithm might convert a unroutable DCID
-   to an integer and divided by the number of servers, with the modulus
-   used to forward the packet.  The number of servers is usually
-   consistent on the time scale of a QUIC connection handshake.  Another
-   might simply hash the address/port 4-tuple.  See also Section 7.
+   If it is impossible for the server to generate CIDs that the load
+   balancer cannot decode (see Section 3.2), there are no further
+   requirements in this subsection.
 
-   Note that any information used by the Fallback Algorithm might not be
-   repeated from one QUIC packet to another.  The 4-tuple is assumed to
-   remain stable during the handshake, but the server can change the
-   destination connection ID after the client's first flight.
+   Otherwise, the load balancer SHOULD maintain a table of 4-tuples that
+   carried unroutable DCIDs and the resulting routing decision.
+   Provided the table does not overflow, and the load balancer does not
+   lose state, this allows connections to survive when the server pool
+   changes, which would sometimes change the output of the fallback
+   algorithm.
 
-   Therefore, if the fallback algorithm uses information other than the
-   4-tuple in its routing decision, the load balancer SHOULD store the
-   routing decision for that 4-tuple in order to route future packets
-   unless doing so would exceed resource limits.  It can free these
-   records when the 4-tuple uses a routable CID.  This state allows the
-   load balancer to successfully route other packets from the client's
-   first flight, as well as subsequent flights if the server provides an
-   unroutable CID for the reasons described in Section 2.2.
+   The load balancer MAY maintain a table of observed unroutable DCIDs
+   and the resulting routing decision.  Provided the table does not
+   overflow, these connections will be robust to NAT rebinding.
 
-   Even if the fallback algorithm solely uses the 4-tuple, it MAY store
-   the algorithm result in case changes to the server pool change
-   fallback algorithm output.
+   Load balancers SHOULD maintain per-flow timers to periodically purge
+   state in the tables described above.
 
-   The load balancer MAY also store the routing decision indexed by
-   DCID.  This is not robust to new server-selected DCIDs, but can
-   increase robustness when a connection to a server generating
-   unroutable CIDs experiences a NAT rebinding.  An entry can be freed
-   when the corresponding 4-tuple uses a different CID, whether routable
-   or not.
+4.3.2.  Advanced Fallback Algorithm
 
-3.1.3.1.  Other design considerations
+   Some architectures may require a load balancer to choose a server
+   pool based on deep packet inspection of a client packet.  For
+   example, it may use the TLS 1.3 Server Name Indication (SNI) field.
+   The advanced fallback algorithm enables this capability but levies
+   several additional requirements to make consistent routing decisions.
 
-   Note that a fallback algorithm can fail if the 4-tuple table
-   overflows.  In one failure mode, the client's first flight contains
-   multiple packets and the algorithm uses an input not constant across
-   all packets in that flight.  Consistent routing depends on
-   successfully storing the initial routing result.
+   For packets not known to belong to a QUIC version the load balancer
+   can parse, load balancers MUST use the baseline fallback algorithm if
+   the DCID is unroutable.
 
-   In another failure mode, a server does not have a valid config, and a
-   fallback algorithm that uses only the 4-tuple for input is not
-   consistent over long time scales (perhaps due to changes in the
-   server pool).  Delivery will suddenly fail when the algorithm output
-   changes.
+   For known QUIC versions, the fallback algorithm MAY parse packets and
+   use that information to make a routing decision.
 
-   Therefore, fallback algorithm inputs that are not QUIC invariants, or
-   architectures where servers often do not have configuration, ought to
-   be used with care.
+   If so, it MUST have the ability to buffer packets with unroutable
+   DCIDs to await further packets that allow it to make a routing
+   decision, as the fields of interest can be an arbitary number of
+   packets into the connection.
 
-3.1.4.  Dropping packets
+   4-tuple routing is not sufficient for this use case, because a client
+   can use the same 4-tuple for two connections that should be routed
+   differently (e.g. because they target different SNIs), as long as the
+   packet contains a source connection ID of nonzero length.
+
+   Therefore, the load balancer SHOULD maintain two tables that map
+   different values to a routing decision:
+
+   *  a table indexed by a concatenation of the 4-tuple and source CID,
+      which might be zero-length, to route subsequent packets that do
+      not contain the server- generated connection ID;
+
+   *  a table indexed by destination CID, if and only if it is possible
+      for the server to generate unroutable CIDs.  This table can be
+      shared with the one in use for the baseline fallback algorithm.
+
+   If either table overflows, or if the load balancer loses state, it is
+   likely the load balancer will misroute packets.
+
+   Load balancers SHOULD maintain per-flow timers to periodically purge
+   state in the tables described above.
+
+4.4.  Dropping packets
 
    Some unroutable connection IDs are evidently client-generated if all
    servers behind the load balancer are compliant with this
@@ -531,7 +545,9 @@ Table of Contents
    example, a rate limiting or security function might drop packets that
    the load balancer routes.
 
-3.2.  Server ID Allocation
+5.  Server ID Encoding in Connection IDs
+
+5.1.  Server ID Allocation
 
    Load Balancer configurations include a mapping of server IDs to
    forwarding addresses.  The corresponding server configurations
@@ -548,7 +564,7 @@ Table of Contents
    The configuration agent SHOULD provide a means for servers to express
    the number of server IDs it can usefully employ, because a single
    routing address actually corresponds to multiple server entities (see
-   Section 6.1).
+   Section 7.1).
 
    Conceptually, each configuration has its own set of server ID
    allocations, though two static configurations with identical server
@@ -557,9 +573,7 @@ Table of Contents
    A server encodes one of its assigned server IDs in any CID it
    generates using the relevant configuration.
 
-4.  Server ID Encoding in Connection IDs
-
-4.1.  CID format
+5.2.  CID format
 
    All connection IDs use the following format:
 
@@ -575,7 +589,7 @@ Table of Contents
                             Figure 2: CID Format
 
    The First Octet field serves one or two purposes, as defined in
-   Section 2.
+   Section 3.
 
    The Server ID field encodes the information necessary for the load
    balancer to route a packet with that connection ID.  It is often
@@ -584,10 +598,10 @@ Table of Contents
    The server uses the Nonce field to make sure that each connection ID
    it generates is unique, even though they all use the same Server ID.
 
-4.2.  Configuration Agent Actions
+5.3.  Configuration Agent Actions
 
    The configuration agent assigns a server ID to every server in its
-   pool in accordance with Section 3.2, and determines a server ID
+   pool in accordance with Section 5.1, and determines a server ID
    length (in octets) sufficiently large to encode all server IDs,
    including potential future servers.
 
@@ -605,7 +619,7 @@ Table of Contents
    As QUIC version 1 limits connection IDs to 20 octets, the server ID
    and nonce lengths MUST sum to 19 octets or less.
 
-4.3.  Server Actions
+5.4.  Server Actions
 
    The server writes the first octet and its server ID into their
    respective fields.
@@ -614,7 +628,7 @@ Table of Contents
    Nonce field with bytes that have no observable relationship to the
    field in previously issued connection IDs.  If there is a key, the
    server fills the nonce field with a nonce of its choosing.  See
-   Section 8.6 for details.
+   Section 9.6 for details.
 
    The server MAY append additional bytes to the connection ID, up to
    the limit specified in that version of QUIC, for its own use.  These
@@ -635,7 +649,7 @@ Table of Contents
    cryptographic agility in accordance with [RFC7696].  QUIC-LB
    implementations SHOULD be extensible to support new algorithms.
 
-4.3.1.  Special Case: Single Pass Encryption
+5.4.1.  Special Case: Single Pass Encryption
 
    When the nonce length and server ID length sum to exactly 16 octets,
    the server MUST use a single-pass encryption algorithm.  All
@@ -643,7 +657,7 @@ Table of Contents
    block is encrypted once, and the result forms the second through
    seventeenth most significant bytes of the connection ID.
 
-4.3.2.  General Case: Four-Pass Encryption
+5.4.2.  General Case: Four-Pass Encryption
 
    Any other field length requires four passes for encryption and at
    least three for decryption.  To understand this algorithm, it is
@@ -655,13 +669,13 @@ Table of Contents
    length that sum to any number other than 16, the server MUST follow
    the algorith below to encrypt the connection ID.
 
-4.3.2.1.  Overview
+5.4.2.1.  Overview
 
    The 4-pass algorithm is a four-round Feistel Network with the round
    function being AES-ECB.  Most modern applications of Feistel Networks
    have more than four rounds.  The implications of this choice, which
    is meant to limit the per-packet compute overhead at load balancers,
-   are discussed in Section 8.7.
+   are discussed in Section 9.7.
 
    The server concatenates the server ID and nonce into a single field,
    which is then split into equal halves.  In successive passes, one of
@@ -703,7 +717,7 @@ Table of Contents
       | FO  |            Ciphertext             |
       +-----+-----------------------------------+
 
-4.3.2.2.  Useful functions
+5.4.2.2.  Useful functions
 
    Two functions are useful to define:
 
@@ -748,7 +762,7 @@ Table of Contents
 
    Let 'half_len' be equal to 'plaintext_len' / 2, rounded up.
 
-4.3.2.3.  Algorithm Description
+5.4.2.3.  Algorithm Description
 
    The example at the end of this section helps to clarify the steps
    described below.
@@ -810,7 +824,7 @@ Table of Contents
        are stripped off before concatenation to make the resulting
        ciphertext the same length as the original plaintext.
 
-4.3.2.4.  Encryption Example
+5.4.2.4.  Encryption Example
 
    The following example executes the steps for the provided inputs.
    Note that the plaintext is of odd octet length, so the middle octet
@@ -866,7 +880,7 @@ Table of Contents
    // step 12
    cid = first_octet || left_2 || right_2 = 0x0767947d29be054a
 
-4.4.  Load Balancer Actions
+5.5.  Load Balancer Actions
 
    On each incoming packet, the load balancer extracts consecutive
    octets, beginning with the second octet.  If there is no key, the
@@ -874,14 +888,14 @@ Table of Contents
 
    If there is a key, the load balancer takes one of two actions:
 
-4.4.1.  Special Case: Single Pass Encryption
+5.5.1.  Special Case: Single Pass Encryption
 
    If server ID length and nonce length sum to exactly 16 octets, they
    form a ciphertext block.  The load balancer decrypts the block using
    the AES-ECB key and extracts the server ID from the most significant
    bytes of the resulting plaintext.
 
-4.4.2.  General Case: Four-Pass Encryption
+5.5.2.  General Case: Four-Pass Encryption
 
    First, split the ciphertext CID (excluding the first octet) into its
    equal- length components left_2 and right_2.  Then follow the process
@@ -911,7 +925,7 @@ Table of Contents
    and the load balancer has to concatenate left_0 and right_0 to obtain
    the complete server ID.
 
-5.  Per-connection state
+6.  Per-connection state
 
    The CID allocation methods QUIC-LB defines require no per-connection
    state at the load balancer.  The load balancer can extract the server
@@ -954,12 +968,12 @@ Table of Contents
    contains a QUIC long header, and extract the Server ID as if it were
    in a Destination CID.
 
-6.  Additional Use Cases
+7.  Additional Use Cases
 
    This section discusses considerations for some deployment scenarios
    not implied by the specification above.
 
-6.1.  Load balancer chains
+7.1.  Load balancer chains
 
    Some network architectures may have multiple tiers of low-state load
    balancers, where a first tier of devices makes a routing decision to
@@ -981,12 +995,12 @@ Table of Contents
    the last tier.  Load balancers closer to the client can then treat
    any parts of the server ID they did not use as part of the nonce.
 
-6.2.  Server Process Demultiplexing
+7.2.  Server Process Demultiplexing
 
    QUIC servers might have QUIC running on multiple processes or threads
    listening on the same address, and have a need to demultiplex between
    them.  In principle, this demultiplexer is a Layer 4 load balancer,
-   and the guidance in Section 6.1 applies.  However, in many
+   and the guidance in Section 7.1 applies.  However, in many
    deployments the demultiplexer lacks the capability to perform
    decryption operations.  Internal server coordination is out of scope
    of this specification, but this non-normative section proposes some
@@ -1023,7 +1037,7 @@ Table of Contents
       same ciphertext.  The load balancer will consider this data to be
       part of the nonce.
 
-6.3.  Moving connections between servers
+7.3.  Moving connections between servers
 
    Some deployments may transparently move a connection from one server
    to another.  The means of transferring connection state between
@@ -1034,7 +1048,7 @@ Table of Contents
    and retire CIDs associated with the old server using the "Retire
    Prior To" field in that frame.
 
-7.  Version Invariance of QUIC-LB
+8.  Version Invariance of QUIC-LB
 
    The server ID encodings, and requirements for their handling, are
    designed to be QUIC version independent (see [RFC8999]).  A QUIC-LB
@@ -1049,8 +1063,8 @@ Table of Contents
    connection ID length could be larger than the largest value in this
    specification.
 
-   Section 3.1.2 provides guidance about how load balancers should
-   handle unroutable DCIDs.  This guidance, and the implementation of an
+   Section 4.2 provides guidance about how load balancers should handle
+   unroutable DCIDs.  This guidance, and the implementation of an
    algorithm to handle these DCIDs, rests on some assumptions that are
    not specified in RFC 8999:
 
@@ -1089,7 +1103,7 @@ Table of Contents
    tenants to deploy new versions provided they have an out-of-band
    means of providing a connection ID for the client to use.
 
-8.  Security Considerations
+9.  Security Considerations
 
    QUIC-LB is intended to prevent linkability.  Attacks would therefore
    attempt to subvert this purpose.
@@ -1102,7 +1116,7 @@ Table of Contents
    server ID without a key algorithm SHOULD only use it to generate new
    CIDs for the Server Initial Packet and SHOULD NOT send CIDs in QUIC
    NEW_CONNECTION_ID frames, except that it sends one new Connection ID
-   in the event of config rotation Section 2.1.  Doing so might falsely
+   in the event of config rotation Section 3.1.  Doing so might falsely
    suggest to the client that said CIDs were generated in a secure
    fashion.
 
@@ -1125,7 +1139,7 @@ Table of Contents
    have diminishing returns.  Nevertheless, this specification seeks to
    minimize the probability two addresses can be linked.
 
-8.1.  Attackers not between the load balancer and server
+9.1.  Attackers not between the load balancer and server
 
    Any attacker might open a connection to the server infrastructure and
    aggressively simulate migration to obtain a large sample of IDs that
@@ -1139,7 +1153,7 @@ Table of Contents
    observers might apply this analysis to correlating different client
    IP addresses.
 
-8.2.  Attackers between the load balancer and server
+9.2.  Attackers between the load balancer and server
 
    Attackers in this privileged position are intrinsically able to map
    two connection IDs to the same server.  These algorithms ensure that
@@ -1147,16 +1161,16 @@ Table of Contents
    such as long as the server chooses the first octet and any plaintext
    nonce correctly.
 
-8.3.  Multiple Configuration IDs
+9.3.  Multiple Configuration IDs
 
    During the period in which there are multiple deployed configuration
-   IDs (see Section 2.1), there is a slight increase in linkability.
+   IDs (see Section 3.1), there is a slight increase in linkability.
    The server space is effectively divided into segments with CIDs that
    have different config rotation bits.  Entities that manage servers
    SHOULD strive to minimize these periods by quickly deploying new
    configurations across the server pool.
 
-8.4.  Limited configuration scope
+9.4.  Limited configuration scope
 
    A simple deployment of QUIC-LB in a cloud provider might use the same
    global QUIC-LB configuration across all its load balancers that route
@@ -1173,7 +1187,7 @@ Table of Contents
    complimentary with concealing DNS requests (e.g., DoH [RFC8484]) and
    the TLS Server Name Indicator (SNI) ([I-D.ietf-tls-esni]) to obscure
    the ultimate destination of traffic.  While the load balancer's
-   fallback algorithm (Section 3.1.3) can use the SNI to make a routing
+   fallback algorithm (Section 4.3) can use the SNI to make a routing
    decision on the first packet, there are three ways to route
    subsequent packets:
 
@@ -1181,7 +1195,7 @@ Table of Contents
       server mapping to each other as described above;
 
    *  co-tenants can be issued one of up to seven configurations
-      distinguished by the config rotation bits (Section 2.1), exposing
+      distinguished by the config rotation bits (Section 3.1), exposing
       information about the target domain to the entire network; or
 
    *  tenants can use the 0b111 codepoint in their CIDs (in which case
@@ -1197,7 +1211,7 @@ Table of Contents
    As the plaintext algorithm makes no attempt to conceal the server
    mapping, these deployments MAY simply use a common configuration.
 
-8.5.  Stateless Reset Oracle
+9.5.  Stateless Reset Oracle
 
    Section 21.9 of [RFC9000] discusses the Stateless Reset Oracle
    attack.  For a server deployment to be vulnerable, an attacking
@@ -1219,7 +1233,7 @@ Table of Contents
    able to generate correct tokens for connections using either type of
    CID.
 
-8.6.  Connection ID Entropy
+9.6.  Connection ID Entropy
 
    If a server ever reuses a nonce in generating a CID for a given
    configuration, it risks exposing sensitive information.  Given the
@@ -1263,7 +1277,7 @@ Table of Contents
    therefore compare the expected rate at which servers will generate
    CIDs with the lifetime of a configuration.
 
-8.7.  Distinguishing Attacks
+9.7.  Distinguishing Attacks
 
    The Four Pass Encryption algorithm is structured as a 4-round Feistel
    network with non-bijective round function.  As such, it does not
@@ -1284,7 +1298,7 @@ Table of Contents
    of the CID.  Attackers would have to compensate by guesses about the
    allocation of server identifiers or the generation of nonces.  These
    attacks are thus mitigated by making nonces hard to guess, as
-   specified in Section 8.6, and by rules related to mixed deployments
+   specified in Section 9.6, and by rules related to mixed deployments
    that use both clear text CID and encrypted CID, for example when
    transitioning from clear text to encryption.  Such deployments MUST
    use different server ID allocations for the clear text and the
@@ -1293,13 +1307,13 @@ Table of Contents
    These attacks cannot be mounted against the Single Pass Encryption
    algorithm.
 
-9.  IANA Considerations
+10.  IANA Considerations
 
    There are no IANA requirements.
 
-10.  References
+11.  References
 
-10.1.  Normative References
+11.1.  Normative References
 
    [NIST-AES-ECB]
               Dworkin, M., "Recommendation for Block Cipher Modes of
@@ -1308,16 +1322,12 @@ Table of Contents
               <https://nvlpubs.nist.gov/nistpubs/Legacy/SP/
               nistspecialpublication800-38a.pdf>.
 
-   [RFC8999]  Thomson, M., "Version-Independent Properties of QUIC",
-              RFC 8999, DOI 10.17487/RFC8999, May 2021,
-              <https://www.rfc-editor.org/rfc/rfc8999>.
-
    [RFC9000]  Iyengar, J., Ed. and M. Thomson, Ed., "QUIC: A UDP-Based
               Multiplexed and Secure Transport", RFC 9000,
               DOI 10.17487/RFC9000, May 2021,
               <https://www.rfc-editor.org/rfc/rfc9000>.
 
-10.2.  Informative References
+11.2.  Informative References
 
    [I-D.ietf-tls-esni]
               Rescorla, E., Oku, K., Sullivan, N., and C. A. Wood, "TLS
@@ -1367,6 +1377,10 @@ Table of Contents
    [RFC8484]  Hoffman, P. and P. McManus, "DNS Queries over HTTPS
               (DoH)", RFC 8484, DOI 10.17487/RFC8484, October 2018,
               <https://www.rfc-editor.org/rfc/rfc8484>.
+
+   [RFC8999]  Thomson, M., "Version-Independent Properties of QUIC",
+              RFC 8999, DOI 10.17487/RFC8999, May 2021,
+              <https://www.rfc-editor.org/rfc/rfc8999>.
 
    [RFC9146]  Rescorla, E., Ed., Tschofenig, H., Ed., Fossati, T., and
               A. Kraus, "Connection Identifier for DTLS 1.2", RFC 9146,
@@ -1820,7 +1834,7 @@ Appendix E.  Change Log
 
 E.1.  since draft-ietf-quic-load-balancers-20
 
-   *  Changed defintion of Unroutable DCIDs, and rewrote sections on
+   *  Changed definition of Unroutable DCIDs, and rewrote sections on
       config failover and fallback routing to avoid misrouted
       connections.
 
