@@ -5,10 +5,10 @@
 QUIC                                                             M. Duke
 Internet-Draft                                                    Google
 Intended status: Standards Track                                N. Banks
-Expires: 6 September 2025                                      Microsoft
+Expires: 7 September 2025                                      Microsoft
                                                               C. Huitema
                                                     Private Octopus Inc.
-                                                            5 March 2025
+                                                            6 March 2025
 
 
             QUIC-LB: Generating Routable QUIC Connection IDs
@@ -55,7 +55,7 @@ Status of This Memo
    time.  It is inappropriate to use Internet-Drafts as reference
    material or to cite them other than as "work in progress."
 
-   This Internet-Draft will expire on 6 September 2025.
+   This Internet-Draft will expire on 7 September 2025.
 
 Copyright Notice
 
@@ -318,14 +318,18 @@ Table of Contents
    no configuration at all, then all connection IDs are unroutable.
 
    Servers with no active configuration MUST issue connection IDs with
-   the three most significant bits set to 0b111 to signify the
-   connection ID is unroutable, corresponding to the config ID reserved
-   for this purpose.  These connection IDs MUST self-encode their length
-   (see Section 3.3).
+   the reserved value of the three most significant bits set to 0b111 to
+   signify the connection ID is unroutable.  These connection IDs MUST
+   self-encode their length (see Section 3.3).
 
-   Servers with no active configuration SHOULD NOT send the client
-   additional connection IDs in NEW_CONNECTION_ID frames.  They SHOULD
-   send the "disable_active_migration" transport parameter.
+   Servers with no active configuration SHOULD provide the client
+   exactly one CID over the life of the connection.  In QUIC versions 1
+   and 2, therefore, servers SHOULD NOT send any NEW_CONNECTION_ID
+   frames, instead delivering a single CID via its first Initial packet.
+
+   Servers with no active configuration SHOULD send the
+   "disable_active_migration" transport parameter, or a similar message
+   in future QUIC versions.
 
    When using codepoint 0b111, all bytes but the first SHOULD have no
    larger of a chance of collision as random bytes.  The connection ID
@@ -417,7 +421,9 @@ Table of Contents
 4.2.  Load Balancer Forwarding
 
    Load balancers execute the following steps in order until one results
-   in a routing decision.
+   in a routing decision.  The steps refer to state that some load
+   balancers will maintain, depending on the deployment's underlying
+   assumptions.  See Section 4.3 for further discussion of this state.
 
    1.  If the packet contains a routable CID, route the packet
        accordingly.
@@ -440,10 +446,12 @@ Table of Contents
 4.3.  Fallback Algorithms
 
    There are conditions described above where a load balancer routes a
-   packet using a "fallback algorithm."  This document does not specify
-   an algorithm, because it is unnecessary for interoperability.  There
-   is a baseline case that has relatively simple requirements of the
-   chosen fallback algorithm, and an advanced case with more
+   packet using a "fallback algorithm."  A standardized algorithm design
+   is not necessary for interoperability, so load balancers can
+   implement any algorithm that meets the relevant requirements below.
+
+   There is a baseline case that has relatively simple requirements of
+   the chosen fallback algorithm, and an advanced case with more
    capabilities and more complex requirements.
 
 4.3.1.  Baseline Fallback Algorithm
@@ -473,9 +481,10 @@ Table of Contents
 
    Some architectures may require a load balancer to choose a server
    pool based on deep packet inspection of a client packet.  For
-   example, it may use the TLS 1.3 Server Name Indication (SNI) field.
-   The advanced fallback algorithm enables this capability but levies
-   several additional requirements to make consistent routing decisions.
+   example, it may use the TLS 1.3 Server Name Indication (SNI)
+   ([RFC6066]) field.  The advanced fallback algorithm enables this
+   capability but levies several additional requirements to make
+   consistent routing decisions.
 
    For packets not known to belong to a QUIC version the load balancer
    can parse, load balancers MUST use the baseline fallback algorithm if
@@ -518,7 +527,9 @@ Table of Contents
    specification.  In particular, an unroutable CID is evidently client-
    generated if - it does not use the 0b111 config ID; OR - it uses the
    0b111 config ID, it is in a long header packet, and its self- encoded
-   length does not match the length in the long header field.
+   length does not match the length in the long header field. - the
+   server is self-encoding CID length, but the length is not consistent
+   with the config ID.
 
    When load balancers are guaranteed to have a superset of all server
    configurations, but servers might have no configuration at all, all
@@ -1354,6 +1365,11 @@ Table of Contents
               the Network Configuration Protocol (NETCONF)", RFC 6020,
               DOI 10.17487/RFC6020, October 2010,
               <https://www.rfc-editor.org/rfc/rfc6020>.
+
+   [RFC6066]  Eastlake 3rd, D., "Transport Layer Security (TLS)
+              Extensions: Extension Definitions", RFC 6066,
+              DOI 10.17487/RFC6066, January 2011,
+              <https://www.rfc-editor.org/rfc/rfc6066>.
 
    [RFC6347]  Rescorla, E. and N. Modadugu, "Datagram Transport Layer
               Security Version 1.2", RFC 6347, DOI 10.17487/RFC6347,
