@@ -209,14 +209,18 @@ Load balancers treat connection IDs for which they have no corresponding config
 ID as unroutable (see {{unroutable}}). If they have no configuration at all,
 then all connection IDs are unroutable.
 
-Servers with no active configuration MUST issue connection IDs with the three
-most significant bits set to 0b111 to signify the connection ID is unroutable,
-corresponding to the config ID reserved for this purpose. These connection IDs
-MUST self-encode their length (see {{length-self-description}}).
+Servers with no active configuration MUST issue connection IDs with the reserved
+value of the three most significant bits set to 0b111 to signify the connection
+ID is unroutable. These connection IDs MUST self-encode their length (see
+{{length-self-description}}).
 
-Servers with no active configuration SHOULD NOT send the client additional
-connection IDs in NEW_CONNECTION_ID frames. They SHOULD send the
-"disable_active_migration" transport parameter.
+Servers with no active configuration SHOULD provide the client exactly one CID
+over the life of the connection. In QUIC versions 1 and 2, therefore, servers
+SHOULD NOT send any NEW_CONNECTION_ID frames, instead delivering a single CID
+via its first Initial packet.
+
+Servers with no active configuration SHOULD send the "disable_active_migration"
+transport parameter, or a similar message in future QUIC versions.
 
 When using codepoint 0b111, all bytes but the first SHOULD have no larger of a
 chance of collision as random bytes. The connection ID SHOULD be of at least
@@ -300,7 +304,9 @@ DCIDs that do not meet any of these criteria are routable.
 ## Load Balancer Forwarding {#load-balancer-forwarding}
 
 Load balancers execute the following steps in order until one results in a
-routing decision.
+routing decision. The steps refer to state that some load balancers will
+maintain, depending on the deployment's underlying assumptions. See
+{{fallback-algorithm}} for further discussion of this state.
 
 1. If the packet contains a routable CID, route the packet accordingly.
 1. If the packet matches an entry in a table of routing decisions indexed by a
@@ -316,10 +322,13 @@ described below, the load balancer might buffer the packet to defer a decision.
 ## Fallback Algorithms {#fallback-algorithm}
 
 There are conditions described above where a load balancer routes a packet using
-a "fallback algorithm." This document does not specify an algorithm, because it
-is unnecessary for interoperability. There is a baseline case that has relatively
-simple requirements of the chosen fallback algorithm, and an advanced case with
-more capabilities and more complex requirements.
+a "fallback algorithm." A standardized algorithm design is not necessary for
+interoperability, so load balancers can implement any algorithm that meets the
+relevant requirements below.
+
+There is a baseline case that has relatively simple requirements of the chosen
+fallback algorithm, and an advanced case with more capabilities and more complex
+requirements.
 
 ### Baseline Fallback Algorithm
 
@@ -347,9 +356,9 @@ the tables described above.
 
 Some architectures may require a load balancer to choose a server pool based
 on deep packet inspection of a client packet. For example, it may use the TLS
-1.3 Server Name Indication (SNI) field. The advanced fallback algorithm enables
-this capability but levies several additional requirements to make consistent
-routing decisions.
+1.3 Server Name Indication (SNI) ({{?RFC6066}}) field. The advanced fallback
+algorithm enables this capability but levies several additional requirements to
+make consistent routing decisions.
 
 For packets not known to belong to a QUIC version the load balancer can parse,
 load balancers MUST use the baseline fallback algorithm if the DCID is
@@ -392,6 +401,8 @@ an unroutable CID is evidently client-generated if
 - it does not use the 0b111 config ID; OR
 - it uses the 0b111 config ID, it is in a long header packet, and its self-
 encoded length does not match the length in the long header field.
+- the server is self-encoding CID length, but the length is not consistent with
+the config ID.
 
 When load balancers are guaranteed to have a superset of all server
 configurations, but servers might have no configuration at all, all valid QUIC
