@@ -1,6 +1,6 @@
 {
   "magic": "E!vIA5L86J2I",
-  "timestamp": "2025-03-05T22:59:36.024804+00:00",
+  "timestamp": "2025-03-06T16:58:19.871325+00:00",
   "repo": "quicwg/load-balancers",
   "labels": [
     {
@@ -3856,7 +3856,7 @@
       "labels": [],
       "body": "Why is it an option to not self-encode the CID length? It would (slightly) simplify the RFC to remove this option entirely. Reasons:\n\n* length-encoded CIDs are compatible with systems that don't require them, but the opposite is not true\n* Very little additional randomness is added by randomizing the 5 bits that are for this use. The ciphertext portion of the CID is already required to be unique\n* Removing this option is one fewer detail that needs to be kept in sync between server and LB configuration\n\nWhat is the argument for not always requiring length encoding?",
       "createdAt": "2025-03-03T19:40:34Z",
-      "updatedAt": "2025-03-03T21:37:09Z",
+      "updatedAt": "2025-03-06T16:41:35Z",
       "closedAt": null,
       "comments": [
         {
@@ -3865,6 +3865,20 @@
           "body": "the bits can be used for thread encoding, or other server-specific things. It's not something specifically necessary for LB/server interop, except for the 0b111 case, which the PR addresses.",
           "createdAt": "2025-03-03T21:37:08Z",
           "updatedAt": "2025-03-03T21:37:08Z"
+        },
+        {
+          "author": "ggreenway",
+          "authorAssociation": "COLLABORATOR",
+          "body": "I'm curious, as implementations are created, how many will use those bits for other purposes. If nothing turns up, it may be worth removing to simplify.",
+          "createdAt": "2025-03-06T00:02:02Z",
+          "updatedAt": "2025-03-06T00:02:02Z"
+        },
+        {
+          "author": "martinduke",
+          "authorAssociation": "CONTRIBUTOR",
+          "body": "Our deployment is on the slow road, but we were planning to stuff the thread encoding in there wherever possible.",
+          "createdAt": "2025-03-06T16:41:34Z",
+          "updatedAt": "2025-03-06T16:41:34Z"
         }
       ]
     },
@@ -11732,13 +11746,13 @@
       "labels": [],
       "body": "Fixes #235",
       "createdAt": "2025-03-01T01:40:23Z",
-      "updatedAt": "2025-03-05T22:58:37Z",
+      "updatedAt": "2025-03-06T16:57:56Z",
       "baseRepository": "quicwg/load-balancers",
       "baseRefName": "main",
       "baseRefOid": "d811e9e4e8ab22acf468227f74770562816283d3",
       "headRepository": "quicwg/load-balancers",
       "headRefName": "fix-unroutable",
-      "headRefOid": "63722d1415dc483844db801d99856cb48df96fcd",
+      "headRefOid": "974f00567945524c059d674d8dd36869d3c52529",
       "closedAt": null,
       "mergedAt": null,
       "mergedBy": null,
@@ -12155,6 +12169,76 @@
               "body": "> I am trying to get a picture of the underlying data model. I understand the first two steps:\r\n> \r\n> 1. Routable CID. That one seems obvious, but there is the issue of the Initial DCID that becomes routable \"by chance\". These will be assigned to the \"decoded\" server, regardless of the source address and source port. Is that intentional?\r\n\r\nYes. This is extremely unlikely because (1) clients sending 8B CIDs is a de facto standard, and QUIC-LB will rarely come out to 8B and (2) even if so, the right thing to do is have a sparse server ID result (as described in S3.3) so that even if it decodes, the server ID is invalid.\r\n\r\n> 2. Unroutable CID that has been memorized in a global CID table. That seems obvious too. (Small question: when are such CID ejected from the table?)\r\n\r\nwe chatted offline and agreed that it would be possible for an attacker to eject people from the table if it was on a routable CID, so ejection should be timer based.\r\n\r\n> 3. Unroutable CID that has been memorized in a \"per 4 tuple\" CID table. Picoquic does something like that for the Initial DCID, because it isolate the routing from collisions due to either poor DCID (e.g., everybody pick 999...999, or everybody picks 0) or deliberate attack -- attacker sends packet with copied DCID, intercepts the connection. But doing that for other DCID than the IDCID prevents handling of NAT rebinding.\r\n> \r\n> It seems weird to check the global table of ICID first, and the per tuple table second. Is that what implementations do?\r\n\r\nThere are no implementations of this PR! As you mentioned in our discussion, it's possible to have multiple connection IDs on the same connection.\r\n\r\n> \r\n> Should we be explicit about the data model of the load balancer, and the tradeoff between robustness against poor random number generation of IDCID and support for NAT rebinding?\r\n\r\nOnline we discussed a major rewrite, which I'll summarize in another comment.\r\n\r\n",
               "createdAt": "2025-03-05T21:26:13Z",
               "updatedAt": "2025-03-05T21:26:13Z"
+            }
+          ]
+        },
+        {
+          "id": "PRR_kwDODoD6yc6etf_Y",
+          "commit": {
+            "abbreviatedOid": "63722d1"
+          },
+          "author": "ggreenway",
+          "authorAssociation": "COLLABORATOR",
+          "state": "CHANGES_REQUESTED",
+          "body": "",
+          "createdAt": "2025-03-05T23:29:41Z",
+          "updatedAt": "2025-03-05T23:57:04Z",
+          "comments": [
+            {
+              "originalPosition": 219,
+              "body": "Should this be a link to https://www.rfc-editor.org/rfc/rfc6066#section-3 ?",
+              "createdAt": "2025-03-05T23:29:41Z",
+              "updatedAt": "2025-03-05T23:57:04Z"
+            },
+            {
+              "originalPosition": 72,
+              "body": "```suggestion\r\nServers with no active configuration MUST issue connection IDs with the reserved value\r\nof the three most significant bits set to 0b111 to signify the connection ID is unroutable.\r\nThese connection IDs\r\n```",
+              "createdAt": "2025-03-05T23:35:58Z",
+              "updatedAt": "2025-03-05T23:57:04Z"
+            },
+            {
+              "originalPosition": 75,
+              "body": "Does this mean that the original client-supplied CID should not be changed, or that the initial CID should be changed but no further changes should be made?",
+              "createdAt": "2025-03-05T23:37:12Z",
+              "updatedAt": "2025-03-05T23:57:04Z"
+            },
+            {
+              "originalPosition": 158,
+              "body": "I'm not sure how to clarify this, but this is the first mention of this type of construction; more description is in the later advanced section, so this was hard to follow on first read-through.",
+              "createdAt": "2025-03-05T23:46:03Z",
+              "updatedAt": "2025-03-05T23:57:04Z"
+            },
+            {
+              "originalPosition": 176,
+              "body": "\"This document does not specify an algorithm\", but below it says \"All load balancers MUST implement a baseline fallback algorithm that takes only...\", which is contradictory",
+              "createdAt": "2025-03-05T23:48:06Z",
+              "updatedAt": "2025-03-05T23:57:04Z"
+            },
+            {
+              "originalPosition": 298,
+              "body": "Another case: if the server is encoding length, and the encoded length is known to not be a valid CID length the server would generate",
+              "createdAt": "2025-03-05T23:54:00Z",
+              "updatedAt": "2025-03-05T23:57:04Z"
+            }
+          ]
+        },
+        {
+          "id": "PRR_kwDODoD6yc6ev0ZB",
+          "commit": {
+            "abbreviatedOid": "63722d1"
+          },
+          "author": "huitema",
+          "authorAssociation": "CONTRIBUTOR",
+          "state": "COMMENTED",
+          "body": "",
+          "createdAt": "2025-03-06T05:01:23Z",
+          "updatedAt": "2025-03-06T05:01:24Z",
+          "comments": [
+            {
+              "originalPosition": 75,
+              "body": "The latter. The expectation is:\r\n\r\n1. Client sends first packets with long header: dest CID=IDCID (client chosen, random), srce CID = CID-C\r\n2. Server respond with packets with long header: dest CID=CID-C (the SCID of client), srce CID = CID-S (server chosen)\r\n3. Client switches to sending packets with long header: dest CID=CID-S, srce CID = CID-C\r\n4. At some point, server sends packets with short header, dest CID = CID-C\r\n5. At some point, client sends packets with short header, dest CID = CID-S\r\n\r\nIf the CID-S is routable, life is good. The server can provide the client with NEW CID. The system supports migration, CID rotation, NAT rebinding, maybe Multipath if negotiated.\r\n\r\nIf the CID-S is not routable, life is constrained. The load balancer picks a route for <4-tuple, d=IDCID, s=CID-C> and remembers it. When the server sees a packet from the client for <same 4-tuple, d=CID-S, s=CID-C> if associates it with the same route. When the server sees a packet from the client for <any 4-tuple, d=CID-S> it associates it with the same route again. The load balancer will not be able to associated any new destination CID with that route, because the client is not going to use long headers anymore.",
+              "createdAt": "2025-03-06T05:01:24Z",
+              "updatedAt": "2025-03-06T05:01:24Z"
             }
           ]
         }
