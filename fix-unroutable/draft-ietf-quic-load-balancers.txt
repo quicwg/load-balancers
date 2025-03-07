@@ -5,10 +5,10 @@
 QUIC                                                             M. Duke
 Internet-Draft                                                    Google
 Intended status: Standards Track                                N. Banks
-Expires: 7 September 2025                                      Microsoft
+Expires: 8 September 2025                                      Microsoft
                                                               C. Huitema
                                                     Private Octopus Inc.
-                                                            6 March 2025
+                                                            7 March 2025
 
 
             QUIC-LB: Generating Routable QUIC Connection IDs
@@ -55,7 +55,7 @@ Status of This Memo
    time.  It is inappropriate to use Internet-Drafts as reference
    material or to cite them other than as "work in progress."
 
-   This Internet-Draft will expire on 7 September 2025.
+   This Internet-Draft will expire on 8 September 2025.
 
 Copyright Notice
 
@@ -428,9 +428,9 @@ Table of Contents
    1.  If the packet contains a routable CID, route the packet
        accordingly.
 
-   2.  If the packet matches an entry in a table of routing decisions
-       indexed by a concatenation of 4-tuple and Source CID, route the
-       packet accordingly.
+   2.  If the packet has a long header and matches an entry in a table
+       of routing decisions indexed by a concatenation of 4-tuple and
+       Source CID, route the packet accordingly.
 
    3.  If the packet matches an entry in a table of routing decisions by
        destination CID, route the packet accordingly.
@@ -507,8 +507,8 @@ Table of Contents
    different values to a routing decision:
 
    *  a table indexed by a concatenation of the 4-tuple and source CID,
-      which might be zero-length, to route subsequent packets that do
-      not contain the server- generated connection ID;
+      which might be zero-length, to route subsequent long header
+      packets that do not contain the server-generated connection ID;
 
    *  a table indexed by destination CID, if and only if it is possible
       for the server to generate unroutable CIDs.  This table can be
