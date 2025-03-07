@@ -1,6 +1,6 @@
 {
   "magic": "E!vIA5L86J2I",
-  "timestamp": "2025-03-06T16:58:19.871325+00:00",
+  "timestamp": "2025-03-07T18:41:24.204004+00:00",
   "repo": "quicwg/load-balancers",
   "labels": [
     {
@@ -3849,15 +3849,15 @@
       "id": "I_kwDODoD6yc6sYq0n",
       "title": "Should CID length always be self-encoded?",
       "url": "https://github.com/quicwg/load-balancers/issues/237",
-      "state": "OPEN",
+      "state": "CLOSED",
       "author": "ggreenway",
       "authorAssociation": "COLLABORATOR",
       "assignees": [],
       "labels": [],
       "body": "Why is it an option to not self-encode the CID length? It would (slightly) simplify the RFC to remove this option entirely. Reasons:\n\n* length-encoded CIDs are compatible with systems that don't require them, but the opposite is not true\n* Very little additional randomness is added by randomizing the 5 bits that are for this use. The ciphertext portion of the CID is already required to be unique\n* Removing this option is one fewer detail that needs to be kept in sync between server and LB configuration\n\nWhat is the argument for not always requiring length encoding?",
       "createdAt": "2025-03-03T19:40:34Z",
-      "updatedAt": "2025-03-06T16:41:35Z",
-      "closedAt": null,
+      "updatedAt": "2025-03-06T22:49:10Z",
+      "closedAt": "2025-03-06T22:49:09Z",
       "comments": [
         {
           "author": "martinduke",
@@ -3879,6 +3879,13 @@
           "body": "Our deployment is on the slow road, but we were planning to stuff the thread encoding in there wherever possible.",
           "createdAt": "2025-03-06T16:41:34Z",
           "updatedAt": "2025-03-06T16:41:34Z"
+        },
+        {
+          "author": "ggreenway",
+          "authorAssociation": "COLLABORATOR",
+          "body": "Sounds good; let's close this.",
+          "createdAt": "2025-03-06T22:49:09Z",
+          "updatedAt": "2025-03-06T22:49:09Z"
         }
       ]
     },
@@ -11746,13 +11753,13 @@
       "labels": [],
       "body": "Fixes #235",
       "createdAt": "2025-03-01T01:40:23Z",
-      "updatedAt": "2025-03-06T16:57:56Z",
+      "updatedAt": "2025-03-07T18:41:01Z",
       "baseRepository": "quicwg/load-balancers",
       "baseRefName": "main",
       "baseRefOid": "d811e9e4e8ab22acf468227f74770562816283d3",
       "headRepository": "quicwg/load-balancers",
       "headRefName": "fix-unroutable",
-      "headRefOid": "974f00567945524c059d674d8dd36869d3c52529",
+      "headRefOid": "af4bfbd3be497dff8ba2117bf6ecdd60d0f55fa8",
       "closedAt": null,
       "mergedAt": null,
       "mergedBy": null,
@@ -11785,6 +11792,13 @@
           "body": "Whew! Thanks to @huitema, I've simplified the text a lot by reducing the degrees of freedom. @ggreenway PTAL.",
           "createdAt": "2025-03-05T22:56:31Z",
           "updatedAt": "2025-03-05T22:56:31Z"
+        },
+        {
+          "author": "martinduke",
+          "authorAssociation": "CONTRIBUTOR",
+          "body": "> Looks good, except for the handling of short header packets in the advanced fallback algorithm. Short header packets do not carry a source ID, so using the \"table indexed by a concatenation of the 4-tuple and source CID\" is not useful. The server should somehow learn and remember the DCID used in short packets. My proposal would be:\r\n> \r\n> 1. Record the advanced routing decision in the table indexed by a concatenation of the 4-tuple and source CID. In that table, also remember the first DCID used by the client.\r\n> 2. When receiving a long header packet in which 4-tuple and SCID match an entry in the table indexed by a concatenation of the 4-tuple and source CID, examine the CID.\r\n> 3. If that CID is routable, no action needed.\r\n> 4. If it is not routable, remember it and the associated routing in the table of observed unroutable DCIDs.\r\n> \r\n> Short header packets that contain an unroutable DCID can only be routed using the table of observed unroutable DCIDs.\r\n\r\nI made some small edits to make it clear that the concatenation can only be used for long headers. PTAL",
+          "createdAt": "2025-03-07T18:40:31Z",
+          "updatedAt": "2025-03-07T18:40:31Z"
         }
       ],
       "reviews": [
@@ -12239,6 +12253,39 @@
               "body": "The latter. The expectation is:\r\n\r\n1. Client sends first packets with long header: dest CID=IDCID (client chosen, random), srce CID = CID-C\r\n2. Server respond with packets with long header: dest CID=CID-C (the SCID of client), srce CID = CID-S (server chosen)\r\n3. Client switches to sending packets with long header: dest CID=CID-S, srce CID = CID-C\r\n4. At some point, server sends packets with short header, dest CID = CID-C\r\n5. At some point, client sends packets with short header, dest CID = CID-S\r\n\r\nIf the CID-S is routable, life is good. The server can provide the client with NEW CID. The system supports migration, CID rotation, NAT rebinding, maybe Multipath if negotiated.\r\n\r\nIf the CID-S is not routable, life is constrained. The load balancer picks a route for <4-tuple, d=IDCID, s=CID-C> and remembers it. When the server sees a packet from the client for <same 4-tuple, d=CID-S, s=CID-C> if associates it with the same route. When the server sees a packet from the client for <any 4-tuple, d=CID-S> it associates it with the same route again. The load balancer will not be able to associated any new destination CID with that route, because the client is not going to use long headers anymore.",
               "createdAt": "2025-03-06T05:01:24Z",
               "updatedAt": "2025-03-06T05:01:24Z"
+            }
+          ]
+        },
+        {
+          "id": "PRR_kwDODoD6yc6e4ASm",
+          "commit": {
+            "abbreviatedOid": "974f005"
+          },
+          "author": "huitema",
+          "authorAssociation": "CONTRIBUTOR",
+          "state": "COMMENTED",
+          "body": "Looks good, except for the handling of short header packets in the advanced fallback algorithm. Short header packets do not carry a source ID, so using the \"table indexed by a concatenation of the 4-tuple and source CID\" is not useful. The server should somehow learn and remember the DCID used in short packets. My proposal would be:\r\n\r\n1. Record the advanced routing decision in the table indexed by a concatenation of the 4-tuple and source CID. In that table, also remember the first DCID used by the client.\r\n2. When receiving a long header packet in which 4-tuple and SCID match an entry in the table indexed by a concatenation of the 4-tuple and source CID, examine the CID.\r\n3. If that CID is routable, no action needed.\r\n4. If it is not routable, remember it and the associated routing in the table of observed unroutable DCIDs.\r\n\r\nShort header packets that contain an unroutable DCID can only be routed using the table of observed unroutable DCIDs.",
+          "createdAt": "2025-03-06T19:55:11Z",
+          "updatedAt": "2025-03-06T19:55:11Z",
+          "comments": []
+        },
+        {
+          "id": "PRR_kwDODoD6yc6e5DqT",
+          "commit": {
+            "abbreviatedOid": "974f005"
+          },
+          "author": "ggreenway",
+          "authorAssociation": "COLLABORATOR",
+          "state": "APPROVED",
+          "body": "",
+          "createdAt": "2025-03-06T22:16:22Z",
+          "updatedAt": "2025-03-06T22:17:43Z",
+          "comments": [
+            {
+              "originalPosition": 17,
+              "body": "QUIC version 2 is not yet standarized. Consider omitting the `and 2`",
+              "createdAt": "2025-03-06T22:16:23Z",
+              "updatedAt": "2025-03-06T22:17:43Z"
             }
           ]
         }
