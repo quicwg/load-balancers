@@ -309,8 +309,9 @@ maintain, depending on the deployment's underlying assumptions. See
 {{fallback-algorithm}} for further discussion of this state.
 
 1. If the packet contains a routable CID, route the packet accordingly.
-1. If the packet matches an entry in a table of routing decisions indexed by a
-concatenation of 4-tuple and Source CID, route the packet accordingly.
+1. If the packet has a long header and matches an entry in a table of routing
+decisions indexed by a concatenation of 4-tuple and Source CID, route the packet
+accordingly.
 1. If the packet matches an entry in a table of routing decisions by destination
 CID, route the packet accordingly.
 1. If packet matches an entry in a table of routing decisions by 4-tuple, route
@@ -380,8 +381,8 @@ Therefore, the load balancer SHOULD maintain two tables that map different
 values to a routing decision:
 
 - a table indexed by a concatenation of the 4-tuple and source CID, which might
-be zero-length, to route subsequent packets that do not contain the server-
-generated connection ID;
+be zero-length, to route subsequent long header packets that do not contain the
+server-generated connection ID;
 
 - a table indexed by destination CID, if and only if it is possible for the
 server to generate unroutable CIDs. This table can be shared with the one in use
