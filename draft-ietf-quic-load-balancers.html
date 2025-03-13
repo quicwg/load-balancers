@@ -1058,7 +1058,7 @@ svg :is([fill="white"], [fill^="#fff"]) {
 </tr></thead>
 <tfoot><tr>
 <td class="left">Duke, et al.</td>
-<td class="center">Expires 12 September 2025</td>
+<td class="center">Expires 14 September 2025</td>
 <td class="right">[Page]</td>
 </tr></tfoot>
 </table>
@@ -1071,12 +1071,12 @@ svg :is([fill="white"], [fill^="#fff"]) {
 <dd class="internet-draft">draft-ietf-quic-load-balancers-latest</dd>
 <dt class="label-published">Published:</dt>
 <dd class="published">
-<time datetime="2025-03-11" class="published">11 March 2025</time>
+<time datetime="2025-03-13" class="published">13 March 2025</time>
     </dd>
 <dt class="label-intended-status">Intended Status:</dt>
 <dd class="intended-status">Standards Track</dd>
 <dt class="label-expires">Expires:</dt>
-<dd class="expires"><time datetime="2025-09-12">12 September 2025</time></dd>
+<dd class="expires"><time datetime="2025-09-14">14 September 2025</time></dd>
 <dt class="label-authors">Authors:</dt>
 <dd class="authors">
 <div class="author">
@@ -1137,7 +1137,7 @@ self-encoding their length to aid some hardware offloads.<a href="#section-abstr
         time. It is inappropriate to use Internet-Drafts as reference
         material or to cite them other than as "work in progress."<a href="#section-boilerplate.1-3" class="pilcrow">¶</a></p>
 <p id="section-boilerplate.1-4">
-        This Internet-Draft will expire on 12 September 2025.<a href="#section-boilerplate.1-4" class="pilcrow">¶</a></p>
+        This Internet-Draft will expire on 14 September 2025.<a href="#section-boilerplate.1-4" class="pilcrow">¶</a></p>
 </section>
 </div>
 <div id="copyright">
@@ -1216,9 +1216,6 @@ self-encoding their length to aid some hardware offloads.<a href="#section-abstr
                     <p id="section-toc.1-1.4.2.3.2.2.1"><a href="#section-4.3.2" class="auto internal xref">4.3.2</a>.  <a href="#name-advanced-fallback-algorithm" class="internal xref">Advanced Fallback Algorithm</a></p>
 </li>
                 </ul>
-</li>
-              <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.4.2.4">
-                <p id="section-toc.1-1.4.2.4.1"><a href="#section-4.4" class="auto internal xref">4.4</a>.  <a href="#name-dropping-packets" class="internal xref">Dropping packets</a></p>
 </li>
             </ul>
 </li>
@@ -1827,39 +1824,6 @@ load balancer will misroute packets.<a href="#section-4.3.2-8" class="pilcrow">�
 the tables described above.<a href="#section-4.3.2-9" class="pilcrow">¶</a></p>
 </section>
 </div>
-</section>
-</div>
-<div id="dropping-packets">
-<section id="section-4.4">
-        <h3 id="name-dropping-packets">
-<a href="#section-4.4" class="section-number selfRef">4.4. </a><a href="#name-dropping-packets" class="section-name selfRef">Dropping packets</a>
-        </h3>
-<p id="section-4.4-1">Some unroutable connection IDs are evidently client-generated if all servers
-behind the load balancer are compliant with this specification. In particular,
-an unroutable CID is evidently client-generated if
-- it does not use the 0b111 config ID; OR
-- it uses the 0b111 config ID, it is in a long header packet, and its self-
-encoded length does not match the length in the long header field.
-- the server is self-encoding CID length, but the length is not consistent with
-the config ID.<a href="#section-4.4-1" class="pilcrow">¶</a></p>
-<p id="section-4.4-2">When load balancers are guaranteed to have a superset of all server
-configurations, but servers might have no configuration at all, all valid QUIC
-short headers have either a routable DCID or use config ID 0b111. Under these
-conditions, load balancers MAY drop packets with short headers and unroutable
-DCIDs that do not have config ID 0b111.<a href="#section-4.4-2" class="pilcrow">¶</a></p>
-<p id="section-4.4-3">Load balancers MAY drop packets with evidently client-generated DCIDs if and
-only if it knows that the encoded QUIC version only allows the sending of that
-signature after the server has the opportunity to update the connection ID.
-For example, a load balancer can safely drop a QUIC version 1 Handshake packet
-with a client-generated DCID, as a version 1 Handshake packet sent to a QUIC-LB
-routable server will always have a server-generated CID. Load balancers MUST NOT
-drop packets with long headers and unknown QUIC versions.<a href="#section-4.4-3" class="pilcrow">¶</a></p>
-<p id="section-4.4-4">Under all other circumstances, load balancers MUST NOT drop packets with
-unroutable DCIDs, and instead forward it using the procedure above.<a href="#section-4.4-4" class="pilcrow">¶</a></p>
-<p id="section-4.4-5">While the load balancer function on a device has restrictions on which packets
-it can drop, a colocated function, outside the scope of this specification, can
-apply other policies to drop packets. For example, a rate limiting or security
-function might drop packets that the load balancer routes.<a href="#section-4.4-5" class="pilcrow">¶</a></p>
 </section>
 </div>
 </section>
