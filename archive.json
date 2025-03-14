@@ -1,6 +1,6 @@
 {
   "magic": "E!vIA5L86J2I",
-  "timestamp": "2025-03-13T01:36:40.098740+00:00",
+  "timestamp": "2025-03-14T18:45:56.408214+00:00",
   "repo": "quicwg/load-balancers",
   "labels": [
     {
@@ -3917,7 +3917,7 @@
       "labels": [],
       "body": "A solution for #238 can significantly reduce version dependence. However, the following assumptions still apply:\n\n* Short headers always contain server-generated CIDs -- there is no way to obtain the CID length if not.\n\n* Packets that do not contain server-generated CIDs are consistent in 4-tuple and DCID. Fallback algorithms for unknown versions will fail otherwise.\n\n* There is a mechanism for servers to provide a CID.\n\nNote also that the reference to NEW_CONNECTION_ID frames is version-specific and should be generalized.",
       "createdAt": "2025-03-05T20:30:09Z",
-      "updatedAt": "2025-03-05T22:52:26Z",
+      "updatedAt": "2025-03-14T17:59:09Z",
       "closedAt": null,
       "comments": [
         {
@@ -3933,6 +3933,13 @@
           "body": "connection IDs cannot be more than 32 bytes and use length-self-encoding.",
           "createdAt": "2025-03-05T22:52:25Z",
           "updatedAt": "2025-03-05T22:52:25Z"
+        },
+        {
+          "author": "martinduke",
+          "authorAssociation": "CONTRIBUTOR",
+          "body": "RFC 8999 says \"The connection ID is chosen by each endpoint using version-specific methods\" so I think we can take as an invariant that a server-generated CID is possible in every version.",
+          "createdAt": "2025-03-14T17:59:08Z",
+          "updatedAt": "2025-03-14T17:59:08Z"
         }
       ]
     }
@@ -12360,6 +12367,32 @@
           "comments": []
         }
       ]
+    },
+    {
+      "number": 241,
+      "id": "PR_kwDODoD6yc6Ot3H3",
+      "title": "Rewrite Version Invariance, clean up other explanatory text",
+      "url": "https://github.com/quicwg/load-balancers/pull/241",
+      "state": "OPEN",
+      "author": "martinduke",
+      "authorAssociation": "CONTRIBUTOR",
+      "assignees": [],
+      "labels": [],
+      "body": "Fixes #239 ",
+      "createdAt": "2025-03-14T18:44:48Z",
+      "updatedAt": "2025-03-14T18:45:22Z",
+      "baseRepository": "quicwg/load-balancers",
+      "baseRefName": "main",
+      "baseRefOid": "4df70c5fdd039a4eb98d8c3ff2a2ff10bad5805c",
+      "headRepository": "quicwg/load-balancers",
+      "headRefName": "invariance",
+      "headRefOid": "48e4adbb90c0c0e46257217581484605dff3276a",
+      "closedAt": null,
+      "mergedAt": null,
+      "mergedBy": null,
+      "mergeCommit": null,
+      "comments": [],
+      "reviews": []
     }
   ]
 }
