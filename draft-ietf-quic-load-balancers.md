@@ -195,7 +195,7 @@ CIDs with an old configuration at that codepoint have closed or transitioned.
 
 Servers MUST NOT generate new connection IDs using an old configuration after
 receiving a new one from the configuration agent. Servers MUST use that QUIC
-version's methods to update the client with CIDs (e.g.,  NEW_CONNECTION_ID
+version's methods to update the client with CIDs (e.g., NEW_CONNECTION_ID
 frames) using the new configuration and retire CIDs using the old configuration.
 
 It also possible to use these bits for more long-lived distinction of different
@@ -934,7 +934,7 @@ handle unroutable DCIDs. This guidance, and the implementation of an algorithm
 to handle these DCIDs, rests on some assumptions about packets that contain
 client-generated DCIDs that are not specified in RFC 8999:
 
-1. they do not have short headers; 
+1. they do not have short headers;
 1. the 4-tuple remains constant;
 1. if the load-balancer uses the Advanced Fallback Algorithm, the packets have
 a constant Source Connection ID.
