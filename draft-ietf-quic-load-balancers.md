@@ -153,6 +153,12 @@ Fundamentally, servers generate connection IDs that encode their server ID.
 Load balancers decode the server ID from the CID in incoming packets to route
 to the correct server.
 
+{{!RFC8999}} specifies that endpoints generate their own connection IDs,
+implying that all QUIC versions will have a mechanism to communicate their
+connection IDs to the peer. In QUIC version 1 and 2, the server does so using
+the Source Connection ID field of its long header packets for the first
+connection ID, and NEW_CONNECTION_ID frames for subsequent CIDs.
+
 There are situations where a server pool might be operating two or more routing
 algorithms or parameter sets simultaneously.  The load balancer uses the first
 three bits of the connection ID to multiplex incoming Destination Connection IDs
@@ -188,10 +194,9 @@ configuration until it takes precautions to make sure that all connections using
 CIDs with an old configuration at that codepoint have closed or transitioned.
 
 Servers MUST NOT generate new connection IDs using an old configuration after
-receiving a new one from the configuration agent. Servers MUST send
-NEW_CONNECTION_ID frames that provide CIDs using the new configuration, and
-retire CIDs using the old configuration using the "Retire Prior To" field of
-that frame.
+receiving a new one from the configuration agent. Servers MUST use that QUIC
+version's methods to update the client with CIDs (e.g., NEW_CONNECTION_ID
+frames) using the new configuration and retire CIDs using the old configuration.
 
 It also possible to use these bits for more long-lived distinction of different
 configurations, but this has privacy implications (see {{multiple-configs}}).
@@ -217,7 +222,7 @@ ID is unroutable. These connection IDs MUST self-encode their length (see
 Servers with no active configuration SHOULD provide the client exactly one CID
 over the life of the connection. In QUIC versions 1 and 2, therefore, servers
 SHOULD NOT send any NEW_CONNECTION_ID frames, instead delivering a single CID
-via its first Initial packet.
+via the Source Connection ID of long headers it sends.
 
 Servers with no active configuration SHOULD send the "disable_active_migration"
 transport parameter, or a similar message in future QUIC versions.
@@ -355,7 +360,7 @@ the tables described above.
 
 ### Advanced Fallback Algorithm
 
-Some architectures may require a load balancer to choose a server pool based
+Some architectures might require a load balancer to choose a server pool based
 on deep packet inspection of a client packet. For example, it may use the TLS
 1.3 Server Name Indication (SNI) ({{?RFC6066}}) field. The advanced fallback
 algorithm enables this capability but levies several additional requirements to
@@ -779,11 +784,12 @@ is necessary:
 and the load balancer has to concatenate left_0 and right_0 to obtain the
 complete server ID.
 
-# Per-connection state
+# Per-connection state {#per-connection-state}
 
-The CID allocation methods QUIC-LB defines require no per-connection state at
-the load balancer. The load balancer can extract the server ID from the
-connection ID of each incoming packet and route that packet accordingly.
+The CID allocation methods QUIC-LB defines no per-connection state at
+the load balancer, with a few conditional exceptions described in
+{{unroutable}}. Otherwise, the load balancer can extract the server ID from
+the connection ID of each incoming packet and route that packet accordingly.
 
 However, once a routing decision has been made, the load balancer MAY
 associate the 4-tuple or connection ID with the decision. This has two
@@ -797,9 +803,9 @@ computational load.
 correct origin server.
 
 In addition to the increased state requirements, however, load balancers cannot
-detect the CONNECTION_CLOSE frame to indicate the end of the connection, so they
-rely on a timeout to delete connection state. There are numerous considerations
-around setting such a timeout.
+detect the packets that indicate the end of the connection, so they rely on a
+timeout to delete connection state. There are numerous considerations around
+setting such a timeout.
 
 In the event a connection ends, freeing an IP and port, and a different
 connection migrates to that IP and port before the timeout, the load balancer
@@ -810,6 +816,13 @@ Furthermore, if a short timeout causes premature deletion of state, the routing
 is easily recoverable by decoding an incoming Connection ID. However, a short
 timeout also reduces the chance that an incoming Stateless Reset is correctly
 routed.
+
+Note that some heuristics to purge state early can introduce Denial of Service
+vulnerabilities. For example, one heuristic might delete flow state once the
+load balancer observes a routable CID on that flow. An attacker that can observe
+a target flow can store a routable CID from a previous connection and spoof the
+target flow's 4-tuple with the routable CID, causing premature deletion of that
+state.
 
 Servers MAY implement the technique described in {{Section 14.4.1 of RFC9000}}
 in case the load balancer is stateless, to increase the likelihood a Source
@@ -902,19 +915,29 @@ A QUIC version might define limits on connection ID length that make some or all
 of the mechanisms in this document unusable.  For example, a maximum connection
 ID length could be below the minimum necessary to use all or part of this
 specification; or, the minimum connection ID length could be larger than the
-largest value in this specification.
+largest value in this specification. Similarly, the length self-encoding
+specification cannot accommodate connection IDs longer than 32 bytes.
+
+The advanced fallback implementation supports a requirement to inspect version-
+specific elements of packets to make a routing decision, such as the Server Name
+Indication (SNI) extension in the TLS Client Hello.  The format and
+cryptographic protection of this information may change in future versions or
+extensions of TLS or QUIC, and therefore this functionality is inherently
+version-dependent. Such a load balancer, when it receives packets from an
+unknown QUIC version, might misdirect initial packets to the wrong tenant. While
+this can be inefficient, the design in this document preserves the ability for
+tenants to deploy new versions provided they have an out-of-band means of
+providing a connection ID for the client to use.
 
 {{load-balancer-forwarding}} provides guidance about how load balancers should
 handle unroutable DCIDs. This guidance, and the implementation of an algorithm
-to handle these DCIDs, rests on some assumptions that are not specified in
-RFC 8999:
+to handle these DCIDs, rests on some assumptions about packets that contain
+client-generated DCIDs that are not specified in RFC 8999:
 
-* Incoming short headers do not contain DCIDs that are client-generated.
-* The use of client-generated incoming DCIDs does not persist beyond a few round
-trips in the connection.
-* While the client is using DCIDs it generated, some exposed fields (IP address,
-UDP port, client-generated destination Connection ID) remain constant for all
-packets sent on the same connection.
+1. they do not have short headers;
+1. the 4-tuple remains constant;
+1. if the load-balancer uses the Advanced Fallback Algorithm, the packets have
+a constant Source Connection ID.
 
 While this document does not update the commitments in {{RFC8999}}, the
 additional assumptions are minimal and narrowly scoped, and provide a likely
@@ -927,17 +950,6 @@ failure.  A QUIC version that violates the assumptions in this section therefore
 cannot be safely deployed with a load balancer that follows this specification.
 An updated or alternative version of this specification might address these
 shortcomings for such a QUIC version.
-
-Some load balancers might inspect version-specific elements of packets to make a
-routing decision.  This might include the Server Name Indication (SNI) extension
-in the TLS Client Hello.  The format and cryptographic protection of this
-information may change in future versions or extensions of TLS or QUIC, and
-therefore this functionality is inherently not version-invariant. Such a load
-balancer, when it receives packets from an unknown QUIC version, might misdirect
-initial packets to the wrong tenant.  While this can be inefficient, the design
-in this document preserves the ability for tenants to deploy new versions
-provided they have an out-of-band means of providing a connection ID for the
-client to use.
 
 # Security Considerations {#security-considerations}
 
@@ -1118,6 +1130,14 @@ transitioning from clear text to encryption. Such deployments MUST use different
 server ID allocations for the clear text and the encrypted versions.
 
 These attacks cannot be mounted against the Single Pass Encryption algorithm.
+
+## Early deletion of load balancer connection state
+
+Potential vulnerabilities related to heuristics that delete per-connection state
+are described in {{per-connection-state}}. Under certain assumptions about
+server configuration and fallback algorithm, this state might be critical to
+maintaining connectivity. Under other assumptions, the state provides robustness
+to improbable network events.
 
 # IANA Considerations
 
@@ -1573,6 +1593,8 @@ and William Zeng Ke all provided useful input to this document.
 
 - Changed definition of Unroutable DCIDs, and rewrote sections on config
 failover and fallback routing to avoid misrouted connections.
+- Deleted text on dropping packets
+- Rewrote version invariance section
 
 ## since draft-ietf-quic-load-balancers-19
 
