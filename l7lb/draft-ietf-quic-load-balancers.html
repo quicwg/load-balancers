@@ -1054,11 +1054,11 @@ svg :is([fill="white"], [fill^="#fff"]) {
 <thead><tr>
 <td class="left">Internet-Draft</td>
 <td class="center">QUIC-LB</td>
-<td class="right">March 2025</td>
+<td class="right">August 2025</td>
 </tr></thead>
 <tfoot><tr>
 <td class="left">Duke, et al.</td>
-<td class="center">Expires 12 September 2025</td>
+<td class="center">Expires 28 February 2026</td>
 <td class="right">[Page]</td>
 </tr></tfoot>
 </table>
@@ -1071,12 +1071,12 @@ svg :is([fill="white"], [fill^="#fff"]) {
 <dd class="internet-draft">draft-ietf-quic-load-balancers-latest</dd>
 <dt class="label-published">Published:</dt>
 <dd class="published">
-<time datetime="2025-03-11" class="published">11 March 2025</time>
+<time datetime="2025-08-27" class="published">27 August 2025</time>
     </dd>
 <dt class="label-intended-status">Intended Status:</dt>
 <dd class="intended-status">Standards Track</dd>
 <dt class="label-expires">Expires:</dt>
-<dd class="expires"><time datetime="2025-09-12">12 September 2025</time></dd>
+<dd class="expires"><time datetime="2026-02-28">28 February 2026</time></dd>
 <dt class="label-authors">Authors:</dt>
 <dd class="authors">
 <div class="author">
@@ -1137,7 +1137,7 @@ self-encoding their length to aid some hardware offloads.<a href="#section-abstr
         time. It is inappropriate to use Internet-Drafts as reference
         material or to cite them other than as "work in progress."<a href="#section-boilerplate.1-3" class="pilcrow">¶</a></p>
 <p id="section-boilerplate.1-4">
-        This Internet-Draft will expire on 12 September 2025.<a href="#section-boilerplate.1-4" class="pilcrow">¶</a></p>
+        This Internet-Draft will expire on 28 February 2026.<a href="#section-boilerplate.1-4" class="pilcrow">¶</a></p>
 </section>
 </div>
 <div id="copyright">
@@ -1298,6 +1298,9 @@ self-encoding their length to aid some hardware offloads.<a href="#section-abstr
 </li>
               <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.9.2.7">
                 <p id="section-toc.1-1.9.2.7.1"><a href="#section-9.7" class="auto internal xref">9.7</a>.  <a href="#name-distinguishing-attacks" class="internal xref">Distinguishing Attacks</a></p>
+</li>
+              <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.9.2.8">
+                <p id="section-toc.1-1.9.2.8.1"><a href="#section-9.8" class="auto internal xref">9.8</a>.  <a href="#name-early-deletion-of-load-bala" class="internal xref">Early deletion of load balancer connection state</a></p>
 </li>
             </ul>
 </li>
@@ -1537,10 +1540,15 @@ algorithm, (2) server ID allocation strategy, and (3) algorithm parameters.<a hr
 <p id="section-2-4">Fundamentally, servers generate connection IDs that encode their server ID.
 Load balancers decode the server ID from the CID in incoming packets to route
 to the correct server.<a href="#section-2-4" class="pilcrow">¶</a></p>
-<p id="section-2-5">There are situations where a server pool might be operating two or more routing
+<p id="section-2-5"><span>[<a href="#RFC8999" class="cite xref">RFC8999</a>]</span> specifies that endpoints generate their own connection IDs,
+implying that all QUIC versions will have a mechanism to communicate their
+connection IDs to the peer. In QUIC version 1 and 2, the server does so using
+the Source Connection ID field of its long header packets for the first
+connection ID, and NEW_CONNECTION_ID frames for subsequent CIDs.<a href="#section-2-5" class="pilcrow">¶</a></p>
+<p id="section-2-6">There are situations where a server pool might be operating two or more routing
 algorithms or parameter sets simultaneously.  The load balancer uses the first
 three bits of the connection ID to multiplex incoming Destination Connection IDs
-(DCIDs) over these schemes (see <a href="#config-rotation" class="auto internal xref">Section 3.1</a>).<a href="#section-2-5" class="pilcrow">¶</a></p>
+(DCIDs) over these schemes (see <a href="#config-rotation" class="auto internal xref">Section 3.1</a>).<a href="#section-2-6" class="pilcrow">¶</a></p>
 </section>
 </div>
 <div id="first-octet">
@@ -1573,10 +1581,9 @@ new parameters when they arrive.<a href="#section-3.1-3" class="pilcrow">¶</a><
 configuration until it takes precautions to make sure that all connections using
 CIDs with an old configuration at that codepoint have closed or transitioned.<a href="#section-3.1-4" class="pilcrow">¶</a></p>
 <p id="section-3.1-5">Servers MUST NOT generate new connection IDs using an old configuration after
-receiving a new one from the configuration agent. Servers MUST send
-NEW_CONNECTION_ID frames that provide CIDs using the new configuration, and
-retire CIDs using the old configuration using the "Retire Prior To" field of
-that frame.<a href="#section-3.1-5" class="pilcrow">¶</a></p>
+receiving a new one from the configuration agent. Servers MUST use that QUIC
+version's methods to update the client with CIDs (e.g., NEW_CONNECTION_ID
+frames) using the new configuration and retire CIDs using the old configuration.<a href="#section-3.1-5" class="pilcrow">¶</a></p>
 <p id="section-3.1-6">It also possible to use these bits for more long-lived distinction of different
 configurations, but this has privacy implications (see <a href="#multiple-configs" class="auto internal xref">Section 9.3</a>).<a href="#section-3.1-6" class="pilcrow">¶</a></p>
 </section>
@@ -1602,7 +1609,7 @@ ID is unroutable. These connection IDs MUST self-encode their length (see
 <p id="section-3.2-4">Servers with no active configuration SHOULD provide the client exactly one CID
 over the life of the connection. In QUIC versions 1 and 2, therefore, servers
 SHOULD NOT send any NEW_CONNECTION_ID frames, instead delivering a single CID
-via its first Initial packet.<a href="#section-3.2-4" class="pilcrow">¶</a></p>
+via the Source Connection ID of long headers it sends.<a href="#section-3.2-4" class="pilcrow">¶</a></p>
 <p id="section-3.2-5">Servers with no active configuration SHOULD send the "disable_active_migration"
 transport parameter, or a similar message in future QUIC versions.<a href="#section-3.2-5" class="pilcrow">¶</a></p>
 <p id="section-3.2-6">When using codepoint 0b111, all bytes but the first SHOULD have no larger of a
@@ -1787,7 +1794,7 @@ the tables described above.<a href="#section-4.3.1-5" class="pilcrow">¶</a></p>
           <h4 id="name-advanced-fallback-algorithm">
 <a href="#section-4.3.2" class="section-number selfRef">4.3.2. </a><a href="#name-advanced-fallback-algorithm" class="section-name selfRef">Advanced Fallback Algorithm</a>
           </h4>
-<p id="section-4.3.2-1">Some architectures may require a load balancer to choose a server pool based
+<p id="section-4.3.2-1">Some architectures might require a load balancer to choose a server pool based
 on deep packet inspection of a client packet. For example, it may use the TLS
 1.3 Server Name Indication (SNI) (<span>[<a href="#RFC6066" class="cite xref">RFC6066</a>]</span>) field. The advanced fallback
 algorithm enables this capability but levies several additional requirements to
@@ -2361,9 +2368,10 @@ complete server ID.<a href="#section-5.5.2-5" class="pilcrow">¶</a></p>
       <h2 id="name-per-connection-state">
 <a href="#section-6" class="section-number selfRef">6. </a><a href="#name-per-connection-state" class="section-name selfRef">Per-connection state</a>
       </h2>
-<p id="section-6-1">The CID allocation methods QUIC-LB defines require no per-connection state at
-the load balancer. The load balancer can extract the server ID from the
-connection ID of each incoming packet and route that packet accordingly.<a href="#section-6-1" class="pilcrow">¶</a></p>
+<p id="section-6-1">The CID allocation methods QUIC-LB defines no per-connection state at
+the load balancer, with a few conditional exceptions described in
+<a href="#unroutable" class="auto internal xref">Section 4</a>. Otherwise, the load balancer can extract the server ID from
+the connection ID of each incoming packet and route that packet accordingly.<a href="#section-6-1" class="pilcrow">¶</a></p>
 <p id="section-6-2">However, once a routing decision has been made, the load balancer MAY
 associate the 4-tuple or connection ID with the decision. This has two
 advantages:<a href="#section-6-2" class="pilcrow">¶</a></p>
@@ -2379,9 +2387,9 @@ correct origin server.<a href="#section-6-3.2.1" class="pilcrow">¶</a></p>
 </li>
       </ul>
 <p id="section-6-4">In addition to the increased state requirements, however, load balancers cannot
-detect the CONNECTION_CLOSE frame to indicate the end of the connection, so they
-rely on a timeout to delete connection state. There are numerous considerations
-around setting such a timeout.<a href="#section-6-4" class="pilcrow">¶</a></p>
+detect the packets that indicate the end of the connection, so they rely on a
+timeout to delete connection state. There are numerous considerations around
+setting such a timeout.<a href="#section-6-4" class="pilcrow">¶</a></p>
 <p id="section-6-5">In the event a connection ends, freeing an IP and port, and a different
 connection migrates to that IP and port before the timeout, the load balancer
 will misroute the different connection's packets to the original server. A short
@@ -2390,12 +2398,18 @@ timeout limits the likelihood of such a misrouting.<a href="#section-6-5" class=
 is easily recoverable by decoding an incoming Connection ID. However, a short
 timeout also reduces the chance that an incoming Stateless Reset is correctly
 routed.<a href="#section-6-6" class="pilcrow">¶</a></p>
-<p id="section-6-7">Servers MAY implement the technique described in <span><a href="https://rfc-editor.org/rfc/rfc9000#section-14.4.1" class="relref">Section 14.4.1</a> of [<a href="#RFC9000" class="cite xref">RFC9000</a>]</span>
+<p id="section-6-7">Note that some heuristics to purge state early can introduce Denial of Service
+vulnerabilities. For example, one heuristic might delete flow state once the
+load balancer observes a routable CID on that flow. An attacker that can observe
+a target flow can store a routable CID from a previous connection and spoof the
+target flow's 4-tuple with the routable CID, causing premature deletion of that
+state.<a href="#section-6-7" class="pilcrow">¶</a></p>
+<p id="section-6-8">Servers MAY implement the technique described in <span><a href="https://rfc-editor.org/rfc/rfc9000#section-14.4.1" class="relref">Section 14.4.1</a> of [<a href="#RFC9000" class="cite xref">RFC9000</a>]</span>
 in case the load balancer is stateless, to increase the likelihood a Source
 Connection ID is included in ICMP responses to Path Maximum Transmission Unit
 (PMTU) probes.  Load balancers MAY parse the echoed packet to extract the Source
 Connection ID, if it contains a QUIC long header, and extract the Server ID as
-if it were in a Destination CID.<a href="#section-6-7" class="pilcrow">¶</a></p>
+if it were in a Destination CID.<a href="#section-6-8" class="pilcrow">¶</a></p>
 </section>
 </div>
 <div id="additional-use-cases">
@@ -2503,45 +2517,44 @@ operation of QUIC-LB.<a href="#section-8-1" class="pilcrow">¶</a></p>
 of the mechanisms in this document unusable.  For example, a maximum connection
 ID length could be below the minimum necessary to use all or part of this
 specification; or, the minimum connection ID length could be larger than the
-largest value in this specification.<a href="#section-8-2" class="pilcrow">¶</a></p>
-<p id="section-8-3"><a href="#load-balancer-forwarding" class="auto internal xref">Section 4.2</a> provides guidance about how load balancers should
+largest value in this specification. Similarly, the length self-encoding
+specification cannot accommodate connection IDs longer than 32 bytes.<a href="#section-8-2" class="pilcrow">¶</a></p>
+<p id="section-8-3">The advanced fallback implementation supports a requirement to inspect version-
+specific elements of packets to make a routing decision, such as the Server Name
+Indication (SNI) extension in the TLS Client Hello.  The format and
+cryptographic protection of this information may change in future versions or
+extensions of TLS or QUIC, and therefore this functionality is inherently
+version-dependent. Such a load balancer, when it receives packets from an
+unknown QUIC version, might misdirect initial packets to the wrong tenant. While
+this can be inefficient, the design in this document preserves the ability for
+tenants to deploy new versions provided they have an out-of-band means of
+providing a connection ID for the client to use.<a href="#section-8-3" class="pilcrow">¶</a></p>
+<p id="section-8-4"><a href="#load-balancer-forwarding" class="auto internal xref">Section 4.2</a> provides guidance about how load balancers should
 handle unroutable DCIDs. This guidance, and the implementation of an algorithm
-to handle these DCIDs, rests on some assumptions that are not specified in
-RFC 8999:<a href="#section-8-3" class="pilcrow">¶</a></p>
-<ul class="normal">
-<li class="normal" id="section-8-4.1">
-          <p id="section-8-4.1.1">Incoming short headers do not contain DCIDs that are client-generated.<a href="#section-8-4.1.1" class="pilcrow">¶</a></p>
+to handle these DCIDs, rests on some assumptions about packets that contain
+client-generated DCIDs that are not specified in RFC 8999:<a href="#section-8-4" class="pilcrow">¶</a></p>
+<ol start="1" type="1" class="normal type-1" id="section-8-5">
+<li id="section-8-5.1">
+          <p id="section-8-5.1.1">they do not have short headers;<a href="#section-8-5.1.1" class="pilcrow">¶</a></p>
 </li>
-        <li class="normal" id="section-8-4.2">
-          <p id="section-8-4.2.1">The use of client-generated incoming DCIDs does not persist beyond a few round
-trips in the connection.<a href="#section-8-4.2.1" class="pilcrow">¶</a></p>
+        <li id="section-8-5.2">
+          <p id="section-8-5.2.1">the 4-tuple remains constant;<a href="#section-8-5.2.1" class="pilcrow">¶</a></p>
 </li>
-        <li class="normal" id="section-8-4.3">
-          <p id="section-8-4.3.1">While the client is using DCIDs it generated, some exposed fields (IP address,
-UDP port, client-generated destination Connection ID) remain constant for all
-packets sent on the same connection.<a href="#section-8-4.3.1" class="pilcrow">¶</a></p>
+        <li id="section-8-5.3">
+          <p id="section-8-5.3.1">if the load-balancer uses the Advanced Fallback Algorithm, the packets have
+a constant Source Connection ID.<a href="#section-8-5.3.1" class="pilcrow">¶</a></p>
 </li>
-      </ul>
-<p id="section-8-5">While this document does not update the commitments in <span>[<a href="#RFC8999" class="cite xref">RFC8999</a>]</span>, the
+      </ol>
+<p id="section-8-6">While this document does not update the commitments in <span>[<a href="#RFC8999" class="cite xref">RFC8999</a>]</span>, the
 additional assumptions are minimal and narrowly scoped, and provide a likely
 set of constants that load balancers can use with minimal risk of version-
-dependence.<a href="#section-8-5" class="pilcrow">¶</a></p>
-<p id="section-8-6">If these assumptions are not valid, this specification is likely to lead to loss
+dependence.<a href="#section-8-6" class="pilcrow">¶</a></p>
+<p id="section-8-7">If these assumptions are not valid, this specification is likely to lead to loss
 of packets that contain unroutable DCIDs, and in extreme cases connection
 failure.  A QUIC version that violates the assumptions in this section therefore
 cannot be safely deployed with a load balancer that follows this specification.
 An updated or alternative version of this specification might address these
-shortcomings for such a QUIC version.<a href="#section-8-6" class="pilcrow">¶</a></p>
-<p id="section-8-7">Some load balancers might inspect version-specific elements of packets to make a
-routing decision.  This might include the Server Name Indication (SNI) extension
-in the TLS Client Hello.  The format and cryptographic protection of this
-information may change in future versions or extensions of TLS or QUIC, and
-therefore this functionality is inherently not version-invariant. Such a load
-balancer, when it receives packets from an unknown QUIC version, might misdirect
-initial packets to the wrong tenant.  While this can be inefficient, the design
-in this document preserves the ability for tenants to deploy new versions
-provided they have an out-of-band means of providing a connection ID for the
-client to use.<a href="#section-8-7" class="pilcrow">¶</a></p>
+shortcomings for such a QUIC version.<a href="#section-8-7" class="pilcrow">¶</a></p>
 </section>
 </div>
 <div id="security-considerations">
@@ -2650,8 +2663,11 @@ QUIC-LB but preserves privacy.<a href="#section-9.4-4.3.1" class="pilcrow">¶</a
 considering the relative value of each of these properties, given the trust
 model between tenants, the presence of methods to obscure the domain name, and
 value of address migration in the tenant use cases.<a href="#section-9.4-5" class="pilcrow">¶</a></p>
-<p id="section-9.4-6">As the plaintext algorithm makes no attempt to conceal the server mapping,
-these deployments MAY simply use a common configuration.<a href="#section-9.4-6" class="pilcrow">¶</a></p>
+<p id="section-9.4-6">In the case that the administrating entity also controls a reverse proxy between
+the load balancer and the tenants, this entity generates the external CIDs, and
+there is no tradeoff.<a href="#section-9.4-6" class="pilcrow">¶</a></p>
+<p id="section-9.4-7">As the plaintext algorithm makes no attempt to conceal the server mapping,
+these deployments MAY simply use a common configuration.<a href="#section-9.4-7" class="pilcrow">¶</a></p>
 </section>
 </div>
 <div id="stateless-reset-oracle">
@@ -2738,6 +2754,18 @@ server ID allocations for the clear text and the encrypted versions.<a href="#se
 <p id="section-9.7-4">These attacks cannot be mounted against the Single Pass Encryption algorithm.<a href="#section-9.7-4" class="pilcrow">¶</a></p>
 </section>
 </div>
+<div id="early-deletion-of-load-balancer-connection-state">
+<section id="section-9.8">
+        <h3 id="name-early-deletion-of-load-bala">
+<a href="#section-9.8" class="section-number selfRef">9.8. </a><a href="#name-early-deletion-of-load-bala" class="section-name selfRef">Early deletion of load balancer connection state</a>
+        </h3>
+<p id="section-9.8-1">Potential vulnerabilities related to heuristics that delete per-connection state
+are described in <a href="#per-connection-state" class="auto internal xref">Section 6</a>. Under certain assumptions about
+server configuration and fallback algorithm, this state might be critical to
+maintaining connectivity. Under other assumptions, the state provides robustness
+to improbable network events.<a href="#section-9.8-1" class="pilcrow">¶</a></p>
+</section>
+</div>
 </section>
 </div>
 <div id="iana-considerations">
@@ -2763,6 +2791,10 @@ server ID allocations for the clear text and the encrypted versions.<a href="#se
         <dd>
 <span class="refAuthor">Dworkin, M.</span>, <span class="refTitle">"Recommendation for Block Cipher Modes of Operation: Methods and Techniques"</span>, <span class="refContent">NIST Special Publication 800-38A</span>, <time datetime="2021" class="refDate">2021</time>, <span>&lt;<a href="https://nvlpubs.nist.gov/nistpubs/Legacy/SP/nistspecialpublication800-38a.pdf">https://nvlpubs.nist.gov/nistpubs/Legacy/SP/nistspecialpublication800-38a.pdf</a>&gt;</span>. </dd>
 <dd class="break"></dd>
+<dt id="RFC8999">[RFC8999]</dt>
+        <dd>
+<span class="refAuthor">Thomson, M.</span>, <span class="refTitle">"Version-Independent Properties of QUIC"</span>, <span class="seriesInfo">RFC 8999</span>, <span class="seriesInfo">DOI 10.17487/RFC8999</span>, <time datetime="2021-05" class="refDate">May 2021</time>, <span>&lt;<a href="https://www.rfc-editor.org/rfc/rfc8999">https://www.rfc-editor.org/rfc/rfc8999</a>&gt;</span>. </dd>
+<dd class="break"></dd>
 <dt id="RFC9000">[RFC9000]</dt>
       <dd>
 <span class="refAuthor">Iyengar, J., Ed.</span> and <span class="refAuthor">M. Thomson, Ed.</span>, <span class="refTitle">"QUIC: A UDP-Based Multiplexed and Secure Transport"</span>, <span class="seriesInfo">RFC 9000</span>, <span class="seriesInfo">DOI 10.17487/RFC9000</span>, <time datetime="2021-05" class="refDate">May 2021</time>, <span>&lt;<a href="https://www.rfc-editor.org/rfc/rfc9000">https://www.rfc-editor.org/rfc/rfc9000</a>&gt;</span>. </dd>
@@ -2778,7 +2810,7 @@ server ID allocations for the clear text and the encrypted versions.<a href="#se
 <dl class="references">
 <dt id="I-D.ietf-tls-esni">[I-D.ietf-tls-esni]</dt>
         <dd>
-<span class="refAuthor">Rescorla, E.</span>, <span class="refAuthor">Oku, K.</span>, <span class="refAuthor">Sullivan, N.</span>, and <span class="refAuthor">C. A. Wood</span>, <span class="refTitle">"TLS Encrypted Client Hello"</span>, <span class="refContent">Work in Progress</span>, <span class="seriesInfo">Internet-Draft, draft-ietf-tls-esni-23</span>, <time datetime="2025-02-19" class="refDate">19 February 2025</time>, <span>&lt;<a href="https://datatracker.ietf.org/doc/html/draft-ietf-tls-esni-23">https://datatracker.ietf.org/doc/html/draft-ietf-tls-esni-23</a>&gt;</span>. </dd>
+<span class="refAuthor">Rescorla, E.</span>, <span class="refAuthor">Oku, K.</span>, <span class="refAuthor">Sullivan, N.</span>, and <span class="refAuthor">C. A. Wood</span>, <span class="refTitle">"TLS Encrypted Client Hello"</span>, <span class="refContent">Work in Progress</span>, <span class="seriesInfo">Internet-Draft, draft-ietf-tls-esni-25</span>, <time datetime="2025-06-14" class="refDate">14 June 2025</time>, <span>&lt;<a href="https://datatracker.ietf.org/doc/html/draft-ietf-tls-esni-25">https://datatracker.ietf.org/doc/html/draft-ietf-tls-esni-25</a>&gt;</span>. </dd>
 <dd class="break"></dd>
 <dt id="Patarin2008">[Patarin2008]</dt>
         <dd>
@@ -2819,10 +2851,6 @@ server ID allocations for the clear text and the encrypted versions.<a href="#se
 <dt id="RFC8484">[RFC8484]</dt>
         <dd>
 <span class="refAuthor">Hoffman, P.</span> and <span class="refAuthor">P. McManus</span>, <span class="refTitle">"DNS Queries over HTTPS (DoH)"</span>, <span class="seriesInfo">RFC 8484</span>, <span class="seriesInfo">DOI 10.17487/RFC8484</span>, <time datetime="2018-10" class="refDate">October 2018</time>, <span>&lt;<a href="https://www.rfc-editor.org/rfc/rfc8484">https://www.rfc-editor.org/rfc/rfc8484</a>&gt;</span>. </dd>
-<dd class="break"></dd>
-<dt id="RFC8999">[RFC8999]</dt>
-        <dd>
-<span class="refAuthor">Thomson, M.</span>, <span class="refTitle">"Version-Independent Properties of QUIC"</span>, <span class="seriesInfo">RFC 8999</span>, <span class="seriesInfo">DOI 10.17487/RFC8999</span>, <time datetime="2021-05" class="refDate">May 2021</time>, <span>&lt;<a href="https://www.rfc-editor.org/rfc/rfc8999">https://www.rfc-editor.org/rfc/rfc8999</a>&gt;</span>. </dd>
 <dd class="break"></dd>
 <dt id="RFC9146">[RFC9146]</dt>
         <dd>
@@ -3334,6 +3362,12 @@ publication of a final version of this document.<a href="#appendix-E-1.1.1" clas
 <li class="normal" id="appendix-E.1-1.1">
             <p id="appendix-E.1-1.1.1">Changed definition of Unroutable DCIDs, and rewrote sections on config
 failover and fallback routing to avoid misrouted connections.<a href="#appendix-E.1-1.1.1" class="pilcrow">¶</a></p>
+</li>
+          <li class="normal" id="appendix-E.1-1.2">
+            <p id="appendix-E.1-1.2.1">Deleted text on dropping packets<a href="#appendix-E.1-1.2.1" class="pilcrow">¶</a></p>
+</li>
+          <li class="normal" id="appendix-E.1-1.3">
+            <p id="appendix-E.1-1.3.1">Rewrote version invariance section<a href="#appendix-E.1-1.3.1" class="pilcrow">¶</a></p>
 </li>
         </ul>
 </section>
