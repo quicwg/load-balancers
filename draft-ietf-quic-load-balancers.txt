@@ -5,10 +5,10 @@
 QUIC                                                             M. Duke
 Internet-Draft                                                    Google
 Intended status: Standards Track                                N. Banks
-Expires: 15 September 2025                                     Microsoft
+Expires: 28 February 2026                                      Microsoft
                                                               C. Huitema
                                                     Private Octopus Inc.
-                                                           14 March 2025
+                                                          27 August 2025
 
 
             QUIC-LB: Generating Routable QUIC Connection IDs
@@ -55,7 +55,7 @@ Status of This Memo
    time.  It is inappropriate to use Internet-Drafts as reference
    material or to cite them other than as "work in progress."
 
-   This Internet-Draft will expire on 15 September 2025.
+   This Internet-Draft will expire on 28 February 2026.
 
 Copyright Notice
 
@@ -1199,6 +1199,10 @@ Table of Contents
    methods to obscure the domain name, and value of address migration in
    the tenant use cases.
 
+   In the case that the administrating entity also controls a reverse
+   proxy between the load balancer and the tenants, this entity
+   generates the external CIDs, and there is no tradeoff.
+
    As the plaintext algorithm makes no attempt to conceal the server
    mapping, these deployments MAY simply use a common configuration.
 
@@ -1336,9 +1340,9 @@ Table of Contents
    [I-D.ietf-tls-esni]
               Rescorla, E., Oku, K., Sullivan, N., and C. A. Wood, "TLS
               Encrypted Client Hello", Work in Progress, Internet-Draft,
-              draft-ietf-tls-esni-23, 19 February 2025,
+              draft-ietf-tls-esni-25, 14 June 2025,
               <https://datatracker.ietf.org/doc/html/draft-ietf-tls-
-              esni-23>.
+              esni-25>.
 
    [Patarin2008]
               Patarin, J., "Generic Attacks on Feistel Schemes -
