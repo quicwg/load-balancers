@@ -1,6 +1,6 @@
 {
   "magic": "E!vIA5L86J2I",
-  "timestamp": "2025-03-14T18:45:56.408214+00:00",
+  "timestamp": "2025-08-27T21:31:42.864398+00:00",
   "repo": "quicwg/load-balancers",
   "labels": [
     {
@@ -3910,15 +3910,15 @@
       "id": "I_kwDODoD6yc6swk4X",
       "title": "Rewrite Version Invariance Section",
       "url": "https://github.com/quicwg/load-balancers/issues/239",
-      "state": "OPEN",
+      "state": "CLOSED",
       "author": "martinduke",
       "authorAssociation": "CONTRIBUTOR",
       "assignees": [],
       "labels": [],
       "body": "A solution for #238 can significantly reduce version dependence. However, the following assumptions still apply:\n\n* Short headers always contain server-generated CIDs -- there is no way to obtain the CID length if not.\n\n* Packets that do not contain server-generated CIDs are consistent in 4-tuple and DCID. Fallback algorithms for unknown versions will fail otherwise.\n\n* There is a mechanism for servers to provide a CID.\n\nNote also that the reference to NEW_CONNECTION_ID frames is version-specific and should be generalized.",
       "createdAt": "2025-03-05T20:30:09Z",
-      "updatedAt": "2025-03-14T17:59:09Z",
-      "closedAt": null,
+      "updatedAt": "2025-03-14T21:25:17Z",
+      "closedAt": "2025-03-14T21:25:17Z",
       "comments": [
         {
           "author": "martinduke",
@@ -3942,6 +3942,22 @@
           "updatedAt": "2025-03-14T17:59:08Z"
         }
       ]
+    },
+    {
+      "number": 242,
+      "id": "I_kwDODoD6yc6xpx7x",
+      "title": "L7LB solve some SNI-switching problems",
+      "url": "https://github.com/quicwg/load-balancers/issues/242",
+      "state": "OPEN",
+      "author": "martinduke",
+      "authorAssociation": "CONTRIBUTOR",
+      "assignees": [],
+      "labels": [],
+      "body": "Add a note that if there is an L7LB behind the L4, and both are controlled by same entity, there's no problem here.",
+      "createdAt": "2025-04-08T17:43:32Z",
+      "updatedAt": "2025-04-08T17:43:32Z",
+      "closedAt": null,
+      "comments": []
     }
   ],
   "pulls": [
@@ -10009,7 +10025,7 @@
       ],
       "body": "Not really sure that we have to do that, but I did it anyhow. \r\nAlso fixed a couple of random line length issues that were causing errors in xml2rfc",
       "createdAt": "2022-07-07T06:01:41Z",
-      "updatedAt": "2025-02-11T19:11:17Z",
+      "updatedAt": "2025-05-15T13:43:20Z",
       "baseRepository": "quicwg/load-balancers",
       "baseRefName": "main",
       "baseRefOid": "8569234f87c482c8a081e28a0ff184d83c02e700",
@@ -12373,20 +12389,126 @@
       "id": "PR_kwDODoD6yc6Ot3H3",
       "title": "Rewrite Version Invariance, clean up other explanatory text",
       "url": "https://github.com/quicwg/load-balancers/pull/241",
-      "state": "OPEN",
+      "state": "MERGED",
       "author": "martinduke",
       "authorAssociation": "CONTRIBUTOR",
       "assignees": [],
       "labels": [],
       "body": "Fixes #239 ",
       "createdAt": "2025-03-14T18:44:48Z",
-      "updatedAt": "2025-03-14T18:45:22Z",
+      "updatedAt": "2025-03-15T07:39:06Z",
       "baseRepository": "quicwg/load-balancers",
       "baseRefName": "main",
       "baseRefOid": "4df70c5fdd039a4eb98d8c3ff2a2ff10bad5805c",
       "headRepository": "quicwg/load-balancers",
       "headRefName": "invariance",
       "headRefOid": "48e4adbb90c0c0e46257217581484605dff3276a",
+      "closedAt": "2025-03-14T21:25:16Z",
+      "mergedAt": "2025-03-14T21:25:16Z",
+      "mergedBy": "martinduke",
+      "mergeCommit": {
+        "oid": "2d0d73ee50585c89b586ef2e6e555801267b1528"
+      },
+      "comments": [],
+      "reviews": [
+        {
+          "id": "PRR_kwDODoD6yc6gITk0",
+          "commit": {
+            "abbreviatedOid": "48e4adb"
+          },
+          "author": "huitema",
+          "authorAssociation": "CONTRIBUTOR",
+          "state": "APPROVED",
+          "body": "Looks good. And yes, we should not assume that CID are only sent in `NEW_CONNECTION_ID`. Even with QUIC V1, they can be sent in `PATH_NEW_CONNECTION_ID` frames.",
+          "createdAt": "2025-03-14T18:51:16Z",
+          "updatedAt": "2025-03-14T18:51:16Z",
+          "comments": []
+        },
+        {
+          "id": "PRR_kwDODoD6yc6gLRC9",
+          "commit": {
+            "abbreviatedOid": "48e4adb"
+          },
+          "author": "martinthomson",
+          "authorAssociation": "MEMBER",
+          "state": "COMMENTED",
+          "body": "If you ask for review, sometimes you get it.",
+          "createdAt": "2025-03-15T03:35:57Z",
+          "updatedAt": "2025-03-15T03:44:37Z",
+          "comments": [
+            {
+              "originalPosition": 4,
+              "body": "When you say \"their own\", it's possibly unclear what you mean.  If you mean that it is the connection IDs that are put in packets that are sent to the endpoint, that's correct...  But this could be interpreted in other ways that are less good.",
+              "createdAt": "2025-03-15T03:35:58Z",
+              "updatedAt": "2025-03-15T03:44:37Z"
+            },
+            {
+              "originalPosition": 23,
+              "body": "Don't you request that your peer retires them?  Well, in QUIC v1 and v2 you do.  Who knows otherwise :)",
+              "createdAt": "2025-03-15T03:36:53Z",
+              "updatedAt": "2025-03-15T03:44:37Z"
+            },
+            {
+              "originalPosition": 32,
+              "body": "Somewhat unrelated: is this advice we really want to give?   If you only receive one connection ID ever, you can't ever migrate and you can't use short idle periods as an opportunity to break linkability.",
+              "createdAt": "2025-03-15T03:39:47Z",
+              "updatedAt": "2025-03-15T03:44:37Z"
+            },
+            {
+              "originalPosition": 103,
+              "body": "lowercase \"initial\" is not \"Initial\" obviously because uppercase implies something specific.  However, it might be better to just drop that word.",
+              "createdAt": "2025-03-15T03:42:43Z",
+              "updatedAt": "2025-03-15T03:44:37Z"
+            },
+            {
+              "originalPosition": 156,
+              "body": "I'm finding this text to be a little obtuse.  Maybe its jet lag speaking, but I'm not following.  Could you consider making this a little more direct?",
+              "createdAt": "2025-03-15T03:44:25Z",
+              "updatedAt": "2025-03-15T03:44:37Z"
+            }
+          ]
+        },
+        {
+          "id": "PRR_kwDODoD6yc6gL44l",
+          "commit": {
+            "abbreviatedOid": "48e4adb"
+          },
+          "author": "huitema",
+          "authorAssociation": "CONTRIBUTOR",
+          "state": "COMMENTED",
+          "body": "",
+          "createdAt": "2025-03-15T07:39:06Z",
+          "updatedAt": "2025-03-15T07:39:06Z",
+          "comments": [
+            {
+              "originalPosition": 156,
+              "body": "I guess I passed over that because Martin D. and I had extended discussions of the \"advanced LB\" algorithms and I recognized the issue. In the \"no configuration\" corner case, the LB learns the server CID by tracking packets sent by the client -- if the source CID matches the source CID of packets sent with destination CID = ICID, the destination CID has to be either the ICID or the server selected CID. But of course hackers can send packets that pretend to come for the client, and inject noise in that insecure algorithm.\r\n\r\nI guess we should describe this type of attacks in the security section. The mitigation is to make sure that the server gets a proper configuration. I do not have a good mitigation otherwise.",
+              "createdAt": "2025-03-15T07:39:06Z",
+              "updatedAt": "2025-03-15T07:39:06Z"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "number": 243,
+      "id": "PR_kwDODoD6yc6lrmWf",
+      "title": "SNI is fine",
+      "url": "https://github.com/quicwg/load-balancers/pull/243",
+      "state": "OPEN",
+      "author": "martinduke",
+      "authorAssociation": "CONTRIBUTOR",
+      "assignees": [],
+      "labels": [],
+      "body": "Fixes #242 ",
+      "createdAt": "2025-08-27T21:31:27Z",
+      "updatedAt": "2025-08-27T21:31:27Z",
+      "baseRepository": "quicwg/load-balancers",
+      "baseRefName": "main",
+      "baseRefOid": "2d0d73ee50585c89b586ef2e6e555801267b1528",
+      "headRepository": "quicwg/load-balancers",
+      "headRefName": "l7lb",
+      "headRefOid": "470388e19658cdf9bcdc10326d1c418972e89d70",
       "closedAt": null,
       "mergedAt": null,
       "mergedBy": null,
