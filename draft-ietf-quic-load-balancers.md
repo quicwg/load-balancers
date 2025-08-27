@@ -1046,6 +1046,10 @@ considering the relative value of each of these properties, given the trust
 model between tenants, the presence of methods to obscure the domain name, and
 value of address migration in the tenant use cases.
 
+In the case that the administrating entity also controls a reverse proxy between
+the load balancer and the tenants, this entity generates the external CIDs, and
+there is no tradeoff.
+
 As the plaintext algorithm makes no attempt to conceal the server mapping,
 these deployments MAY simply use a common configuration.
 
