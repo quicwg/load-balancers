@@ -144,7 +144,7 @@ routable connection IDs.
 The algorithms differ in the complexity of configuration at both load balancer
 and server. Increasing complexity improves obfuscation of the server mapping.
 
-This specificationn describes three participants: the configuration agent, the
+This specification describes three participants: the configuration agent, the
 load balancer, and the server. For any given QUIC-LB configuration that enables
 connection-ID-aware load balancing, there must be a choice of (1) routing
 algorithm, (2) server ID allocation strategy, and (3) algorithm parameters.
