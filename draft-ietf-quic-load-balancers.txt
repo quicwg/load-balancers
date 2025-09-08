@@ -5,10 +5,10 @@
 QUIC                                                             M. Duke
 Internet-Draft                                                    Google
 Intended status: Standards Track                                N. Banks
-Expires: 28 February 2026                                      Microsoft
+Expires: 12 March 2026                                         Microsoft
                                                               C. Huitema
                                                     Private Octopus Inc.
-                                                          27 August 2025
+                                                        8 September 2025
 
 
             QUIC-LB: Generating Routable QUIC Connection IDs
@@ -55,7 +55,7 @@ Status of This Memo
    time.  It is inappropriate to use Internet-Drafts as reference
    material or to cite them other than as "work in progress."
 
-   This Internet-Draft will expire on 28 February 2026.
+   This Internet-Draft will expire on 12 March 2026.
 
 Copyright Notice
 
@@ -244,7 +244,7 @@ Table of Contents
    balancer and server.  Increasing complexity improves obfuscation of
    the server mapping.
 
-   This specificationn describes three participants: the configuration
+   This specification describes three participants: the configuration
    agent, the load balancer, and the server.  For any given QUIC-LB
    configuration that enables connection-ID-aware load balancing, there
    must be a choice of (1) routing algorithm, (2) server ID allocation
