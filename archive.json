@@ -1,6 +1,6 @@
 {
   "magic": "E!vIA5L86J2I",
-  "timestamp": "2025-08-27T21:31:42.864398+00:00",
+  "timestamp": "2025-09-08T19:13:40.246480+00:00",
   "repo": "quicwg/load-balancers",
   "labels": [
     {
@@ -3948,15 +3948,15 @@
       "id": "I_kwDODoD6yc6xpx7x",
       "title": "L7LB solve some SNI-switching problems",
       "url": "https://github.com/quicwg/load-balancers/issues/242",
-      "state": "OPEN",
+      "state": "CLOSED",
       "author": "martinduke",
       "authorAssociation": "CONTRIBUTOR",
       "assignees": [],
       "labels": [],
       "body": "Add a note that if there is an L7LB behind the L4, and both are controlled by same entity, there's no problem here.",
       "createdAt": "2025-04-08T17:43:32Z",
-      "updatedAt": "2025-04-08T17:43:32Z",
-      "closedAt": null,
+      "updatedAt": "2025-08-27T21:31:54Z",
+      "closedAt": "2025-08-27T21:31:54Z",
       "comments": []
     }
   ],
@@ -12495,26 +12495,83 @@
       "id": "PR_kwDODoD6yc6lrmWf",
       "title": "SNI is fine",
       "url": "https://github.com/quicwg/load-balancers/pull/243",
-      "state": "OPEN",
+      "state": "MERGED",
       "author": "martinduke",
       "authorAssociation": "CONTRIBUTOR",
       "assignees": [],
       "labels": [],
       "body": "Fixes #242 ",
       "createdAt": "2025-08-27T21:31:27Z",
-      "updatedAt": "2025-08-27T21:31:27Z",
+      "updatedAt": "2025-08-27T21:31:54Z",
       "baseRepository": "quicwg/load-balancers",
       "baseRefName": "main",
       "baseRefOid": "2d0d73ee50585c89b586ef2e6e555801267b1528",
       "headRepository": "quicwg/load-balancers",
       "headRefName": "l7lb",
       "headRefOid": "470388e19658cdf9bcdc10326d1c418972e89d70",
-      "closedAt": null,
-      "mergedAt": null,
-      "mergedBy": null,
-      "mergeCommit": null,
+      "closedAt": "2025-08-27T21:31:53Z",
+      "mergedAt": "2025-08-27T21:31:53Z",
+      "mergedBy": "martinduke",
+      "mergeCommit": {
+        "oid": "4e4013edae12afd303cdc1db07e2885c23a13268"
+      },
       "comments": [],
       "reviews": []
+    },
+    {
+      "number": 244,
+      "id": "PR_kwDODoD6yc6m6qYl",
+      "title": "Fix typo in specification description",
+      "url": "https://github.com/quicwg/load-balancers/pull/244",
+      "state": "MERGED",
+      "author": "guhetier",
+      "authorAssociation": "CONTRIBUTOR",
+      "assignees": [],
+      "labels": [],
+      "body": "",
+      "createdAt": "2025-09-04T18:21:33Z",
+      "updatedAt": "2025-09-08T19:13:04Z",
+      "baseRepository": "quicwg/load-balancers",
+      "baseRefName": "main",
+      "baseRefOid": "4e4013edae12afd303cdc1db07e2885c23a13268",
+      "headRepository": "guhetier/load-balancers",
+      "headRefName": "patch-1",
+      "headRefOid": "a2f332272639444cc77f7797c5079173d700dfea",
+      "closedAt": "2025-09-08T19:13:04Z",
+      "mergedAt": "2025-09-08T19:13:03Z",
+      "mergedBy": "nibanks",
+      "mergeCommit": {
+        "oid": "7ba71c035a4a57b722281dd88fa0b4ca04f2bfe5"
+      },
+      "comments": [],
+      "reviews": [
+        {
+          "id": "PRR_kwDODoD6yc697-EC",
+          "commit": {
+            "abbreviatedOid": "a2f3322"
+          },
+          "author": "ggreenway",
+          "authorAssociation": "COLLABORATOR",
+          "state": "APPROVED",
+          "body": "",
+          "createdAt": "2025-09-04T18:27:50Z",
+          "updatedAt": "2025-09-04T18:27:50Z",
+          "comments": []
+        },
+        {
+          "id": "PRR_kwDODoD6yc6-mskO",
+          "commit": {
+            "abbreviatedOid": "a2f3322"
+          },
+          "author": "nibanks",
+          "authorAssociation": "MEMBER",
+          "state": "APPROVED",
+          "body": "",
+          "createdAt": "2025-09-08T19:12:38Z",
+          "updatedAt": "2025-09-08T19:12:38Z",
+          "comments": []
+        }
+      ]
     }
   ]
 }
