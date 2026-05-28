@@ -50,31 +50,8 @@ jobs:
           name: "Update GitHub Pages"
           command: |
             if [ "${CIRCLE_TAG#draft-}" == "$CIRCLE_TAG" ]; then
-              # 1. Build the drafts locally so we have the fresh outputs ready
-              make
-              
-              # 2. Clone the real gh-pages branch cleanly from GitHub into a fresh separate directory
-              git clone --depth 1 -b gh-pages https://github.com/${CIRCLE_PROJECT_USERNAME}/${CIRCLE_PROJECT_REPONAME}.git /tmp/ghpages-clean
-              
-              # 3. Copy our freshly compiled artifacts into that clean directory
-              # (Adjust these filenames if your built drafts have different names/extensions)
-              cp *.html *.txt /tmp/ghpages-clean/ 2>/dev/null || true
-              if [ -d l7lb ]; then cp -r l7lb /tmp/ghpages-clean/; fi
-              if [ -d main ]; then cp -r main /tmp/ghpages-clean/; fi
-              
-              # 4. Move into the clean directory, commit, and push back to GitHub
-              cd /tmp/ghpages-clean
-              git config user.name "CircleCI Job"
-              git config user.email "circleci@dontlink.me"
-              git add .
-              
-              # Only commit and push if something actually changed
-              if ! git diff-index --quiet HEAD; then
-                git commit -m "Update GitHub Pages from CircleCI build $CIRCLE_BUILD_NUM [skip ci]"
-                git push origin gh-pages
-              else
-                echo "No changes to deploy to GitHub Pages."
-              fi
+              # We explicitly pass the repo location directly into the make execution context
+              make gh-pages GHPAGES_REPO="." CI_AUTHOR="CircleCI"
             fi
 
       # For tagged builds, upload to the datatracker.
