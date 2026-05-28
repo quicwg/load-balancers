@@ -60,7 +60,7 @@ jobs:
               git clone -b gh-pages "$CIRCLE_REPOSITORY_URL" "$TARGET_DIR"
               
               # 3. Let the Makefile copy the freshly built artifacts into it without cloning again
-              make -g GHPAGES_DIR="$TARGET_DIR" gh-pages-inst
+              make GHPAGES_DIR="$TARGET_DIR" gh-pages-inst
               
               # 4. Go into the clean directory, commit, and push out
               cd "$TARGET_DIR"
