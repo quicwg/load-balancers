@@ -50,7 +50,16 @@ jobs:
           name: "Update GitHub Pages"
           command: |
             if [ "${CIRCLE_TAG#draft-}" == "$CIRCLE_TAG" ]; then
-              export GHPAGES_REPO="$CIRCLE_REPOSITORY_URL"
+              # 1. Re-initialize the remote manually to make sure tracking works
+              git remote set-url origin https://github.com/${CIRCLE_PROJECT_USERNAME}/${CIRCLE_PROJECT_REPONAME}.git
+              
+              # 2. Force download the exact gh-pages branch from GitHub directly to a local head
+              git fetch -f origin gh-pages:refs/heads/gh-pages
+              
+              # 3. Explicitly pull down the full depth of that branch into our local database
+              git fetch --depth=100 origin gh-pages
+              
+              # 4. Now let the makefile do its thing
               make gh-pages
             fi
 
