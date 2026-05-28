@@ -1,0 +1,27 @@
+name: Build and Deploy Drafts
+on:
+  push:
+    branches:
+      - main
+    tags:
+      - 'draft-*'
+  pull_request:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      # 1. Check out the repository cleanly
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+        with:
+          # Fetch full history so gh-pages building and issue archiving work flawlessly
+          fetch-depth: 0
+
+      # 2. Use the official i-d-template action to compile and push everything
+      - name: Build and Deploy Draft
+        uses: martinthomson/i-d-template@v1
+        with:
+          make_targets: "gh-pages"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
