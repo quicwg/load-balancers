@@ -50,9 +50,19 @@ jobs:
           name: "Update GitHub Pages"
           command: |
             if [ "${CIRCLE_TAG#draft-}" == "$CIRCLE_TAG" ]; then
-              # Inline the target repository URL directly into the make command.
-              # This forces ghpages.mk to clone over the network instead of using a local '.' clone.
-              make gh-pages GHPAGES_REPO="https://github.com/${CIRCLE_PROJECT_USERNAME}/${CIRCLE_PROJECT_REPONAME}.git" CI_AUTHOR="CircleCI"
+              # 1. Clean out the detached HEAD and link the current commit to a real local branch
+              git checkout -B temp-ci-branch
+
+              # 2. Reset the tracking URL explicitly to the true GitHub repository 
+              git remote set-url origin https://github.com/${CIRCLE_PROJECT_USERNAME}/${CIRCLE_PROJECT_REPONAME}.git
+
+              # 3. Pull down the full commit histories for both branches over the network
+              # This populates the local .git/objects folder with the missing SHA1 file trees
+              git fetch --depth=100 origin main:main || true
+              git fetch --depth=100 origin gh-pages:gh-pages || true
+
+              # 4. Now that the objects exist locally, the makefile's local clone will succeed
+              make gh-pages CI_AUTHOR="CircleCI"
             fi
 
       # For tagged builds, upload to the datatracker.
