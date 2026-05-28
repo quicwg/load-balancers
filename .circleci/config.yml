@@ -50,9 +50,9 @@ jobs:
           name: "Update GitHub Pages"
           command: |
             if [ "${CIRCLE_TAG#draft-}" == "$CIRCLE_TAG" ]; then
-              # Re-initialize tracking head pointer so the local clone works
-              git fetch origin gh-pages:refs/heads/gh-pages || true
-              make gh-pages CI_AUTHOR="CircleCI"
+              # Inline the target repository URL directly into the make command.
+              # This forces ghpages.mk to clone over the network instead of using a local '.' clone.
+              make gh-pages GHPAGES_REPO="https://github.com/${CIRCLE_PROJECT_USERNAME}/${CIRCLE_PROJECT_REPONAME}.git" CI_AUTHOR="CircleCI"
             fi
 
       # For tagged builds, upload to the datatracker.
