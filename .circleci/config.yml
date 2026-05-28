@@ -17,9 +17,9 @@ jobs:
       - restore_cache:
           name: "Restoring cache - Git"
           keys:
-            - v3-cache-git-{{ .Branch }}-{{ .Revision }}
-            - v3-cache-git-{{ .Branch }}
-            - v3-cache-git-
+            - v2-cache-git-{{ .Branch }}-{{ .Revision }}
+            - v2-cache-git-{{ .Branch }}
+            - v2-cache-git-
 
       - restore_cache:
           name: "Restoring cache - References"
@@ -50,9 +50,15 @@ jobs:
           name: "Update GitHub Pages"
           command: |
             if [ "${CIRCLE_TAG#draft-}" == "$CIRCLE_TAG" ]; then
-              # Define the variable directly before the make call in the same execution line.
-              # This forces the makefile to pull directly from GitHub's servers where LFS/promisor objects live.
-              GHPAGES_REPO="https://github.com/${CIRCLE_PROJECT_USERNAME}/${CIRCLE_PROJECT_REPONAME}.git" make gh-pages CI_AUTHOR="CircleCI"
+              make gh-pages
+            fi
+
+      # For tagged builds, upload to the datatracker.
+      - deploy:
+          name: "Upload to Datatracker"
+          command: |
+            if [ "${CIRCLE_TAG#draft-}" != "$CIRCLE_TAG" ]; then
+              make upload
             fi
 
       # Archive GitHub Issues
@@ -74,7 +80,7 @@ jobs:
 
       - save_cache:
           name: "Saving Cache - Git"
-          key: v3-cache-git-{{ .Branch }}-{{ .Revision }}
+          key: v2-cache-git-{{ .Branch }}-{{ .Revision }}
           paths:
             - ~/draft/.git
 
