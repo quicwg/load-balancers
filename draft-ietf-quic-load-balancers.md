@@ -694,7 +694,7 @@ plaintext_CID = 0x31441a9c69c275
 plaintext_len = 7
 
 // step 2
-hash_len = 4
+half_len = 4
 left_0 = 0x31441a90
 right_0 = 0x0c69c275
 
