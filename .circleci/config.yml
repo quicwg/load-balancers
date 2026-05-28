@@ -55,7 +55,7 @@ jobs:
             fi
 
       # For tagged builds, upload to the datatracker.
-      - deploy:
+      - run:
           name: "Upload to Datatracker"
           command: |
             if [ "${CIRCLE_TAG#draft-}" != "$CIRCLE_TAG" ]; then
