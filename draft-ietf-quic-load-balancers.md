@@ -21,8 +21,8 @@ author:
   -
     ins: N. Banks
     name: Nick Banks
-    org: Microsoft
-    email: nibanks@microsoft.com
+    org: Netflix
+    email: 
 
   -
     ins: C. Huitema
