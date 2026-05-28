@@ -141,8 +141,9 @@ In QUIC-LB, load balancers do not generate individual connection IDs for
 servers.  Instead, they communicate the parameters of an algorithm to generate
 routable connection IDs.
 
-The algorithms differ in the complexity of configuration at both load balancer
-and server. Increasing complexity improves obfuscation of the server mapping.
+There are three algorithms. One is simple to configure but does not obscure the
+server mapping. The others have similar privacy properties, but one is more
+computationally expensive to enable a shorter connection ID.
 
 This specification describes three participants: the configuration agent, the
 load balancer, and the server. For any given QUIC-LB configuration that enables
