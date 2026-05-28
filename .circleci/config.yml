@@ -17,9 +17,9 @@ jobs:
       - restore_cache:
           name: "Restoring cache - Git"
           keys:
-            - v2-cache-git-{{ .Branch }}-{{ .Revision }}
-            - v2-cache-git-{{ .Branch }}
-            - v2-cache-git-
+            - v3-cache-git-{{ .Branch }}-{{ .Revision }}
+            - v3-cache-git-{{ .Branch }}
+            - v3-cache-git-
 
       - restore_cache:
           name: "Restoring cache - References"
@@ -92,7 +92,7 @@ jobs:
 
       - save_cache:
           name: "Saving Cache - Git"
-          key: v2-cache-git-{{ .Branch }}-{{ .Revision }}
+          key: v3-cache-git-{{ .Branch }}-{{ .Revision }}
           paths:
             - ~/draft/.git
 
