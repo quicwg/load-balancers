@@ -40,6 +40,18 @@ jobs:
 
       - checkout
 
+      - run:
+          name: "Unshallow Git Repository for gh-pages"
+          command: |
+            if [ -d .git ]; then
+              # If it's a shallow clone, pull down the missing history
+              if [ -f .git/shallow ]; then
+                git fetch --unshallow || true
+              fi
+              # Explicitly ensure local tracking of the gh-pages branch exists
+              git fetch origin gh-pages:gh-pages || true
+            fi
+
       # Build txt and html versions of drafts
       - run:
           name: "Build Drafts"
