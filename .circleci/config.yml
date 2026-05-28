@@ -41,15 +41,17 @@ jobs:
       - checkout
 
       - run:
-          name: "Unshallow Git Repository for gh-pages"
+	  name: "Force Fetch Remote gh-pages History"
           command: |
             if [ -d .git ]; then
-              # If it's a shallow clone, pull down the missing history
-              if [ -f .git/shallow ]; then
-                git fetch --unshallow || true
-              fi
-              # Explicitly ensure local tracking of the gh-pages branch exists
-              git fetch origin gh-pages:gh-pages || true
+              # Re-add the true remote URL to ensure tracking works properly
+              git remote set-url origin "$CIRCLE_REPOSITORY_URL"
+              
+              # Force fetch the gh-pages branch directly into a local branch reference
+              git fetch -f origin gh-pages:gh-pages || true
+              
+              # Ensure the main repository database grabs all objects/blobs associated with it
+              git fetch --depth=100 origin gh-pages || true
             fi
 
       # Build txt and html versions of drafts
