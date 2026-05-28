@@ -40,20 +40,6 @@ jobs:
 
       - checkout
 
-      - run:
-	  name: "Force Fetch Remote gh-pages History"
-          command: |
-            if [ -d .git ]; then
-              # Re-add the true remote URL to ensure tracking works properly
-              git remote set-url origin "$CIRCLE_REPOSITORY_URL"
-              
-              # Force fetch the gh-pages branch directly into a local branch reference
-              git fetch -f origin gh-pages:gh-pages || true
-              
-              # Ensure the main repository database grabs all objects/blobs associated with it
-              git fetch --depth=100 origin gh-pages || true
-            fi
-
       # Build txt and html versions of drafts
       - run:
           name: "Build Drafts"
@@ -64,6 +50,7 @@ jobs:
           name: "Update GitHub Pages"
           command: |
             if [ "${CIRCLE_TAG#draft-}" == "$CIRCLE_TAG" ]; then
+              export GHPAGES_REPO="$CIRCLE_REPOSITORY_URL"
               make gh-pages
             fi
 
