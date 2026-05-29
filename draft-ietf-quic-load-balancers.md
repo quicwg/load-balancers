@@ -22,7 +22,7 @@ author:
     ins: N. Banks
     name: Nick Banks
     org: Netflix
-    email: nickbanks@netflix.com 
+    email: nickbanks@netflix.com
 
   -
     ins: C. Huitema
