@@ -1849,6 +1849,8 @@ E.1.  since draft-ietf-quic-load-balancers-21
 
    *  Added considerations for multiple tenants on the same IP address
 
+   *  Cleaned up typos and outdated statements.
+
 E.2.  since draft-ietf-quic-load-balancers-20
 
    *  Changed definition of Unroutable DCIDs, and rewrote sections on
