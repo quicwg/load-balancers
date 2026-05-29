@@ -21,7 +21,7 @@ jobs:
       # 2. Use the official i-d-template action to compile and push everything
       - name: Build and Deploy Draft
         uses: martinthomson/i-d-template@v1
+        if: ${{ github.event_name == 'push' }}
         with:
-          make_targets: "gh-pages"
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          make: gh-pages
+          token: ${{ github.token }}
