@@ -1036,23 +1036,24 @@ mapping to each other as described above;
 
 * co-tenants can be issued one of up to seven configurations distinguished by
 the config rotation bits ({{config-rotation}}), exposing information about the
-target domain to the entire network; or
+target domain to the entire network;
 
-* tenants can use the 0b111 codepoint in their CIDs (in which case they SHOULD
-disable migration in their connections), which neutralizes the value of
-QUIC-LB but preserves privacy.
+* tenants can be assigned the Plaintext CID algorithm (in which case they SHOULD
+disable migration in their connections), which will prevent migration but
+preserve privacy; or
 
-When configuring QUIC-LB, administrators evaluate the privacy tradeoff by
-considering the relative value of each of these properties, given the trust
-model between tenants, the presence of methods to obscure the domain name, and
-value of address migration in the tenant use cases.
+* tenants are assigned different keys, and the load balancer trial-decrypts the
+connection ID with every key assigned to that codepoint and IP address and
+routes according to the success of each attempt.
+
+When configuring QUIC-LB, administrators evaluate the privacy and performance
+tradeoff by considering the relative value of each of these properties, given
+the trust model between tenants, the presence of methods to obscure the domain
+name, and value of address migration in the tenant use cases.
 
 In the case that the administrating entity also controls a reverse proxy between
 the load balancer and the tenants, this entity generates the external CIDs, and
 there is no tradeoff.
-
-As the plaintext algorithm makes no attempt to conceal the server mapping,
-these deployments MAY simply use a common configuration.
 
 ## Stateless Reset Oracle
 
@@ -1593,6 +1594,10 @@ and William Zeng Ke all provided useful input to this document.
 
 > **RFC Editor's Note:**  Please remove this section prior to
 > publication of a final version of this document.
+
+## since draft-ietf-quic-load-balancers-21
+
+- Added considerations for multiple tenants on the same IP address
 
 ## since draft-ietf-quic-load-balancers-20
 
