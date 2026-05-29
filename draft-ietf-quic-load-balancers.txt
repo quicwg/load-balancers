@@ -5,10 +5,10 @@
 QUIC                                                             M. Duke
 Internet-Draft                                                    Google
 Intended status: Standards Track                                N. Banks
-Expires: 12 March 2026                                         Microsoft
+Expires: 30 November 2026                                        Netflix
                                                               C. Huitema
                                                     Private Octopus Inc.
-                                                        8 September 2025
+                                                             29 May 2026
 
 
             QUIC-LB: Generating Routable QUIC Connection IDs
@@ -55,11 +55,11 @@ Status of This Memo
    time.  It is inappropriate to use Internet-Drafts as reference
    material or to cite them other than as "work in progress."
 
-   This Internet-Draft will expire on 12 March 2026.
+   This Internet-Draft will expire on 30 November 2026.
 
 Copyright Notice
 
-   Copyright (c) 2025 IETF Trust and the persons identified as the
+   Copyright (c) 2026 IETF Trust and the persons identified as the
    document authors.  All rights reserved.
 
    This document is subject to BCP 78 and the IETF Trust's Legal
@@ -128,34 +128,35 @@ Table of Contents
      C.3.  Future Versions of DTLS
    Appendix D.  Acknowledgments
    Appendix E.  Change Log
-     E.1.  since draft-ietf-quic-load-balancers-20
-     E.2.  since draft-ietf-quic-load-balancers-19
-     E.3.  since draft-ietf-quic-load-balancers-18
-     E.4.  since draft-ietf-quic-load-balancers-17
-     E.5.  since draft-ietf-quic-load-balancers-16
-     E.6.  since draft-ietf-quic-load-balancers-15
-     E.7.  since draft-ietf-quic-load-balancers-14
-     E.8.  since draft-ietf-quic-load-balancers-13
-     E.9.  since draft-ietf-quic-load-balancers-12
-     E.10. since draft-ietf-quic-load-balancers-11
-     E.11. since draft-ietf-quic-load-balancers-10
-     E.12. since draft-ietf-quic-load-balancers-09
-     E.13. since draft-ietf-quic-load-balancers-08
-     E.14. since draft-ietf-quic-load-balancers-07
-     E.15. since draft-ietf-quic-load-balancers-06
-     E.16. since draft-ietf-quic-load-balancers-05
-     E.17. since draft-ietf-quic-load-balancers-04
-     E.18. since-draft-ietf-quic-load-balancers-03
-     E.19. since-draft-ietf-quic-load-balancers-02
-     E.20. since-draft-ietf-quic-load-balancers-01
-     E.21. since-draft-ietf-quic-load-balancers-00
-     E.22. Since draft-duke-quic-load-balancers-06
-     E.23. Since draft-duke-quic-load-balancers-05
-     E.24. Since draft-duke-quic-load-balancers-04
-     E.25. Since draft-duke-quic-load-balancers-03
-     E.26. Since draft-duke-quic-load-balancers-02
-     E.27. Since draft-duke-quic-load-balancers-01
-     E.28. Since draft-duke-quic-load-balancers-00
+     E.1.  since draft-ietf-quic-load-balancers-21
+     E.2.  since draft-ietf-quic-load-balancers-20
+     E.3.  since draft-ietf-quic-load-balancers-19
+     E.4.  since draft-ietf-quic-load-balancers-18
+     E.5.  since draft-ietf-quic-load-balancers-17
+     E.6.  since draft-ietf-quic-load-balancers-16
+     E.7.  since draft-ietf-quic-load-balancers-15
+     E.8.  since draft-ietf-quic-load-balancers-14
+     E.9.  since draft-ietf-quic-load-balancers-13
+     E.10. since draft-ietf-quic-load-balancers-12
+     E.11. since draft-ietf-quic-load-balancers-11
+     E.12. since draft-ietf-quic-load-balancers-10
+     E.13. since draft-ietf-quic-load-balancers-09
+     E.14. since draft-ietf-quic-load-balancers-08
+     E.15. since draft-ietf-quic-load-balancers-07
+     E.16. since draft-ietf-quic-load-balancers-06
+     E.17. since draft-ietf-quic-load-balancers-05
+     E.18. since draft-ietf-quic-load-balancers-04
+     E.19. since-draft-ietf-quic-load-balancers-03
+     E.20. since-draft-ietf-quic-load-balancers-02
+     E.21. since-draft-ietf-quic-load-balancers-01
+     E.22. since-draft-ietf-quic-load-balancers-00
+     E.23. Since draft-duke-quic-load-balancers-06
+     E.24. Since draft-duke-quic-load-balancers-05
+     E.25. Since draft-duke-quic-load-balancers-04
+     E.26. Since draft-duke-quic-load-balancers-03
+     E.27. Since draft-duke-quic-load-balancers-02
+     E.28. Since draft-duke-quic-load-balancers-01
+     E.29. Since draft-duke-quic-load-balancers-00
    Authors' Addresses
 
 1.  Introduction
@@ -240,9 +241,10 @@ Table of Contents
    for servers.  Instead, they communicate the parameters of an
    algorithm to generate routable connection IDs.
 
-   The algorithms differ in the complexity of configuration at both load
-   balancer and server.  Increasing complexity improves obfuscation of
-   the server mapping.
+   There are three algorithms.  One is simple to configure but does not
+   obscure the server mapping.  The others have similar privacy
+   properties, but one is more computationally expensive to enable a
+   shorter connection ID.
 
    This specification describes three participants: the configuration
    agent, the load balancer, and the server.  For any given QUIC-LB
@@ -822,7 +824,7 @@ Table of Contents
    plaintext_len = 7
 
    // step 2
-   hash_len = 4
+   half_len = 4
    left_0 = 0x31441a90
    right_0 = 0x0c69c275
 
@@ -1187,24 +1189,26 @@ Table of Contents
 
    *  co-tenants can be issued one of up to seven configurations
       distinguished by the config rotation bits (Section 3.1), exposing
-      information about the target domain to the entire network; or
+      information about the target domain to the entire network;
 
-   *  tenants can use the 0b111 codepoint in their CIDs (in which case
-      they SHOULD disable migration in their connections), which
-      neutralizes the value of QUIC-LB but preserves privacy.
+   *  tenants can be assigned the Plaintext CID algorithm (in which case
+      they SHOULD disable migration in their connections), which will
+      prevent migration but preserve privacy; or
 
-   When configuring QUIC-LB, administrators evaluate the privacy
-   tradeoff by considering the relative value of each of these
-   properties, given the trust model between tenants, the presence of
-   methods to obscure the domain name, and value of address migration in
-   the tenant use cases.
+   *  tenants are assigned different keys, and the load balancer trial-
+      decrypts the connection ID with every key assigned to that
+      codepoint and IP address and routes according to the success of
+      each attempt.
+
+   When configuring QUIC-LB, administrators evaluate the privacy and
+   performance tradeoff by considering the relative value of each of
+   these properties, given the trust model between tenants, the presence
+   of methods to obscure the domain name, and value of address migration
+   in the tenant use cases.
 
    In the case that the administrating entity also controls a reverse
    proxy between the load balancer and the tenants, this entity
    generates the external CIDs, and there is no tradeoff.
-
-   As the plaintext algorithm makes no attempt to conceal the server
-   mapping, these deployments MAY simply use a common configuration.
 
 9.5.  Stateless Reset Oracle
 
@@ -1841,7 +1845,11 @@ Appendix E.  Change Log
       *RFC Editor's Note:* Please remove this section prior to
       publication of a final version of this document.
 
-E.1.  since draft-ietf-quic-load-balancers-20
+E.1.  since draft-ietf-quic-load-balancers-21
+
+   *  Added considerations for multiple tenants on the same IP address
+
+E.2.  since draft-ietf-quic-load-balancers-20
 
    *  Changed definition of Unroutable DCIDs, and rewrote sections on
       config failover and fallback routing to avoid misrouted
@@ -1851,7 +1859,7 @@ E.1.  since draft-ietf-quic-load-balancers-20
 
    *  Rewrote version invariance section
 
-E.2.  since draft-ietf-quic-load-balancers-19
+E.3.  since draft-ietf-quic-load-balancers-19
 
    *  Further guidance on multiple server processes/threads
 
@@ -1859,24 +1867,24 @@ E.2.  since draft-ietf-quic-load-balancers-19
 
    *  Clarified fallback algorithms and known QUIC versions.
 
-E.3.  since draft-ietf-quic-load-balancers-18
+E.4.  since draft-ietf-quic-load-balancers-18
 
    *  Rearranged the output of the expand function to reduce CPU load of
       decrypt
 
-E.4.  since draft-ietf-quic-load-balancers-17
+E.5.  since draft-ietf-quic-load-balancers-17
 
    *  fixed regressions in draft-17 publication
 
-E.5.  since draft-ietf-quic-load-balancers-16
+E.6.  since draft-ietf-quic-load-balancers-16
 
    *  added a config ID bit (now there are 3).
 
-E.6.  since draft-ietf-quic-load-balancers-15
+E.7.  since draft-ietf-quic-load-balancers-15
 
    *  aasvg fixes.
 
-E.7.  since draft-ietf-quic-load-balancers-14
+E.8.  since draft-ietf-quic-load-balancers-14
 
    *  Revised process demultiplexing text
 
@@ -1887,7 +1895,7 @@ E.7.  since draft-ietf-quic-load-balancers-14
    *  Tweaked 4-pass algorithm to avoid accidental plaintext
       similarities
 
-E.8.  since draft-ietf-quic-load-balancers-13
+E.9.  since draft-ietf-quic-load-balancers-13
 
    *  Incorporated Connection ID length in argument of truncate function
 
@@ -1897,15 +1905,15 @@ E.8.  since draft-ietf-quic-load-balancers-13
 
    *  Added non-normative language about server process demultiplexers
 
-E.9.  since draft-ietf-quic-load-balancers-12
+E.10.  since draft-ietf-quic-load-balancers-12
 
    *  Separated Retry Service design into a separate draft
 
-E.10.  since draft-ietf-quic-load-balancers-11
+E.11.  since draft-ietf-quic-load-balancers-11
 
    *  Fixed mistakes in test vectors
 
-E.11.  since draft-ietf-quic-load-balancers-10
+E.12.  since draft-ietf-quic-load-balancers-10
 
    *  Refactored algorithm descriptions; made the 4-pass algorithm
       easier to implement
@@ -1914,7 +1922,7 @@ E.11.  since draft-ietf-quic-load-balancers-10
 
    *  Split YANG model into a server and middlebox version
 
-E.12.  since draft-ietf-quic-load-balancers-09
+E.13.  since draft-ietf-quic-load-balancers-09
 
    *  Renamed "Stream Cipher" and "Block Cipher" to "Encrypted Short"
       and "Encrypted Long"
@@ -1927,13 +1935,13 @@ E.12.  since draft-ietf-quic-load-balancers-09
 
    *  Clarified what SNI LBs should do with unknown QUIC versions.
 
-E.13.  since draft-ietf-quic-load-balancers-08
+E.14.  since draft-ietf-quic-load-balancers-08
 
    *  Eliminate Dynamic SID allocation
 
    *  Eliminated server use bytes
 
-E.14.  since draft-ietf-quic-load-balancers-07
+E.15.  since draft-ietf-quic-load-balancers-07
 
    *  Shortened SSCID nonce minimum length to 4 bytes
 
@@ -1943,7 +1951,7 @@ E.14.  since draft-ietf-quic-load-balancers-07
 
    *  Shrunk size of SID table
 
-E.15.  since draft-ietf-quic-load-balancers-06
+E.16.  since draft-ietf-quic-load-balancers-06
 
    *  Added interoperability with DTLS
 
@@ -1955,7 +1963,7 @@ E.15.  since draft-ietf-quic-load-balancers-06
 
    *  Added retry service considerations for non-Initial packets
 
-E.16.  since draft-ietf-quic-load-balancers-05
+E.17.  since draft-ietf-quic-load-balancers-05
 
    *  Added low-config CID for further discussion
 
@@ -1967,7 +1975,7 @@ E.16.  since draft-ietf-quic-load-balancers-05
 
    *  Switched to notation from quic-transport
 
-E.17.  since draft-ietf-quic-load-balancers-04
+E.18.  since draft-ietf-quic-load-balancers-04
 
    *  Rearranged the shared-state retry token to simplify token
       processing
@@ -1982,7 +1990,7 @@ E.17.  since draft-ietf-quic-load-balancers-04
 
    *  Additional compliant DCID criteria
 
-E.18.  since-draft-ietf-quic-load-balancers-03
+E.19.  since-draft-ietf-quic-load-balancers-03
 
    *  Improved Config Rotation text
 
@@ -1990,7 +1998,7 @@ E.18.  since-draft-ietf-quic-load-balancers-03
 
    *  Deleted the Obfuscated CID algorithm
 
-E.19.  since-draft-ietf-quic-load-balancers-02
+E.20.  since-draft-ietf-quic-load-balancers-02
 
    *  Replaced stream cipher algorithm with three-pass version
 
@@ -2004,7 +2012,7 @@ E.19.  since-draft-ietf-quic-load-balancers-02
 
    *  Allow dropped long-header packets for known QUIC versions
 
-E.20.  since-draft-ietf-quic-load-balancers-01
+E.21.  since-draft-ietf-quic-load-balancers-01
 
    *  Test vectors for load balancer decoding
 
@@ -2014,15 +2022,15 @@ E.20.  since-draft-ietf-quic-load-balancers-01
 
    *  Discussed load balancer chains
 
-E.21.  since-draft-ietf-quic-load-balancers-00
+E.22.  since-draft-ietf-quic-load-balancers-00
 
    *  Removed in-band protocol from the document
 
-E.22.  Since draft-duke-quic-load-balancers-06
+E.23.  Since draft-duke-quic-load-balancers-06
 
    *  Switch to IETF WG draft.
 
-E.23.  Since draft-duke-quic-load-balancers-05
+E.24.  Since draft-duke-quic-load-balancers-05
 
    *  Editorial changes
 
@@ -2036,11 +2044,11 @@ E.23.  Since draft-duke-quic-load-balancers-05
 
    *  Added psuedocode for config schema
 
-E.24.  Since draft-duke-quic-load-balancers-04
+E.25.  Since draft-duke-quic-load-balancers-04
 
    *  Added standard for retry services
 
-E.25.  Since draft-duke-quic-load-balancers-03
+E.26.  Since draft-duke-quic-load-balancers-03
 
    *  Renamed Plaintext CID algorithm as Obfuscated CID
 
@@ -2050,7 +2058,7 @@ E.25.  Since draft-duke-quic-load-balancers-03
 
    *  Added self-encoding of CID length
 
-E.26.  Since draft-duke-quic-load-balancers-02
+E.27.  Since draft-duke-quic-load-balancers-02
 
    *  Added Config Rotation
 
@@ -2062,7 +2070,7 @@ E.26.  Since draft-duke-quic-load-balancers-02
 
    *  Reformatted QUIC-LB packets
 
-E.27.  Since draft-duke-quic-load-balancers-01
+E.28.  Since draft-duke-quic-load-balancers-01
 
    *  Complete rewrite
 
@@ -2070,7 +2078,7 @@ E.27.  Since draft-duke-quic-load-balancers-01
 
    *  Lightweight messages
 
-E.28.  Since draft-duke-quic-load-balancers-00
+E.29.  Since draft-duke-quic-load-balancers-00
 
    *  Converted to markdown
 
@@ -2084,8 +2092,8 @@ Authors' Addresses
 
 
    Nick Banks
-   Microsoft
-   Email: nibanks@microsoft.com
+   Netflix
+   Email: nickbanks@netflix.com
 
 
    Christian Huitema
