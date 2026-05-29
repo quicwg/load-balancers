@@ -1598,6 +1598,7 @@ and William Zeng Ke all provided useful input to this document.
 ## since draft-ietf-quic-load-balancers-21
 
 - Added considerations for multiple tenants on the same IP address
+- Cleaned up typos and outdated statements.
 
 ## since draft-ietf-quic-load-balancers-20
 
