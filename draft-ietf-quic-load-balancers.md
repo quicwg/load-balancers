@@ -785,7 +785,9 @@ is necessary:
 and the load balancer has to concatenate left_0 and right_0 to obtain the
 complete server ID.
 
-# Per-connection state {#per-connection-state}
+# Implementation Considerations
+
+## Per-connection state {#per-connection-state}
 
 The CID allocation methods QUIC-LB defines no per-connection state at
 the load balancer, with a few conditional exceptions described in
@@ -831,6 +833,34 @@ Connection ID is included in ICMP responses to Path Maximum Transmission Unit
 (PMTU) probes.  Load balancers MAY parse the echoed packet to extract the Source
 Connection ID, if it contains a QUIC long header, and extract the Server ID as
 if it were in a Destination CID.
+
+## Retiring Old Connection IDs
+
+Servers running long-lived connections may need to request retirement of all of
+its connection IDs because the load balancer will no longer support the key
+they used, the key was compromised, or due to policy regarding the maximum
+lifetime of ciphertext using a key.
+
+There are three ways to do this via the NEW_CONNECTION_ID frame.
+
+* Fill the "Retire Prior To" field to retire all old connection IDs beginning
+with the first NEW_CONNECTION_ID frame, all sent in a batch. This can cause
+problems with implementations that update path CID bindings after each
+NEW_CONNECTION_ID frame, as ongoing probes might fail. At time of writing,
+some popular QUIC implementations are known to do this.
+
+* Each NEW_CONNECTION_ID frame successively retires one old connection ID, all
+sent in a batch. This violates {{Section 5.1.2 of RFC9000}}, which states that
+endpoints SHOULD NOT update Retire Prior To when it still awaits
+RETIRE_CONNECTION_ID frames from the previous update. Moreover, if the batch of
+frames is somehow split over two packets and the earlier one is lost, it can
+result in a sudden jump in Retire Prior To, as above.
+
+* Each NEW_CONNECTION_ID frame successively retires one old connection ID, but
+each is not sent until the server receives a RETIRE_CONNECTION_ID frame
+triggered by the previous NEW_CONNECTION_ID frames. This is robust to compliant
+QUIC implementations and requirements, but results in multiple packets spread
+over time, instead of one, over a connection that might otherwise be idle.
 
 # Additional Use Cases
 
