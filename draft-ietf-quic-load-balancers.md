@@ -836,10 +836,10 @@ if it were in a Destination CID.
 
 ## Retiring Old Connection IDs
 
-Servers running long-lived connections may need to request retirement of all of
-its connection IDs because the load balancer will no longer support the key
-they used, the key was compromised, or due to policy regarding the maximum
-lifetime of ciphertext using a key.
+A server running long-lived connections might need to request retirement of all
+of its connection IDs because the load balancer will no longer support the key
+it used, that key was compromised, or due to policy regarding the maximum
+lifetime of ciphertext using that key.
 
 There are three ways to do this via the NEW_CONNECTION_ID frame.
 
