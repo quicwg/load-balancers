@@ -841,26 +841,28 @@ of its connection IDs because the load balancer will no longer support the key
 it used, that key was compromised, or due to policy regarding the maximum
 lifetime of ciphertext using that key.
 
-There are three ways to do this via the NEW_CONNECTION_ID frame.
+{{Section 5.1.2 of RFC9000}} explicitly anticipates replacing all active
+connection IDs at once. To do so, the endpoint sends a batch of
+NEW_CONNECTION_ID frames, each with Retire Prior To set to the sequence number
+of the first replacement connection ID. This requests retirement of all previously
+issued connection IDs while supplying their replacements.
 
-* Fill the "Retire Prior To" field to retire all old connection IDs beginning
-with the first NEW_CONNECTION_ID frame, all sent in a batch. This can cause
-problems with implementations that update path CID bindings after each
-NEW_CONNECTION_ID frame, as ongoing probes might fail. At time of writing,
-some popular QUIC implementations are known to do this.
+However, some implementations update path-to-connection-ID bindings while
+processing each NEW_CONNECTION_ID frame and discard paths that cannot
+immediately be assigned a replacement connection ID. Processing the first frame
+can therefore cause these implementations to discard backup paths or abort
+ongoing path validation, even if subsequent frames in the same packet supply
+enough connection IDs to preserve all paths.
 
-* Each NEW_CONNECTION_ID frame successively retires one old connection ID, all
-sent in a batch. This violates {{Section 5.1.2 of RFC9000}}, which states that
-endpoints SHOULD NOT update Retire Prior To when it still awaits
-RETIRE_CONNECTION_ID frames from the previous update. Moreover, if the batch of
-frames is somehow split over two packets and the earlier one is lost, it can
-result in a sudden jump in Retire Prior To, as above.
+To mitigate this behavior, an endpoint can increase Retire Prior To incrementally
+across the batch, replacing one old connection ID with each frame. This departs
+from the recommendation in Section 5.1.2 of RFC 9000 to wait for all retirements
+requested by the previous Retire Prior To value before increasing it again.
 
-* Each NEW_CONNECTION_ID frame successively retires one old connection ID, but
-each is not sent until the server receives a RETIRE_CONNECTION_ID frame
-triggered by the previous NEW_CONNECTION_ID frames. This is robust to compliant
-QUIC implementations and requirements, but results in multiple packets spread
-over time, instead of one, over a connection that might otherwise be idle.
+Alternatively, an endpoint can replace connection IDs one at a time, waiting for
+the corresponding RETIRE_CONNECTION_ID frame before requesting the next
+retirement. This avoids the temporary shortage caused by bulk retirement, but
+requires multiple exchanges over a connection that might otherwise be idle.
 
 # Additional Use Cases
 
