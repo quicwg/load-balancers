@@ -101,24 +101,23 @@ Table of Contents
    6.  Implementation Considerations
      6.1.  Per-connection state
      6.2.  Retiring Old Connection IDs
-   7.  Additional Use Cases
-     7.1.  Load balancer chains
-     7.2.  Server Process Demultiplexing
-     7.3.  Moving connections between servers
-   8.  Version Invariance of QUIC-LB
-   9.  Security Considerations
-     9.1.  Attackers not between the load balancer and server
-     9.2.  Attackers between the load balancer and server
-     9.3.  Multiple Configuration IDs
-     9.4.  Limited configuration scope
-     9.5.  Stateless Reset Oracle
-     9.6.  Connection ID Entropy
-     9.7.  Distinguishing Attacks
-     9.8.  Early deletion of load balancer connection state
-   10. IANA Considerations
-   11. References
-     11.1.  Normative References
-     11.2.  Informative References
+     6.3.  Load balancer chains
+     6.4.  Server Process Demultiplexing
+     6.5.  Moving connections between servers
+   7.  Version Invariance of QUIC-LB
+   8.  Security Considerations
+     8.1.  Attackers not between the load balancer and server
+     8.2.  Attackers between the load balancer and server
+     8.3.  Multiple Configuration IDs
+     8.4.  Limited configuration scope
+     8.5.  Stateless Reset Oracle
+     8.6.  Connection ID Entropy
+     8.7.  Distinguishing Attacks
+     8.8.  Early deletion of load balancer connection state
+   9.  IANA Considerations
+   10. References
+     10.1.  Normative References
+     10.2.  Informative References
    Appendix A.  QUIC-LB YANG Model
      A.1.  Tree Diagram
    Appendix B.  Load Balancer Test Vectors
@@ -312,7 +311,7 @@ Table of Contents
 
    It also possible to use these bits for more long-lived distinction of
    different configurations, but this has privacy implications (see
-   Section 9.3).
+   Section 8.3).
 
 3.2.  Configuration Failover
 
@@ -551,7 +550,7 @@ Table of Contents
    The configuration agent SHOULD provide a means for servers to express
    the number of server IDs it can usefully employ, because a single
    routing address actually corresponds to multiple server entities (see
-   Section 7.1).
+   Section 6.3).
 
    Conceptually, each configuration has its own set of server ID
    allocations, though two static configurations with identical server
@@ -615,7 +614,7 @@ Table of Contents
    Nonce field with bytes that have no observable relationship to the
    field in previously issued connection IDs.  If there is a key, the
    server fills the nonce field with a nonce of its choosing.  See
-   Section 9.6 for details.
+   Section 8.6 for details.
 
    The server MAY append additional bytes to the connection ID, up to
    the limit specified in that version of QUIC, for its own use.  These
@@ -662,7 +661,7 @@ Table of Contents
    function being AES-ECB.  Most modern applications of Feistel Networks
    have more than four rounds.  The implications of this choice, which
    is meant to limit the per-packet compute overhead at load balancers,
-   are discussed in Section 9.7.
+   are discussed in Section 8.7.
 
    The server concatenates the server ID and nonce into a single field,
    which is then split into equal halves.  In successive passes, one of
@@ -1000,18 +999,11 @@ Table of Contents
    caused by bulk retirement, but requires multiple exchanges over a
    connection that might otherwise be idle.
 
-7.  Additional Use Cases
-
-   This section discusses considerations for some deployment scenarios
-   not implied by the specification above.
-
-7.1.  Load balancer chains
+6.3.  Load balancer chains
 
    Some network architectures may have multiple tiers of low-state load
    balancers, where a first tier of devices makes a routing decision to
-   the next tier, and so on, until packets reach the server.  Although
-   QUIC-LB is not explicitly designed for this use case, it is possible
-   to support it.
+   the next tier, and so on, until packets reach the server.
 
    If each load balancer is assigned a range of server IDs that is a
    subset of the range of IDs assigned to devices that are closer to the
@@ -1027,12 +1019,12 @@ Table of Contents
    the last tier.  Load balancers closer to the client can then treat
    any parts of the server ID they did not use as part of the nonce.
 
-7.2.  Server Process Demultiplexing
+6.4.  Server Process Demultiplexing
 
    QUIC servers might have QUIC running on multiple processes or threads
    listening on the same address, and have a need to demultiplex between
    them.  In principle, this demultiplexer is a Layer 4 load balancer,
-   and the guidance in Section 7.1 applies.  However, in many
+   and the guidance in Section 6.3 applies.  However, in many
    deployments the demultiplexer lacks the capability to perform
    decryption operations.  Internal server coordination is out of scope
    of this specification, but this non-normative section proposes some
@@ -1069,7 +1061,7 @@ Table of Contents
       same ciphertext.  The load balancer will consider this data to be
       part of the nonce.
 
-7.3.  Moving connections between servers
+6.5.  Moving connections between servers
 
    Some deployments may transparently move a connection from one server
    to another.  The means of transferring connection state between
@@ -1080,7 +1072,7 @@ Table of Contents
    and retire CIDs associated with the old server using the "Retire
    Prior To" field in that frame.
 
-8.  Version Invariance of QUIC-LB
+7.  Version Invariance of QUIC-LB
 
    The server ID encodings, and requirements for their handling, are
    designed to be QUIC version independent (see [RFC8999]).  A QUIC-LB
@@ -1135,7 +1127,7 @@ Table of Contents
    alternative version of this specification might address these
    shortcomings for such a QUIC version.
 
-9.  Security Considerations
+8.  Security Considerations
 
    QUIC-LB is intended to prevent linkability.  Attacks would therefore
    attempt to subvert this purpose.
@@ -1171,7 +1163,7 @@ Table of Contents
    have diminishing returns.  Nevertheless, this specification seeks to
    minimize the probability two addresses can be linked.
 
-9.1.  Attackers not between the load balancer and server
+8.1.  Attackers not between the load balancer and server
 
    Any attacker might open a connection to the server infrastructure and
    aggressively simulate migration to obtain a large sample of IDs that
@@ -1185,7 +1177,7 @@ Table of Contents
    observers might apply this analysis to correlating different client
    IP addresses.
 
-9.2.  Attackers between the load balancer and server
+8.2.  Attackers between the load balancer and server
 
    Attackers in this privileged position are intrinsically able to map
    two connection IDs to the same server.  These algorithms ensure that
@@ -1193,7 +1185,7 @@ Table of Contents
    such as long as the server chooses the first octet and any plaintext
    nonce correctly.
 
-9.3.  Multiple Configuration IDs
+8.3.  Multiple Configuration IDs
 
    During the period in which there are multiple deployed configuration
    IDs (see Section 3.1), there is a slight increase in linkability.
@@ -1202,7 +1194,7 @@ Table of Contents
    SHOULD strive to minimize these periods by quickly deploying new
    configurations across the server pool.
 
-9.4.  Limited configuration scope
+8.4.  Limited configuration scope
 
    A simple deployment of QUIC-LB in a cloud provider might use the same
    global QUIC-LB configuration across all its load balancers that route
@@ -1249,7 +1241,7 @@ Table of Contents
    proxy between the load balancer and the tenants, this entity
    generates the external CIDs, and there is no tradeoff.
 
-9.5.  Stateless Reset Oracle
+8.5.  Stateless Reset Oracle
 
    Section 21.9 of [RFC9000] discusses the Stateless Reset Oracle
    attack.  For a server deployment to be vulnerable, an attacking
@@ -1271,7 +1263,7 @@ Table of Contents
    able to generate correct tokens for connections using either type of
    CID.
 
-9.6.  Connection ID Entropy
+8.6.  Connection ID Entropy
 
    If a server ever reuses a nonce in generating a CID for a given
    configuration, it risks exposing sensitive information.  Given the
@@ -1315,7 +1307,7 @@ Table of Contents
    therefore compare the expected rate at which servers will generate
    CIDs with the lifetime of a configuration.
 
-9.7.  Distinguishing Attacks
+8.7.  Distinguishing Attacks
 
    The Four Pass Encryption algorithm is structured as a 4-round Feistel
    network with non-bijective round function.  As such, it does not
@@ -1336,7 +1328,7 @@ Table of Contents
    of the CID.  Attackers would have to compensate by guesses about the
    allocation of server identifiers or the generation of nonces.  These
    attacks are thus mitigated by making nonces hard to guess, as
-   specified in Section 9.6, and by rules related to mixed deployments
+   specified in Section 8.6, and by rules related to mixed deployments
    that use both clear text CID and encrypted CID, for example when
    transitioning from clear text to encryption.  Such deployments MUST
    use different server ID allocations for the clear text and the
@@ -1345,7 +1337,7 @@ Table of Contents
    These attacks cannot be mounted against the Single Pass Encryption
    algorithm.
 
-9.8.  Early deletion of load balancer connection state
+8.8.  Early deletion of load balancer connection state
 
    Potential vulnerabilities related to heuristics that delete per-
    connection state are described in Section 6.1.  Under certain
@@ -1354,13 +1346,13 @@ Table of Contents
    assumptions, the state provides robustness to improbable network
    events.
 
-10.  IANA Considerations
+9.  IANA Considerations
 
    There are no IANA requirements.
 
-11.  References
+10.  References
 
-11.1.  Normative References
+10.1.  Normative References
 
    [NIST-AES-ECB]
               Dworkin, M., "Recommendation for Block Cipher Modes of
@@ -1378,7 +1370,7 @@ Table of Contents
               DOI 10.17487/RFC9000, May 2021,
               <https://www.rfc-editor.org/rfc/rfc9000>.
 
-11.2.  Informative References
+10.2.  Informative References
 
    [I-D.ietf-tls-esni]
               Rescorla, E., Oku, K., Sullivan, N., and C. A. Wood, "TLS
@@ -1887,6 +1879,8 @@ Appendix E.  Change Log
 E.1.  since draft-ietf-quic-load-balancers-21
 
    *  Added considerations for multiple tenants on the same IP address
+
+   *  Added considerations for retiring all connection IDs at once
 
    *  Cleaned up typos and outdated statements.
 
