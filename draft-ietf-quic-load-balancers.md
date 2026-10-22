@@ -864,17 +864,11 @@ the corresponding RETIRE_CONNECTION_ID frame before requesting the next
 retirement. This avoids the temporary shortage caused by bulk retirement, but
 requires multiple exchanges over a connection that might otherwise be idle.
 
-# Additional Use Cases
-
-This section discusses considerations for some deployment scenarios not implied
-by the specification above.
-
 ## Load balancer chains {#lb-chains}
 
 Some network architectures may have multiple tiers of low-state load balancers,
 where a first tier of devices makes a routing decision to the next tier, and so
-on, until packets reach the server. Although QUIC-LB is not explicitly designed
-for this use case, it is possible to support it.
+on, until packets reach the server.
 
 If each load balancer is assigned a range of server IDs that is a subset of the
 range of IDs assigned to devices that are closer to the client, then the first
@@ -1630,6 +1624,7 @@ and William Zeng Ke all provided useful input to this document.
 ## since draft-ietf-quic-load-balancers-21
 
 - Added considerations for multiple tenants on the same IP address
+- Added considerations for retiring all connection IDs at once
 - Cleaned up typos and outdated statements.
 
 ## since draft-ietf-quic-load-balancers-20
