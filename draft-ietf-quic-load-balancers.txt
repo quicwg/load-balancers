@@ -5,10 +5,10 @@
 QUIC                                                             M. Duke
 Internet-Draft                                                    Google
 Intended status: Standards Track                                N. Banks
-Expires: 30 November 2026                                        Netflix
+Expires: 25 April 2027                                           Netflix
                                                               C. Huitema
                                                     Private Octopus Inc.
-                                                             29 May 2026
+                                                         22 October 2026
 
 
             QUIC-LB: Generating Routable QUIC Connection IDs
@@ -55,7 +55,7 @@ Status of This Memo
    time.  It is inappropriate to use Internet-Drafts as reference
    material or to cite them other than as "work in progress."
 
-   This Internet-Draft will expire on 30 November 2026.
+   This Internet-Draft will expire on 25 April 2027.
 
 Copyright Notice
 
@@ -98,7 +98,9 @@ Table of Contents
      5.5.  Load Balancer Actions
        5.5.1.  Special Case: Single Pass Encryption
        5.5.2.  General Case: Four-Pass Encryption
-   6.  Per-connection state
+   6.  Implementation Considerations
+     6.1.  Per-connection state
+     6.2.  Retiring Old Connection IDs
    7.  Additional Use Cases
      7.1.  Load balancer chains
      7.2.  Server Process Demultiplexing
@@ -910,7 +912,9 @@ Table of Contents
    and the load balancer has to concatenate left_0 and right_0 to obtain
    the complete server ID.
 
-6.  Per-connection state
+6.  Implementation Considerations
+
+6.1.  Per-connection state
 
    The CID allocation methods QUIC-LB defines no per-connection state at
    the load balancer, with a few conditional exceptions described in
@@ -960,6 +964,41 @@ Table of Contents
    parse the echoed packet to extract the Source Connection ID, if it
    contains a QUIC long header, and extract the Server ID as if it were
    in a Destination CID.
+
+6.2.  Retiring Old Connection IDs
+
+   A server running long-lived connections might need to request
+   retirement of all of its connection IDs because the load balancer
+   will no longer support the key it used, that key was compromised, or
+   due to policy regarding the maximum lifetime of ciphertext using that
+   key.
+
+   Section 5.1.2 of [RFC9000] explicitly anticipates replacing all
+   active connection IDs at once.  To do so, the endpoint sends a batch
+   of NEW_CONNECTION_ID frames, each with Retire Prior To set to the
+   sequence number of the first replacement connection ID.  This
+   requests retirement of all previously issued connection IDs while
+   supplying their replacements.
+
+   However, some implementations update path-to-connection-ID bindings
+   while processing each NEW_CONNECTION_ID frame and discard paths that
+   cannot immediately be assigned a replacement connection ID.
+   Processing the first frame can therefore cause these implementations
+   to discard backup paths or abort ongoing path validation, even if
+   subsequent frames in the same packet supply enough connection IDs to
+   preserve all paths.
+
+   To mitigate this behavior, an endpoint can increase Retire Prior To
+   incrementally across the batch, replacing one old connection ID with
+   each frame.  This departs from the recommendation in Section 5.1.2 of
+   RFC 9000 to wait for all retirements requested by the previous Retire
+   Prior To value before increasing it again.
+
+   Alternatively, an endpoint can replace connection IDs one at a time,
+   waiting for the corresponding RETIRE_CONNECTION_ID frame before
+   requesting the next retirement.  This avoids the temporary shortage
+   caused by bulk retirement, but requires multiple exchanges over a
+   connection that might otherwise be idle.
 
 7.  Additional Use Cases
 
@@ -1309,7 +1348,7 @@ Table of Contents
 9.8.  Early deletion of load balancer connection state
 
    Potential vulnerabilities related to heuristics that delete per-
-   connection state are described in Section 6.  Under certain
+   connection state are described in Section 6.1.  Under certain
    assumptions about server configuration and fallback algorithm, this
    state might be critical to maintaining connectivity.  Under other
    assumptions, the state provides robustness to improbable network

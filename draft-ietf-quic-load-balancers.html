@@ -20,21 +20,22 @@ balancer can route packets with migrated addresses correctly. As it proposes a
 structured connection ID format, it also provides a means of connection IDs
 self-encoding their length to aid some hardware offloads. 
     " name="description">
-<meta content="xml2rfc 3.33.0" name="generator">
+<meta content="xml2rfc 3.34.1" name="generator">
 <meta content="draft-ietf-quic-load-balancers-latest" name="ietf.draft">
 <!-- Generator version information:
-  xml2rfc 3.33.0
-    Python 3.12.13
-    ConfigArgParse 1.7
+  xml2rfc 3.34.1
+    Python 3.14.8
+    ConfigArgParse 1.8.0
     google-i18n-address 3.1.1
     intervaltree 3.2.1
     Jinja2 3.1.6
-    lxml 6.0.2
-    platformdirs 4.9.6
+    lxml 6.1.1
+    natsort 8.4.0
+    platformdirs 4.13.4
     pycountry 24.6.1
     PyYAML 6.0.3
     requests 2.33.1
-    wcwidth 0.7.0
+    wcwidth 0.9.2
 -->
 <link href="draft-ietf-quic-load-balancers.xml" rel="alternate" type="application/rfc+xml">
 <link href="#copyright" rel="license">
@@ -70,7 +71,6 @@ self-encoding their length to aid some hardware offloads.
   src: local('Lora Italic'), local('Lora-Italic'), url('https://martinthomson.github.io/rfc-css/fonts/lora-italic-latin-ext.woff2') format('woff2');
   unicode-range: U+0100-024F, U+0259, U+1E00-1EFF, U+2020, U+20A0-20AB, U+20AD-20CF, U+2113, U+2C60-2C7F, U+A720-A7FF;
 }
-
 @font-face {
   font-family: 'Lora';
   font-style: italic;
@@ -119,7 +119,6 @@ self-encoding their length to aid some hardware offloads.
   src: local('Lora Regular'), local('Lora-Regular'), url('https://martinthomson.github.io/rfc-css/fonts/lora-regular-latin.woff2') format('woff2');
   unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+2000-206F, U+2074, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
 }
-
 @font-face {
   font-family: 'Lora';
   font-style: normal;
@@ -184,7 +183,6 @@ self-encoding their length to aid some hardware offloads.
   font-display: swap;
   src: local('Oxygen Mono'), local('OxygenMono-Regular'), url('https://martinthomson.github.io/rfc-css/fonts/oxygenmono-regular-latin.woff2') format('woff2');
   unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
-}
 }
 
 @font-face {
@@ -1053,11 +1051,11 @@ svg {
 <thead><tr>
 <td class="left">Internet-Draft</td>
 <td class="center">QUIC-LB</td>
-<td class="right">May 2026</td>
+<td class="right">October 2026</td>
 </tr></thead>
 <tfoot><tr>
 <td class="left">Duke, et al.</td>
-<td class="center">Expires 30 November 2026</td>
+<td class="center">Expires 25 April 2027</td>
 <td class="right">[Page]</td>
 </tr></tfoot>
 </table>
@@ -1070,12 +1068,12 @@ svg {
 <dd class="internet-draft">draft-ietf-quic-load-balancers-latest</dd>
 <dt class="label-published">Published:</dt>
 <dd class="published">
-<time datetime="2026-05-29" class="published">29 May 2026</time>
+<time datetime="2026-10-22" class="published">22 October 2026</time>
     </dd>
 <dt class="label-intended-status">Intended Status:</dt>
 <dd class="intended-status">Standards Track</dd>
 <dt class="label-expires">Expires:</dt>
-<dd class="expires"><time datetime="2026-11-30">30 November 2026</time></dd>
+<dd class="expires"><time datetime="2027-04-25">25 April 2027</time></dd>
 <dt class="label-authors">Authors:</dt>
 <dd class="authors">
 <div class="author">
@@ -1136,7 +1134,7 @@ self-encoding their length to aid some hardware offloads.<a href="#section-abstr
         time. It is inappropriate to use Internet-Drafts as reference
         material or to cite them other than as "work in progress."<a href="#section-boilerplate.1-3" class="pilcrow">¶</a></p>
 <p id="section-boilerplate.1-4">
-        This Internet-Draft will expire on 30 November 2026.<a href="#section-boilerplate.1-4" class="pilcrow">¶</a></p>
+        This Internet-Draft will expire on 25 April 2027.<a href="#section-boilerplate.1-4" class="pilcrow">¶</a></p>
 </section>
 </div>
 <div id="copyright">
@@ -1255,7 +1253,15 @@ self-encoding their length to aid some hardware offloads.<a href="#section-abstr
             </ul>
 </li>
           <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.6">
-            <p id="section-toc.1-1.6.1"><a href="#section-6" class="auto internal xref">6</a>.  <a href="#name-per-connection-state" class="internal xref">Per-connection state</a></p>
+            <p id="section-toc.1-1.6.1"><a href="#section-6" class="auto internal xref">6</a>.  <a href="#name-implementation-consideratio" class="internal xref">Implementation Considerations</a></p>
+<ul class="compact toc ulBare ulEmpty">
+<li class="compact toc ulBare ulEmpty" id="section-toc.1-1.6.2.1">
+                <p id="section-toc.1-1.6.2.1.1"><a href="#section-6.1" class="auto internal xref">6.1</a>.  <a href="#name-per-connection-state" class="internal xref">Per-connection state</a></p>
+</li>
+              <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.6.2.2">
+                <p id="section-toc.1-1.6.2.2.1"><a href="#section-6.2" class="auto internal xref">6.2</a>.  <a href="#name-retiring-old-connection-ids" class="internal xref">Retiring Old Connection IDs</a></p>
+</li>
+            </ul>
 </li>
           <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.7">
             <p id="section-toc.1-1.7.1"><a href="#section-7" class="auto internal xref">7</a>.  <a href="#name-additional-use-cases" class="internal xref">Additional Use Cases</a></p>
@@ -2366,53 +2372,90 @@ complete server ID.<a href="#section-5.5.2-5" class="pilcrow">¶</a></p>
 </div>
 </section>
 </div>
-<div id="per-connection-state">
+<div id="implementation-considerations">
 <section id="section-6">
-      <h2 id="name-per-connection-state">
-<a href="#section-6" class="section-number selfRef">6. </a><a href="#name-per-connection-state" class="section-name selfRef">Per-connection state</a>
+      <h2 id="name-implementation-consideratio">
+<a href="#section-6" class="section-number selfRef">6. </a><a href="#name-implementation-consideratio" class="section-name selfRef">Implementation Considerations</a>
       </h2>
-<p id="section-6-1">The CID allocation methods QUIC-LB defines no per-connection state at
+<div id="per-connection-state">
+<section id="section-6.1">
+        <h3 id="name-per-connection-state">
+<a href="#section-6.1" class="section-number selfRef">6.1. </a><a href="#name-per-connection-state" class="section-name selfRef">Per-connection state</a>
+        </h3>
+<p id="section-6.1-1">The CID allocation methods QUIC-LB defines no per-connection state at
 the load balancer, with a few conditional exceptions described in
 <a href="#unroutable" class="auto internal xref">Section 4</a>. Otherwise, the load balancer can extract the server ID from
-the connection ID of each incoming packet and route that packet accordingly.<a href="#section-6-1" class="pilcrow">¶</a></p>
-<p id="section-6-2">However, once a routing decision has been made, the load balancer MAY
+the connection ID of each incoming packet and route that packet accordingly.<a href="#section-6.1-1" class="pilcrow">¶</a></p>
+<p id="section-6.1-2">However, once a routing decision has been made, the load balancer MAY
 associate the 4-tuple or connection ID with the decision. This has two
-advantages:<a href="#section-6-2" class="pilcrow">¶</a></p>
+advantages:<a href="#section-6.1-2" class="pilcrow">¶</a></p>
 <ul class="normal">
-<li class="normal" id="section-6-3.1">
-          <p id="section-6-3.1.1">The load balancer only extracts the server ID once until the 4-tuple or
+<li class="normal" id="section-6.1-3.1">
+            <p id="section-6.1-3.1.1">The load balancer only extracts the server ID once until the 4-tuple or
 connection ID changes. When the CID is encrypted, this might reduce
-computational load.<a href="#section-6-3.1.1" class="pilcrow">¶</a></p>
+computational load.<a href="#section-6.1-3.1.1" class="pilcrow">¶</a></p>
 </li>
-        <li class="normal" id="section-6-3.2">
-          <p id="section-6-3.2.1">Incoming Stateless Reset packets and ICMP messages are easily routed to the
-correct origin server.<a href="#section-6-3.2.1" class="pilcrow">¶</a></p>
+          <li class="normal" id="section-6.1-3.2">
+            <p id="section-6.1-3.2.1">Incoming Stateless Reset packets and ICMP messages are easily routed to the
+correct origin server.<a href="#section-6.1-3.2.1" class="pilcrow">¶</a></p>
 </li>
-      </ul>
-<p id="section-6-4">In addition to the increased state requirements, however, load balancers cannot
+        </ul>
+<p id="section-6.1-4">In addition to the increased state requirements, however, load balancers cannot
 detect the packets that indicate the end of the connection, so they rely on a
 timeout to delete connection state. There are numerous considerations around
-setting such a timeout.<a href="#section-6-4" class="pilcrow">¶</a></p>
-<p id="section-6-5">In the event a connection ends, freeing an IP and port, and a different
+setting such a timeout.<a href="#section-6.1-4" class="pilcrow">¶</a></p>
+<p id="section-6.1-5">In the event a connection ends, freeing an IP and port, and a different
 connection migrates to that IP and port before the timeout, the load balancer
 will misroute the different connection's packets to the original server. A short
-timeout limits the likelihood of such a misrouting.<a href="#section-6-5" class="pilcrow">¶</a></p>
-<p id="section-6-6">Furthermore, if a short timeout causes premature deletion of state, the routing
+timeout limits the likelihood of such a misrouting.<a href="#section-6.1-5" class="pilcrow">¶</a></p>
+<p id="section-6.1-6">Furthermore, if a short timeout causes premature deletion of state, the routing
 is easily recoverable by decoding an incoming Connection ID. However, a short
 timeout also reduces the chance that an incoming Stateless Reset is correctly
-routed.<a href="#section-6-6" class="pilcrow">¶</a></p>
-<p id="section-6-7">Note that some heuristics to purge state early can introduce Denial of Service
+routed.<a href="#section-6.1-6" class="pilcrow">¶</a></p>
+<p id="section-6.1-7">Note that some heuristics to purge state early can introduce Denial of Service
 vulnerabilities. For example, one heuristic might delete flow state once the
 load balancer observes a routable CID on that flow. An attacker that can observe
 a target flow can store a routable CID from a previous connection and spoof the
 target flow's 4-tuple with the routable CID, causing premature deletion of that
-state.<a href="#section-6-7" class="pilcrow">¶</a></p>
-<p id="section-6-8">Servers MAY implement the technique described in <span><a href="https://rfc-editor.org/rfc/rfc9000#section-14.4.1" class="relref">Section 14.4.1</a> of [<a href="#RFC9000" class="cite xref">RFC9000</a>]</span>
+state.<a href="#section-6.1-7" class="pilcrow">¶</a></p>
+<p id="section-6.1-8">Servers MAY implement the technique described in <span><a href="https://rfc-editor.org/rfc/rfc9000#section-14.4.1" class="relref">Section 14.4.1</a> of [<a href="#RFC9000" class="cite xref">RFC9000</a>]</span>
 in case the load balancer is stateless, to increase the likelihood a Source
 Connection ID is included in ICMP responses to Path Maximum Transmission Unit
 (PMTU) probes.  Load balancers MAY parse the echoed packet to extract the Source
 Connection ID, if it contains a QUIC long header, and extract the Server ID as
-if it were in a Destination CID.<a href="#section-6-8" class="pilcrow">¶</a></p>
+if it were in a Destination CID.<a href="#section-6.1-8" class="pilcrow">¶</a></p>
+</section>
+</div>
+<div id="retiring-old-connection-ids">
+<section id="section-6.2">
+        <h3 id="name-retiring-old-connection-ids">
+<a href="#section-6.2" class="section-number selfRef">6.2. </a><a href="#name-retiring-old-connection-ids" class="section-name selfRef">Retiring Old Connection IDs</a>
+        </h3>
+<p id="section-6.2-1">A server running long-lived connections might need to request retirement of all
+of its connection IDs because the load balancer will no longer support the key
+it used, that key was compromised, or due to policy regarding the maximum
+lifetime of ciphertext using that key.<a href="#section-6.2-1" class="pilcrow">¶</a></p>
+<p id="section-6.2-2"><span><a href="https://rfc-editor.org/rfc/rfc9000#section-5.1.2" class="relref">Section 5.1.2</a> of [<a href="#RFC9000" class="cite xref">RFC9000</a>]</span> explicitly anticipates replacing all active
+connection IDs at once. To do so, the endpoint sends a batch of
+NEW_CONNECTION_ID frames, each with Retire Prior To set to the sequence number
+of the first replacement connection ID. This requests retirement of all previously
+issued connection IDs while supplying their replacements.<a href="#section-6.2-2" class="pilcrow">¶</a></p>
+<p id="section-6.2-3">However, some implementations update path-to-connection-ID bindings while
+processing each NEW_CONNECTION_ID frame and discard paths that cannot
+immediately be assigned a replacement connection ID. Processing the first frame
+can therefore cause these implementations to discard backup paths or abort
+ongoing path validation, even if subsequent frames in the same packet supply
+enough connection IDs to preserve all paths.<a href="#section-6.2-3" class="pilcrow">¶</a></p>
+<p id="section-6.2-4">To mitigate this behavior, an endpoint can increase Retire Prior To incrementally
+across the batch, replacing one old connection ID with each frame. This departs
+from the recommendation in Section 5.1.2 of RFC 9000 to wait for all retirements
+requested by the previous Retire Prior To value before increasing it again.<a href="#section-6.2-4" class="pilcrow">¶</a></p>
+<p id="section-6.2-5">Alternatively, an endpoint can replace connection IDs one at a time, waiting for
+the corresponding RETIRE_CONNECTION_ID frame before requesting the next
+retirement. This avoids the temporary shortage caused by bulk retirement, but
+requires multiple exchanges over a connection that might otherwise be idle.<a href="#section-6.2-5" class="pilcrow">¶</a></p>
+</section>
+</div>
 </section>
 </div>
 <div id="additional-use-cases">
@@ -2766,7 +2809,7 @@ server ID allocations for the clear text and the encrypted versions.<a href="#se
 <a href="#section-9.8" class="section-number selfRef">9.8. </a><a href="#name-early-deletion-of-load-bala" class="section-name selfRef">Early deletion of load balancer connection state</a>
         </h3>
 <p id="section-9.8-1">Potential vulnerabilities related to heuristics that delete per-connection state
-are described in <a href="#per-connection-state" class="auto internal xref">Section 6</a>. Under certain assumptions about
+are described in <a href="#per-connection-state" class="auto internal xref">Section 6.1</a>. Under certain assumptions about
 server configuration and fallback algorithm, this state might be critical to
 maintaining connectivity. Under other assumptions, the state provides robustness
 to improbable network events.<a href="#section-9.8-1" class="pilcrow">¶</a></p>
