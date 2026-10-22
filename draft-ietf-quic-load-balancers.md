@@ -785,7 +785,9 @@ is necessary:
 and the load balancer has to concatenate left_0 and right_0 to obtain the
 complete server ID.
 
-# Per-connection state {#per-connection-state}
+# Implementation Considerations
+
+## Per-connection state {#per-connection-state}
 
 The CID allocation methods QUIC-LB defines no per-connection state at
 the load balancer, with a few conditional exceptions described in
@@ -831,6 +833,36 @@ Connection ID is included in ICMP responses to Path Maximum Transmission Unit
 (PMTU) probes.  Load balancers MAY parse the echoed packet to extract the Source
 Connection ID, if it contains a QUIC long header, and extract the Server ID as
 if it were in a Destination CID.
+
+## Retiring Old Connection IDs
+
+A server running long-lived connections might need to request retirement of all
+of its connection IDs because the load balancer will no longer support the key
+it used, that key was compromised, or due to policy regarding the maximum
+lifetime of ciphertext using that key.
+
+{{Section 5.1.2 of RFC9000}} explicitly anticipates replacing all active
+connection IDs at once. To do so, the endpoint sends a batch of
+NEW_CONNECTION_ID frames, each with Retire Prior To set to the sequence number
+of the first replacement connection ID. This requests retirement of all previously
+issued connection IDs while supplying their replacements.
+
+However, some implementations update path-to-connection-ID bindings while
+processing each NEW_CONNECTION_ID frame and discard paths that cannot
+immediately be assigned a replacement connection ID. Processing the first frame
+can therefore cause these implementations to discard backup paths or abort
+ongoing path validation, even if subsequent frames in the same packet supply
+enough connection IDs to preserve all paths.
+
+To mitigate this behavior, an endpoint can increase Retire Prior To incrementally
+across the batch, replacing one old connection ID with each frame. This departs
+from the recommendation in Section 5.1.2 of RFC 9000 to wait for all retirements
+requested by the previous Retire Prior To value before increasing it again.
+
+Alternatively, an endpoint can replace connection IDs one at a time, waiting for
+the corresponding RETIRE_CONNECTION_ID frame before requesting the next
+retirement. This avoids the temporary shortage caused by bulk retirement, but
+requires multiple exchanges over a connection that might otherwise be idle.
 
 # Additional Use Cases
 
