@@ -82,12 +82,12 @@ a separate connection ID on the new path, thus reducing linkability as clients
 move through the world.
 
 There is a tension between the requirements to provide routing information and
-mitigate linkability.  Ultimately, because new connection IDs are in protected
-packets, they must be generated at the server if the load balancer does not have
-access to the connection keys. However, it is the load balancer that has the
-context necessary to generate a connection ID that encodes useful routing
-information. In the absence of any shared state between load balancer and
-server, the load balancer must maintain a relatively expensive table of
+mitigate linkability.  Ultimately, because new connection IDs are provided in
+protected packets, they must be generated at the server if the load balancer
+does not have access to the connection keys. However, it is the load balancer
+that has the context necessary to generate a connection ID that encodes useful
+routing information. In the absence of any shared state between load balancer
+and server, the load balancer must maintain a relatively expensive table of
 server-generated connection IDs, and will not route packets correctly if they
 use a connection ID that was originally communicated in a protected
 NEW_CONNECTION_ID frame.
@@ -95,7 +95,9 @@ NEW_CONNECTION_ID frame.
 This specification provides common algorithms for encoding the server mapping in
 a connection ID given some shared parameters. The mapping is generally only
 discoverable by observers that have the parameters, preserving unlinkability as
-much as possible.
+much as possible. These algorithms both enable interoperability between servers
+and load balancers from different vendors, and provide an example of
+successful compliance with {{!RFC9000}}.
 
 As this document proposes a structured QUIC Connection ID, it also proposes a
 system for self-encoding connection ID length in all packets, so that crypto
@@ -105,7 +107,8 @@ While this document describes a small set of configuration parameters to make
 the server mapping intelligible, the means of distributing these parameters
 between load balancers, servers, and other trusted intermediaries is out of its
 scope. There are numerous well-known infrastructures for distribution of
-configuration.
+configuration. However, an appendix does provide a YANG model for the
+configuration parameters.
 
 ## Terminology
 
@@ -120,13 +123,15 @@ significance described in RFC 2119.
 In this document, "client" and "server" refer to the endpoints of a QUIC
 connection unless otherwise indicated.  A "load balancer" is an intermediary for
 that connection that does not possess QUIC connection keys, but it may rewrite
-IP addresses or conduct other IP or UDP processing. A "configuration agent" is
-the entity that determines the QUIC-LB configuration parameters for the network
-and leverages some system to distribute that configuration.
+IP addresses, conduct other IP or UDP processing, and inspect the public parts
+of QUIC headers. A "configuration agent" is the entity that determines the
+QUIC-LB configuration parameters for the network and leverages some system to
+distribute that configuration.
 
-Note that stateful load balancers that act as proxies, by terminating a QUIC
-connection with the client and then retrieving data from the server using QUIC
-or another protocol, are treated as a server with respect to this specification.
+Note that stateful load balancers that act as reverse proxies, by terminating a
+QUIC connection with the client and then retrieving data from the server using
+QUIC or another protocol, are treated as a server with respect to this
+specification.
 
 For brevity, "Connection ID" will often be abbreviated as "CID".
 
@@ -137,9 +142,8 @@ All wire formats will be depicted using the notation defined in Section 1.3 of
 
 # Overview
 
-In QUIC-LB, load balancers do not generate individual connection IDs for
-servers.  Instead, they communicate the parameters of an algorithm to generate
-routable connection IDs.
+In QUIC-LB, load balancers and servers have a common understanding of how to
+encode each server and the keys, if any, to encrypt that information.
 
 There are three algorithms. One is simple to configure but does not obscure the
 server mapping. The others have similar privacy properties, but one is more
@@ -198,6 +202,7 @@ Servers MUST NOT generate new connection IDs using an old configuration after
 receiving a new one from the configuration agent. Servers MUST use that QUIC
 version's methods to update the client with CIDs (e.g., NEW_CONNECTION_ID
 frames) using the new configuration and retire CIDs using the old configuration.
+See {{retiring}} for details.
 
 It also possible to use these bits for more long-lived distinction of different
 configurations, but this has privacy implications (see {{multiple-configs}}).
@@ -221,9 +226,10 @@ ID is unroutable. These connection IDs MUST self-encode their length (see
 {{length-self-description}}).
 
 Servers with no active configuration SHOULD provide the client exactly one CID
-over the life of the connection. In QUIC versions 1 and 2, therefore, servers
-SHOULD NOT send any NEW_CONNECTION_ID frames, instead delivering a single CID
-via the Source Connection ID of long headers it sends.
+over the life of the connection, except for any second CID provided in the
+preferred_address transport parameter. In QUIC versions 1 and 2, therefore,
+servers SHOULD NOT send any NEW_CONNECTION_ID frames, instead delivering a
+single CID via the Source Connection ID of long headers it sends.
 
 Servers with no active configuration SHOULD send the "disable_active_migration"
 transport parameter, or a similar message in future QUIC versions.
@@ -265,8 +271,9 @@ The first octet has the following fields:
 
 Config Rotation: Indicates the configuration used to interpret the CID.
 
-CID Len or Random Bits: Length Self-Description (if applicable), or random bits
-otherwise. Encodes the length of the Connection ID following the First Octet.
+CID Len or Random Bits: Encodes the length of the Connection ID following the
+First Octet, if applicable. Otherwise, bits indistinguisable from random,
+which can be used for internal server purposes.
 
 # Unroutable Connection IDs {#unroutable}
 
@@ -356,6 +363,12 @@ The load balancer MAY maintain a table of observed unroutable DCIDs and the
 resulting routing decision. Provided the table does not overflow, these
 connections will be robust to NAT rebinding.
 
+Load balancers SHOULD store only 4-tuples and unroutable DCIDs observed in Short
+Header packets. During the handshake, the 4-tuple is constant and the baseline
+fallback algorithm is extremely likely to produce consistent results. Omitting
+long header results reduces resource consumption in the very likely case that
+the handshake produces a routable CID.
+
 Load balancers SHOULD maintain per-flow timers to periodically purge state in
 the tables described above.
 
@@ -400,6 +413,15 @@ load balancer will misroute packets.
 Load balancers SHOULD maintain per-flow timers to periodically purge state in
 the tables described above.
 
+Note that the client might choose a connection ID that successfully decrypts to
+a server ID that is valid for the destination IP address, but not valid for the
+server pool chosen by the Advanced Fallback algorithm. For example, the SNI
+might not be served by the server identified in the CID. One mitigation is to
+sparsely populate the server ID space to make these instances rare. A more
+robust solution is to inspect long-header client packets even if their CID
+successfully decrypts, if the flow is not in the table(s) described in this
+section.
+
 # Server ID Encoding in Connection IDs
 
 ## Server ID Allocation {#sid-allocation}
@@ -434,6 +456,7 @@ All connection IDs use the following format:
 QUIC-LB Connection ID {
     First Octet (8),
     Plaintext Block (40..152),
+    Server Use (..),
 }
 Plaintext Block {
     Server ID (8..),
@@ -447,8 +470,11 @@ The First Octet field serves one or two purposes, as defined in {{first-octet}}.
 The Server ID field encodes the information necessary for the load balancer to
 route a packet with that connection ID. It is often encrypted.
 
-The server uses the Nonce field to make sure that each connection ID it
+The server varies the Nonce field to make sure that each connection ID it
 generates is unique, even though they all use the same Server ID.
+
+The Server Use field is an optional field that can be used for server-specific
+functions. See {{server-actions}} for details.
 
 ## Configuration Agent Actions
 
@@ -458,7 +484,10 @@ octets) sufficiently large to encode all server IDs, including potential future
 servers.
 
 Each configuration specifies the length of the Server ID and Nonce fields, with
-limits defined for each algorithm.
+limits defined for each algorithm. Note that in general, load balancers might
+have different values for these lengths than servers, though they MUST agree
+on the sum of the two lengths. See {{lb-chains}} and {{demultiplexing}} for
+examples of why this might be useful.
 
 Optionally, it also defines a 16-octet key. Note that failure to define a key
 means that observers can determine the assigned server of any connection,
@@ -468,9 +497,11 @@ The nonce length MUST be at least 4 octets. The server ID length MUST be at
 least 1 octet.
 
 As QUIC version 1 limits connection IDs to 20 octets, the server ID and nonce
-lengths MUST sum to 19 octets or less.
+lengths MUST sum to 19 octets or less to be compatible with versions 1 or 2.
+Note that a combined length of 19 prevents the server from using bytes for
+internal use, which could have operational effects.
 
-## Server Actions
+## Server Actions {#server-actions}
 
 The server writes the first octet and its server ID into their respective
 fields.
@@ -485,9 +516,8 @@ specified in that version of QUIC, for its own use. These bytes MUST NOT
 provide observers with any information that could link two connection IDs to
 the same connection, client, or server. In particular, all servers using a
 configuration MUST consistently add the same length to each connection ID,
-to preserve the linkability objectives of QUIC-LB. Any additional bytes SHOULD
-NOT provide any observable correlation to previous connection IDs for that
-connection (e.g., the bytes can be chosen at random).
+to preserve the linkability objectives of QUIC-LB. See {{demultiplexing}} for
+an example where this field could be useful.
 
 If there is no key in the configuration, the Connection ID is complete.
 Otherwise, there are further steps, as described in the two following
@@ -789,10 +819,10 @@ complete server ID.
 
 ## Per-connection state {#per-connection-state}
 
-The CID allocation methods QUIC-LB defines no per-connection state at
-the load balancer, with a few conditional exceptions described in
-{{unroutable}}. Otherwise, the load balancer can extract the server ID from
-the connection ID of each incoming packet and route that packet accordingly.
+The encodings QUIC-LB defines require no connection state at the load balancer,
+with a few conditional exceptions described in {{unroutable}}. Otherwise, the
+load balancer can extract the server ID from the connection ID of each incoming
+packet and route that packet accordingly.
 
 However, once a routing decision has been made, the load balancer MAY
 associate the 4-tuple or connection ID with the decision. This has two
@@ -834,7 +864,7 @@ Connection ID is included in ICMP responses to Path Maximum Transmission Unit
 Connection ID, if it contains a QUIC long header, and extract the Server ID as
 if it were in a Destination CID.
 
-## Retiring Old Connection IDs
+## Retiring Old Connection IDs {#retiring}
 
 A server running long-lived connections might need to request retirement of all
 of its connection IDs because the load balancer will no longer support the key
@@ -877,17 +907,17 @@ to the correct forwarding address. Note that this solution is extensible to
 arbitrarily large numbers of load-balancing tiers, as the maximum server ID
 space is quite large.
 
-If the number of necessary server IDs per next hop is uniform, a simple
+If the number of necessary server IDs per next hop is roughly uniform, a simple
 implementation would use successively longer server IDs at each tier of load
 balancing, and the server configuration would match the last tier. Load
 balancers closer to the client can then treat any parts of the server ID they
 did not use as part of the nonce.
 
-## Server Process Demultiplexing
+## Server Process Demultiplexing {#demultiplexing}
 
 QUIC servers might have QUIC running on multiple processes or threads listening
-on the same address, and have a need to demultiplex between them. In principle,
-this demultiplexer is a Layer 4 load balancer, and the guidance in {{lb-chains}}
+on the same address, and need to demultiplex between them. Conceptually, this
+demultiplexer is a Layer 4 load balancer, and the guidance in {{lb-chains}}
 applies. However, in many deployments the demultiplexer lacks the capability to
 perform decryption operations. Internal server coordination is out of scope of
 this specification, but this non-normative section proposes some approaches
@@ -963,7 +993,7 @@ client-generated DCIDs that are not specified in RFC 8999:
 
 1. they do not have short headers;
 1. the 4-tuple remains constant;
-1. if the load-balancer uses the Advanced Fallback Algorithm, the packets have
+1. if the load balancer uses the Advanced Fallback Algorithm, the packets have
 a constant Source Connection ID.
 
 While this document does not update the commitments in {{RFC8999}}, the
@@ -990,8 +1020,8 @@ network infrastructure, which makes QUIC robust to NAT rebinding. Servers that
 are encoding their server ID without a key algorithm SHOULD only use it to
 generate new CIDs for the Server Initial Packet and SHOULD NOT send CIDs in QUIC
 NEW_CONNECTION_ID frames, except that it sends one new Connection ID in the
-event of config rotation {{config-rotation}}. Doing so might falsely suggest to
-the client that said CIDs were generated in a secure fashion.
+event of config rotation ({{config-rotation}}). Doing so might falsely suggest
+to the client that said CIDs were generated in a secure fashion.
 
 A linkability attack would find some means of determining that two connection
 IDs route to the same server. Due to the limitations of measures at QUIC layer,
@@ -1070,7 +1100,8 @@ preserve privacy; or
 
 * tenants are assigned different keys, and the load balancer trial-decrypts the
 connection ID with every key assigned to that codepoint and IP address and
-routes according to the success of each attempt.
+routes according to the success of each attempt. Keeping per-connection-ID state
+might reduce the compute cost of this approach.
 
 When configuring QUIC-LB, administrators evaluate the privacy and performance
 tradeoff by considering the relative value of each of these properties, given
@@ -1078,8 +1109,8 @@ the trust model between tenants, the presence of methods to obscure the domain
 name, and value of address migration in the tenant use cases.
 
 In the case that the administrating entity also controls a reverse proxy between
-the load balancer and the tenants, this entity generates the external CIDs, and
-there is no tradeoff.
+the load balancer and the tenants, the reverse proxy generates the external
+CIDs, and there is no tradeoff.
 
 ## Stateless Reset Oracle
 
@@ -1148,7 +1179,7 @@ sum of the lengths of the Server ID and the Nonce.
 
 The authors considered increasing the number of passes from 4 to 12,
 which would definitely block these attacks. However, this would require
-12 round of AES decryption by load balancers accessing the CID, a cost deemed
+12 rounds of AES decryption by load balancers accessing the CID, a cost deemed
 prohibitive in the planned deployments.
 
 The attacks described in [Patarin2008] rely on known plain text. In a normal
@@ -1156,10 +1187,9 @@ deployment, the plain text is only known by the server that generates the ID
 and by the load balancer that decrypts the content of the CID. Attackers
 would have to compensate by guesses about the allocation of server identifiers
 or the generation of nonces. These attacks are thus mitigated by making nonces
-hard to guess, as specified in {{cid-entropy}}, and by rules related to mixed
-deployments that use both clear text CID and encrypted CID, for example when
-transitioning from clear text to encryption. Such deployments MUST use different
-server ID allocations for the clear text and the encrypted versions.
+hard to guess, as specified in {{cid-entropy}}. Furthermore, deployments that
+use both cleartext and encrypted CIDs MUST use different server ID allocations
+for those two types.
 
 These attacks cannot be mounted against the Single Pass Encryption algorithm.
 
@@ -1625,6 +1655,8 @@ and William Zeng Ke all provided useful input to this document.
 
 - Added considerations for multiple tenants on the same IP address
 - Added considerations for retiring all connection IDs at once
+- Added considerations when routing on SNI but the CID accidentally
+decrypts successfully
 - Cleaned up typos and outdated statements.
 
 ## since draft-ietf-quic-load-balancers-20
