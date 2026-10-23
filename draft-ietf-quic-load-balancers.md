@@ -365,7 +365,7 @@ connections will be robust to NAT rebinding.
 
 Load balancers SHOULD store only 4-tuples and unroutable DCIDs observed in Short
 Header packets. During the handshake, the 4-tuple is constant and the baseline
-fallback algorithm is extremlely likely to produce consistent results. Omitting
+fallback algorithm is extremely likely to produce consistent results. Omitting
 long header results reduces resource consumption in the very likely case that
 the handshake produces a routable CID.
 
@@ -517,7 +517,7 @@ provide observers with any information that could link two connection IDs to
 the same connection, client, or server. In particular, all servers using a
 configuration MUST consistently add the same length to each connection ID,
 to preserve the linkability objectives of QUIC-LB. See {{demultiplexing}} for
-an example where this could be useful.
+an example where this field could be useful.
 
 If there is no key in the configuration, the Connection ID is complete.
 Otherwise, there are further steps, as described in the two following
